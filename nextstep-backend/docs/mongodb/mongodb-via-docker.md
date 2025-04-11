@@ -20,14 +20,14 @@ Also, within a network, you can refer one container to another, to depend on eac
 
 To use the `docker-compose` command you require a `docker-compose.yaml` file, for it to read the network configuration you want it to establish.
 
-We have pre-made a [`docker-compose.yaml`](/insighthub-backend/docker-compose.yaml) file for you to use,
+We have pre-made a [`docker-compose.yaml`](/nextstep-backend/docker-compose.yaml) file for you to use,
 that spins up local [mongodb](https://hub.docker.com/_/mongo) (DB) and [mongo-express](https://hub.docker.com/_/mongo-express) (UI) containers via docker.
 
 ## Usage
 
-### Update Your [`.env`](/insighthub-backend/.env) File For [`docker-compose.yaml`](/insighthub-backend/docker-compose.yaml)
+### Update Your [`.env`](/nextstep-backend/.env) File For [`docker-compose.yaml`](/nextstep-backend/docker-compose.yaml)
 
-Before using [`docker-compose.yaml`](/insighthub-backend/docker-compose.yaml), you need to navigate to your [`.env`](/insighthub-backend/.env) file,
+Before using [`docker-compose.yaml`](/nextstep-backend/docker-compose.yaml), you need to navigate to your [`.env`](/nextstep-backend/.env) file,
 and update it by adding the following properties:
 
 ```
@@ -64,7 +64,7 @@ DB_UI_LOCAL_PORT=8061
     ```
 ### OPTIONAL: Run Raw Queries From `mongosh`
 You may run raw queries for mongodb, via the `mongosh` of the `mongodb` container.
-Once you `docker-compose up -d` this [`docker-compose.yaml`](/insighthub-backend/docker-compose.yaml) file,
+Once you `docker-compose up -d` this [`docker-compose.yaml`](/nextstep-backend/docker-compose.yaml) file,
 and the `mongodb` container is running, then execute the following commands:
 View all the running containers:
 ```

@@ -1,6 +1,6 @@
 openapi: 3.0.1
 info:
-  title: InsightHub API
+  title: NextStep API
   description: API for managing all the abilities.
   version: 1.0.0
 

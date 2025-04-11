@@ -1,4 +1,4 @@
-# InsightHub Frontend
+# NextStep Frontend
 
 ## Usage
 
