@@ -2,7 +2,7 @@ name: Backend - Deploy coverage report to Pages
 
 on:
   push:
-    branches: ['main']
+    branches: ['master']
 
   workflow_dispatch:
 
