@@ -37,10 +37,8 @@ RUN apt-get install -y software-properties-common && add-apt-repository ppa:ondr
 RUN apt-get install -y php7.2 php7.2-soap php7.2-ldap php7.2-mysqli php7.2-gd php7.2-xml php7.2-curl php7.2-mbstring php7.2-zip # buildkit
 RUN update-alternatives --set php /usr/bin/php7.2 # buildkit
 RUN service apache2 restart # buildkit
-RUN mkdir -p /var/www/html/OpenCATS # buildkit
 # RUN wget https://github.com/opencats/OpenCATS/releases/download/0.9.7.4/opencats-0.9.7.4-full.zip # buildkit
 # RUN unzip opencats-0.9.7.4-full.zip && rm opencats-0.9.7.4-full.zip # buildkit
-
 
 WORKDIR /tmp
 RUN git clone https://github.com/opencats/OpenCATS.git opencats && \
@@ -52,10 +50,10 @@ WORKDIR /var/www/html
 RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer && \
     composer install
 
+COPY config.php config.php
 RUN chown -R www-data:www-data . # buildkit
 RUN chmod 770 attachments # buildkit
 RUN chmod 770 upload # buildkit
+RUN rm index.html
 EXPOSE 80
-
-# ENTRYPOINT tail -f /dev/null
 CMD apachectl -D FOREGROUND
