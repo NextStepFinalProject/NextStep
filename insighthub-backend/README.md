@@ -1,32 +1,32 @@
-# InsightHub Backend
+# NextStep Backend
 
 ## Git Subtree
 
-This `insighthub-backend` directory was initialized by cloning [`colman-advanced-web-apps`](https://github.com/taljacob2/colman-advanced-web-apps) repository as a [git subtree](https://www.atlassian.com/git/tutorials/git-subtree), by running the following command:
+This `nextstep-backend` directory was initialized by cloning [`colman-advanced-web-apps`](https://github.com/taljacob2/colman-advanced-web-apps) repository as a [git subtree](https://www.atlassian.com/git/tutorials/git-subtree), by running the following command:
 
 ```
 cd ..
-git subtree add -P insighthub-backend https://github.com/taljacob2/colman-advanced-web-apps master --squash
+git subtree add -P nextstep-backend https://github.com/taljacob2/colman-advanced-web-apps master --squash
 ```
 
 ### Check For Updates From [`colman-advanced-web-apps`](https://github.com/taljacob2/colman-advanced-web-apps) Repository
 
-To upgrade the existing backend with the most recent version available in the [`colman-advanced-web-apps`](https://github.com/taljacob2/colman-advanced-web-apps) repository, merge it into this `insighthub-backend` directory:
+To upgrade the existing backend with the most recent version available in the [`colman-advanced-web-apps`](https://github.com/taljacob2/colman-advanced-web-apps) repository, merge it into this `nextstep-backend` directory:
 
 ```
 cd ..
-git subtree pull -P insighthub-backend https://github.com/taljacob2/colman-advanced-web-apps master --squash
+git subtree pull -P nextstep-backend https://github.com/taljacob2/colman-advanced-web-apps master --squash
 ```
 
 ## Prerequisites
 
 ### Configure Environment
 
-1. As a **requirement** for running the application, create an `.env` file in the `insighthub-backend` working directory. Copy the content of the [.env.template](/insighthub-backend/.env.template) file to your newly created `.env` file. Define the environment variables there.
+1. As a **requirement** for running the application, create an `.env` file in the `nextstep-backend` working directory. Copy the content of the [.env.template](/nextstep-backend/.env.template) file to your newly created `.env` file. Define the environment variables there.
 
 1. Edit the values of the properties to match your environment.
 
-   > In case you want to run a docker environment, see our guide for [how to setup a docker environment](/insighthub-backend/docs/mongodb/mongodb-via-docker.md).
+   > In case you want to run a docker environment, see our guide for [how to setup a docker environment](/nextstep-backend/docs/mongodb/mongodb-via-docker.md).
 
 ## `.env`
 
@@ -78,7 +78,7 @@ You can set the NUMBER and the TIME_UNIT to your liking.
 
 Determines the expiration time for the authentication refresh token.
 
-You should define it in the same way as [`TOKEN_EXPIRATION`](https://github.com/Lina0Elman/InsightHub?tab=readme-ov-file#token_expiration).
+You should define it in the same way as [`TOKEN_EXPIRATION`](https://github.com/NextStepFinalProject/NextStep?tab=readme-ov-file#token_expiration).
 
 ## Usage
 
@@ -108,10 +108,10 @@ Run tests:
 npm run test
 ```
 
-See our `main` test coverage at https://Lina0Elman.github.io/InsightHub
+See our `main` test coverage at https://NextStepFinalProject.github.io/NextStep
 
 ## Documentation
 
 See the Swagger documentation in the `/api-docs` route.
 
-See more docs [here](/insighthub-backend/docs).
+See more docs [here](/nextstep-backend/docs).

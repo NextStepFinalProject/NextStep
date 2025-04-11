@@ -1,7 +1,7 @@
 {
   "name": "ex",
   "version": "1.0.0",
-  "description": "InsightHub Backend",
+  "description": "NextStep Backend",
   "main": "src/server.ts",
   "scripts": {
     "start": "tsc && node ./dist/server.js",
@@ -11,14 +11,14 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/Lina0Elman/InsightHub.git"
+    "url": "git+https://github.com/NextStepFinalProject/NextStep.git"
   },
   "author": "Mevorah Berrebi & Tal Jacob & Lina Elman & Liav Tibi",
   "license": "ISC",
   "bugs": {
-    "url": "https://github.com/Lina0Elman/InsightHub/issues"
+    "url": "https://github.com/NextStepFinalProject/NextStep/issues"
   },
-  "homepage": "https://github.com/Lina0Elman/InsightHub#readme",
+  "homepage": "https://github.com/NextStepFinalProject/NextStep#readme",
   "dependencies": {
     "bcrypt": "^5.1.1",
     "body-parser": "^1.20.3",

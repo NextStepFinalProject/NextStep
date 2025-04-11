@@ -1,4 +1,4 @@
-// insighthub-backend/src/middleware/validateUser.ts
+// nextstep-backend/src/middleware/validateUser.ts
 import { Response, NextFunction } from 'express';
 import {CustomRequest} from "types/customRequest";
 import {unless} from "express-unless";

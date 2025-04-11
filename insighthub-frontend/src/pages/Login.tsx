@@ -69,7 +69,7 @@ const Login: React.FC = () => {
       <Container component="main" maxWidth="xs">
         <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', mt: 8 }}>
           <Typography component="h1" variant="h3" gutterBottom>
-            Insight Hub
+            Next Step
           </Typography>
           <Paper elevation={3} sx={{ padding: 4, width: '100%' }}>
             <Typography component="h1" variant="h5" align="center">

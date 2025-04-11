@@ -11,7 +11,7 @@ jobs:
     runs-on: ubuntu-latest
     defaults:
       run:
-        working-directory: insighthub-frontend
+        working-directory: nextstep-frontend
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -20,7 +20,7 @@ jobs:
         with:
           envkey_VITE_PORT: 5000
           envkey_VITE_BACKEND_URL: http://localhost:3000
-          file_name: insighthub-frontend/.env
+          file_name: nextstep-frontend/.env
           fail_on_empty: true
           sort_keys: false
       - uses: actions/setup-node@v4
