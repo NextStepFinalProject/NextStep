@@ -26,5 +26,35 @@ services:
       - ME_CONFIG_BASICAUTH_USERNAME=$DB_USER
       - ME_CONFIG_BASICAUTH_PASSWORD=$DB_PASSWORD
 
+  opencats:
+      image: williambadenhorst86/opencats-ubuntu
+      ports:
+          - 8090:80
+      links:
+          - mysql
+
+  mysql:
+      image: mysql:5.5
+      ports:
+          - 3307:3306
+      volumes:
+          - /var/lib/mysql
+      environment:
+          MYSQL_ROOT_PASSWORD: root
+          MYSQL_DATABASE: cats_dev
+          MYSQL_USER: cats
+          MYSQL_PASSWORD: password
+
+  phpmyadmin:
+      image: phpmyadmin/phpmyadmin
+      ports:
+          - 8080:80
+      links:
+          - mysql:db
+      environment:
+          PMA_HOST: db
+          PMA_USER: cats
+          PMA_PASSWORD: password
+
 volumes:
   mongodb_data: {}
