@@ -11,4 +11,8 @@ router.post('/image', Resource.createImageResource);
 
 router.get('/image/:filename', Resource.getImageResource);
 
+router.post('/resume', Resource.createAndScoreResumeResource);
+
+router.get('/resume/:filename', Resource.getResumeResource);
+
 export default router;
