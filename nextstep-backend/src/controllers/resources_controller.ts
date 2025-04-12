@@ -49,19 +49,10 @@ const getImageResource = async (req: Request, res: Response) => {
     }
 };
 
-const createAndScoreResumeResource = async (req: Request, res: Response) => {
+const createResumeResource = async (req: Request, res: Response) => {
     try {
-        const resumeFilename = await uploadResume(req);
-        const resumePath = path.resolve(config.resources.resumesDirectoryPath(), resumeFilename);
-        const jobDescription = req.body.jobDescription;
-        
-        const score = await scoreResume(resumePath, jobDescription);
-
-        return res.status(201).json({
-            resumeFilename,
-            score,
-            message: 'Resume uploaded and scored successfully'
-        });
+        const resumeFilename = await uploadResume(req);    
+        return res.status(201).send(resumeFilename);
     } catch (error) {
         if (error instanceof multer.MulterError || error instanceof TypeError) {
             return res.status(400).send(error.message);
@@ -91,5 +82,5 @@ export default {
     createImageResource,
     getImageResource,
     getResumeResource,
-    createAndScoreResumeResource
+    createResumeResource
 };

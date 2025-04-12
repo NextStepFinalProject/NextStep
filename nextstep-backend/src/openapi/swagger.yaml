@@ -787,7 +787,7 @@ paths:
     post:
       tags:
         - Resources
-      summary: Upload and score a resume
+      summary: Upload a resume
       security:
         - BearerAuth: []
       requestBody:
@@ -806,21 +806,12 @@ paths:
                   description: Optional job description for scoring
       responses:
         '201':
-          description: Resume uploaded and scored successfully
+          description: Resume uploaded successfully
           content:
-            application/json:
+            text/plain:
               schema:
-                type: object
-                properties:
-                  resumeFilename:
-                    type: string
-                    description: The filename of the uploaded resume
-                  score:
-                    type: number
-                    description: The ATS score of the resume
-                  message:
-                    type: string
-                    description: Status message
+                description: The name of the uploaded file
+                type: string
         '400':
           description: Bad request
           content:
