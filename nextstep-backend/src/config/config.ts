@@ -26,6 +26,21 @@ export const config = {
         model_name: () => process.env.OPENROUTER_MODEL_NAME || 'google/gemma-3-27b-it:free',
         turned_on: () =>  process.env.CHAT_AI_TURNED_ON === 'true' || false
     },
+    resumeRating: {
+        api_url: () => process.env.RESUME_RATING_API_URL || 'https://resume-rating-api.p.rapidapi.com/api/resume-rating',
+        api_key: () => process.env.RAPIDAPI_API_KEY || undefined,
+        headers: () => ({
+            'x-rapidapi-key': config.resumeRating.api_key(),
+            'x-rapidapi-host': 'resume-rating-api.p.rapidapi.com',
+            'Content-Type': 'application/json'
+        }),
+        turned_on: () =>  process.env.RESUME_RATING_TURNED_ON === 'true' || false
+    },
+    tempFileHosting: {
+        api_base_url: () => process.env.TEMP_FILE_HOSTING_API_BASE_URL || 'https://tmpfiles.org',
+        api_upload_relative_url: () => process.env.TEMP_FILE_HOSTING_API_UPLOAD_RELATIVE_URL || '/api/v1/upload',
+        api_file_relative_url: () => process.env.TEMP_FILE_HOSTING_API_FILE_RELATIVE_URL || '/dl',
+    },
     socketMethods: {
         messageFromServer: "message-from-server",
         messageFromClient: "message-from-client",

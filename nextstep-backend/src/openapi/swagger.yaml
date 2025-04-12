@@ -833,8 +833,6 @@ paths:
       tags:
         - Resources
       summary: Get resume file
-      security:
-        - BearerAuth: []
       parameters:
         - name: filename
           in: path

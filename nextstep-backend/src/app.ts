@@ -59,6 +59,7 @@ app.use(authenticateToken.unless({
         { url: '/comment', methods: ['GET'] },
         { url: '/post', methods: ['GET'] },  // Allow GET to /post
         { url: /^\/resource\/image\/[^\/]+$/, methods: ['GET'] },  // Allow GET to /resource/image/{anything}
+        { url: /^\/resource\/resume\/[^\/]+$/, methods: ['GET'] },  // Allow GET to /resource/resume/{anything}
     ]
 }));
 
