@@ -249,7 +249,6 @@ paths:
         '401':
           description: Unauthorized - Missing token
 
-  # Comment Routes
   /comment:
     get:
       tags:
@@ -411,7 +410,6 @@ paths:
         '404':
           $ref: '#/components/responses/PostNotFound'
 
-  # Authentication Routes
   /auth/register:
     post:
       tags:
@@ -579,6 +577,7 @@ paths:
           $ref: '#/components/responses/Unauthorized'
         '403':
           $ref: '#/components/responses/Forbidden'
+
   /user/{userId}:
     get:
       tags:
@@ -665,7 +664,6 @@ paths:
           $ref: '#/components/responses/Forbidden'
         '404':
           $ref: '#/components/responses/UserNotFound'
-
 
   /resource/image/user:
     post:
