@@ -1,4 +1,3 @@
-
 import express, {Request, Response} from 'express';
 import Resource from '../controllers/resources_controller';
 import {CustomRequest} from "types/customRequest";
