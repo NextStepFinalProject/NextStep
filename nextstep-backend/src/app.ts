@@ -14,7 +14,7 @@ import {config} from "./config/config";
 import validateUser from "./middleware/validateUser";
 import loadOpenApiFile from "./openapi/openapi_loader";
 import resource_routes from './routes/resources_routes';
-
+import resume_routes from './routes/resume_routes';
 
 const specs = swaggerJsdoc(options);
 
@@ -43,9 +43,7 @@ app.use(bodyParser.json());
 app.use(removeUndefinedOrEmptyFields);
 app.use(bodyParser.urlencoded({ extended: true }));
 
-
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(loadOpenApiFile() as JsonObject));
-
 
 // Add Authentication for all routes except the ones listed below
 app.use(authenticateToken.unless({
@@ -68,8 +66,6 @@ app.use(authenticateToken.unless({
 // To block queries without Authentication
 app.use(authenticateTokenForParams);
 
-
-
 app.use('/auth', authRoutes);
 app.use('/comment', commentsRoutes);
 app.use('/post', postsRoutes);
@@ -77,5 +73,6 @@ app.use("/user/:id", validateUser);
 app.use('/user', usersRoutes);
 app.use('/resource', resource_routes);
 app.use('/room', roomsRoutes);
+app.use('/resume', resume_routes);
 
 export { app, corsOptions };
