@@ -498,6 +498,67 @@ paths:
         '401':
           description: Invalid refresh token
 
+  /auth/social:
+    post:
+      tags:
+        - Authentication
+      summary: Authenticate user through social provider using Firebase
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - idToken
+                - authProvider
+              properties:
+                idToken:
+                  type: string
+                  description: The ID token received from Firebase authentication
+                authProvider:
+                  type: string
+                  enum: [google, facebook]
+                  description: The social provider to authenticate with
+      responses:
+        '200':
+          description: Successfully authenticated with social provider
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LoginResponse'
+        '400':
+          description: Bad request - Missing idToken or authProvider, or invalid token
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    description: Error message indicating the specific issue
+                    example: "Missing idToken"
+              examples:
+                missingIdToken:
+                  value:
+                    message: "Missing idToken"
+                missingAuthProvider:
+                  value:
+                    message: "Missing authProvider"
+                invalidToken:
+                  value:
+                    message: "Invalid token"
+        '401':
+          description: Invalid social authentication credentials
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Invalid"
+
   /user:
     get:
       tags:
