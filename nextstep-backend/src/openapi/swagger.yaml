@@ -801,9 +801,6 @@ paths:
                   type: string
                   format: binary
                   description: The resume file to upload (PDF, DOC, DOCX, TXT/TEXT)
-                jobDescription:
-                  type: string
-                  description: Optional job description for scoring
       responses:
         '201':
           description: Resume uploaded successfully
