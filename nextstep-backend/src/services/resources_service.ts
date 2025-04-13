@@ -70,14 +70,14 @@ const createResumesStorage = () => {
             fileSize: config.resources.resumeMaxSize()
         },
         fileFilter: (req, file, cb) => {
-            const allowedTypes = /pdf|doc|docx/;
+            const allowedTypes = /pdf|doc|docx|txt|text/;
             const extname = allowedTypes.test(path.extname(file.originalname).toLowerCase());
             const mimetype = allowedTypes.test(file.mimetype);
 
             if (extname && mimetype) {
                 return cb(null, true);
             } else {
-                return cb(new TypeError(`Invalid file type. Only PDF, DOC, and DOCX files are allowed.`));
+                return cb(new TypeError(`Invalid file type. Only PDF, DOC, DOCX and TXT/TEXT files are allowed.`));
             }
         }
     });

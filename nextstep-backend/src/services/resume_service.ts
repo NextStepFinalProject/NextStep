@@ -59,6 +59,7 @@ const parseDocument = async (filePath: string): Promise<string> => {
             case '.doc':
                 return await parseWord(filePath);
             case '.txt':
+            case '.text':
                 return fs.readFileSync(filePath, 'utf-8');
             default:
                 throw new Error(`Unsupported file format: ${ext}`);

@@ -126,10 +126,10 @@ describe('Resume API Tests', () => {
         it('should validate file type', async () => {
             const response = await request(app)
                 .post('/resource/resume')
-                .attach('file', Buffer.from('invalid content'), { filename: 'test.txt' })
+                .attach('file', Buffer.from('invalid content'), { filename: 'test.png' })
                 .expect(400);
 
-            expect(response.text).toBe('Invalid file type. Only PDF, DOC, and DOCX files are allowed.');
+            expect(response.text).toBe('Invalid file type. Only PDF, DOC, DOCX and TXT/TEXT files are allowed.');
         });
 
         it('should handle missing file', async () => {

@@ -800,7 +800,7 @@ paths:
                 file:
                   type: string
                   format: binary
-                  description: The resume file to upload (PDF, DOC, DOCX)
+                  description: The resume file to upload (PDF, DOC, DOCX, TXT/TEXT)
                 jobDescription:
                   type: string
                   description: Optional job description for scoring
@@ -820,7 +820,7 @@ paths:
                 fileTooLarge:
                   value: "File too large"
                 invalidFileType:
-                  value: "Invalid file type. Only PDF, DOC, and DOCX files are allowed"
+                  value: "Invalid file type. Only PDF, DOC, DOCX and TXT/TEXT files are allowed"
                 noFileUploaded:
                   value: "No file uploaded"
         '401':
