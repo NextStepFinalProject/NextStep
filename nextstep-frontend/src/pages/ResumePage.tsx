@@ -1,10 +1,12 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { Box, Button, CircularProgress, Typography, TextField } from '@mui/material';
 import { styled } from '@mui/material/styles';
 import { useNavigate } from 'react-router-dom';
 import { config } from '../config';
 import api from '../serverApi';
 import TopBar from '../components/TopBar';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 
 const UploadBox = styled(Box)(({ theme }) => ({
   border: '2px dashed #ccc',
@@ -46,6 +48,33 @@ const ScoreText = styled(Typography)({
   fontWeight: 'bold',
 });
 
+const FeedbackContainer = styled(Box)(({ theme }) => ({
+  maxHeight: '60vh',
+  overflowY: 'auto',
+  padding: theme.spacing(2),
+  backgroundColor: theme.palette.background.paper,
+  borderRadius: theme.shape.borderRadius,
+  '& pre': {
+    backgroundColor: theme.palette.grey[100],
+    padding: theme.spacing(1),
+    borderRadius: theme.shape.borderRadius,
+    overflowX: 'auto',
+  },
+  '& table': {
+    borderCollapse: 'collapse',
+    width: '100%',
+    marginBottom: theme.spacing(2),
+  },
+  '& th, & td': {
+    border: `1px solid ${theme.palette.divider}`,
+    padding: theme.spacing(1),
+    textAlign: 'left',
+  },
+  '& th': {
+    backgroundColor: theme.palette.grey[100],
+  },
+}));
+
 const ResumePage: React.FC = () => {
   const [file, setFile] = useState<File | null>(null);
   const [jobDescription, setJobDescription] = useState('');
@@ -54,7 +83,15 @@ const ResumePage: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const feedbackEndRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
+
+  // Auto-scroll to bottom when feedback updates
+  useEffect(() => {
+    if (feedbackEndRef.current) {
+      feedbackEndRef.current.scrollIntoView({ behavior: 'smooth' });
+    }
+  }, [feedback]);
 
   const uploadResume = async (formData: FormData) => {
     // First, upload the resume file to get the filename
@@ -193,16 +230,12 @@ const ResumePage: React.FC = () => {
           <Typography variant="h6" gutterBottom>
             Analysis Feedback:
           </Typography>
-          <Typography
-            sx={{
-              whiteSpace: 'pre-wrap',
-              p: 2,
-              bgcolor: 'background.paper',
-              borderRadius: 1,
-            }}
-          >
-            {feedback}
-          </Typography>
+          <FeedbackContainer>
+            <ReactMarkdown remarkPlugins={[remarkGfm]}>
+              {feedback}
+            </ReactMarkdown>
+            <div ref={feedbackEndRef} />
+          </FeedbackContainer>
         </Box>
       )}
 
