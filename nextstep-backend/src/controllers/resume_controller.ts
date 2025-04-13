@@ -17,13 +17,12 @@ const getResumeScore = async (req: Request, res: Response) => {
             return res.status(404).send('Resume not found');
         }
 
-        const score = await scoreResume(resumePath, jobDescription);
-        return res.status(200).json({ score });
+        const scoreAndFeedback = await scoreResume(resumePath, jobDescription);
+        return res.status(200).send(scoreAndFeedback);
     } catch (error) {
         handleError(error, res);
     }
 };
-
 
 
 export default {

@@ -7,7 +7,6 @@ import multer from 'multer';
 import {CustomRequest} from "types/customRequest";
 import {updateUserById} from "../services/users_service";
 import {handleError} from "../utils/handle_error";
-import { scoreResume } from '../services/resume_service';
 
 const createUserImageResource = async (req: CustomRequest, res: Response) => {
     try {

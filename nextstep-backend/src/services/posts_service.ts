@@ -32,7 +32,7 @@ const addMisterAIComment = async (postId: string, postContent: string) => {
         misterAI = await usersService.addUser('misterai', 'securepassword', 'misterai@example.com', 'local');
     }
 
-    const comment = await chatService.chatWithAI(postContent);
+    const comment = await chatService.chatWithAI(postContent, 'You are an AI assistant tasked with providing the first comment on forum posts. Your responses should be relevant, engaging, and encourage further discussion, also must be short, and you must answer if you know the answer. Ensure your comments are appropriate for the content and tone of the post. Also must answer in the language of the user post. answer short answers. dont ask questions to follow up');
     const commentData: CommentData = { postId, owner: misterAI.id, content: comment };
     const savedComment = await commentsService.addComment(commentData);
     return savedComment;

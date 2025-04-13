@@ -7,7 +7,7 @@ const cleanResponse = (response: string): string => {
 
 
 
-export const chatWithAI = async (inputUserMessage: string)=> {
+export const chatWithAI = async (userMessageContent: string, systemMessageContent: string)=> {
     try {
         const API_URL = config.chatAi.api_url();
         const API_KEY = config.chatAi.api_key();
@@ -15,12 +15,12 @@ export const chatWithAI = async (inputUserMessage: string)=> {
 
         const systemMessage = {
             role: 'system',
-            content: 'You are an AI assistant tasked with providing the first comment on forum posts. Your responses should be relevant, engaging, and encourage further discussion, also must be short, and you must answer if you know the answer. Ensure your comments are appropriate for the content and tone of the post. Also must answer in the language of the user post. answer short answers. dont ask questions to follow up'
+            content: systemMessageContent
         };
 
         const userMessage = {
             role: 'user',
-            content: inputUserMessage
+            content: userMessageContent
         };
 
 
