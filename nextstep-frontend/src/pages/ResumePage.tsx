@@ -102,7 +102,7 @@ const ResumePage: React.FC = () => {
         : '';
       
       const eventSource = new EventSource(
-        `${config.app.backend_url()}/resume/streamScore/${filename}?jobDescription=${encodeURIComponent(jobDescription)}&token=${encodeURIComponent(token)}`
+        `${config.app.backend_url()}/resume/streamScore/${filename}?jobDescription=${encodeURIComponent(jobDescription)}&accessToken=${encodeURIComponent(token)}`
       );
 
       eventSource.onmessage = (event) => {
