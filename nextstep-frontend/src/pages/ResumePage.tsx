@@ -54,6 +54,7 @@ const FeedbackContainer = styled(Box)(({ theme }) => ({
   padding: theme.spacing(2),
   backgroundColor: theme.palette.background.paper,
   borderRadius: theme.shape.borderRadius,
+  textAlign: 'left',
   '& pre': {
     backgroundColor: theme.palette.grey[100],
     padding: theme.spacing(1),
@@ -72,6 +73,12 @@ const FeedbackContainer = styled(Box)(({ theme }) => ({
   },
   '& th': {
     backgroundColor: theme.palette.grey[100],
+  },
+  '& h1, & h2, & h3, & h4, & h5, & h6': {
+    textAlign: 'left',
+  },
+  '& p': {
+    textAlign: 'left',
   },
 }));
 
