@@ -2,4 +2,8 @@
     height: 100%;
     padding-top: 10vh;
     overflow-y: auto;
+    max-width: none;
+    align-content: flex-start;
+    flex-wrap: wrap;
+    justify-content: center;
 }

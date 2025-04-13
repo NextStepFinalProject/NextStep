@@ -6,6 +6,7 @@ import { LoginResponse } from '../models/LoginResponse';
 import DividedList from '../components/DividedList';
 import { Room } from '../models/Room';
 import axios from 'axios';
+import { Box } from '@mui/material';
 
 const Chat: React.FC = () => {
   const [messageContent, setMessageContent] = useState('');
@@ -79,7 +80,8 @@ const Chat: React.FC = () => {
   }, [room.messages]); // Scroll whenever messages change
 
   return (
-    <div className="chat-container">
+    <Box sx={{ maxWidth: 800, mx: 'auto', p: 3 }}>
+      <div className="chat-container">
         <div className="message-input">
             <input
                 type="text"
@@ -114,7 +116,8 @@ const Chat: React.FC = () => {
             <h3>Online Users:</h3>
             <DividedList onlineUsers={onlineUsers} onUserClick={onUserClick} />
         </div>
-    </div>
+      </div>
+    </Box>
   );
 };
 
