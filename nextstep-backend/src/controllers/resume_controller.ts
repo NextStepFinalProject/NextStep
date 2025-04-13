@@ -20,7 +20,11 @@ const getResumeScore = async (req: Request, res: Response) => {
         const scoreAndFeedback = await scoreResume(resumePath, jobDescription);
         return res.status(200).send(scoreAndFeedback);
     } catch (error) {
-        handleError(error, res);
+        if (error instanceof TypeError) {
+            return res.status(400).send(error.message);
+        } else {
+            handleError(error, res);
+        }
     }
 };
 
@@ -57,7 +61,11 @@ const getStreamResumeScore = async (req: Request, res: Response) => {
         res.write(`data: ${JSON.stringify({ score, done: true })}\n\n`);
         res.end();
     } catch (error) {
-        handleError(error, res);
+        if (error instanceof TypeError) {
+            return res.status(400).send(error.message);
+        } else {
+            handleError(error, res);
+        }
     }
 };
 

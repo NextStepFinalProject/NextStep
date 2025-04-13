@@ -94,6 +94,9 @@ const parseWord = async (filePath: string): Promise<string> => {
 const scoreResume = async (resumePath: string, jobDescription?: string): Promise<{ score: number; feedback: string }> => {
     try {
         const resumeText = await parseDocument(resumePath);
+        if (resumeText.trim() == '') {
+            throw new TypeError('Could not parse the resume file');
+        }
         const prompt = feedbackTemplate(resumeText, jobDescription || 'No job description provided.');
 
         let feedback = FEEDBACK_ERROR_MESSAGE;
@@ -107,8 +110,13 @@ const scoreResume = async (resumePath: string, jobDescription?: string): Promise
         const score = scoreMatch ? parseInt(scoreMatch[1]) : 0;
         return { score, feedback };
     } catch (error: any) {
-        console.error('Error scoring resume:', error);
-        throw new Error('Failed to score resume');
+        if (error instanceof TypeError) {
+            console.error('TypeError while scoring resume:', error);
+            throw error;
+        } else {
+            console.error('Unexpected error while scoring resume:', error);
+            throw new Error('Failed to score resume');
+        }
     }
 };
 
@@ -119,6 +127,9 @@ const streamScoreResume = async (
 ): Promise<number> => {
     try {
         const resumeText = await parseDocument(resumePath);
+        if (resumeText.trim() == '') {
+            throw new TypeError('Could not parse the resume file');
+        }
         const prompt = feedbackTemplate(resumeText, jobDescription || 'No job description provided.');
         
         let fullResponse = '';
@@ -145,8 +156,13 @@ const streamScoreResume = async (
 
         return finalScore;
     } catch (error: any) {
-        console.error('Error streaming resume score:', error);
-        throw new Error('Failed to stream resume score');
+        if (error instanceof TypeError) {
+            console.error('TypeError while streaming resume score:', error);
+            throw error;
+        } else {
+            console.error('Unexpected error while streaming resume score:', error);
+            throw new Error('Failed to stream resume score');
+        }
     }
 };
 
