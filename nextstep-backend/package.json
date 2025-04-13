@@ -7,7 +7,8 @@
     "start": "tsc && node ./dist/server.js",
     "dev": "nodemon ./src/server.ts",
     "test": "cross-env NODE_ENV=test jest --runInBand",
-    "testAuth": "cross-env NODE_ENV=test jest --runInBand auth_controller.test.ts"
+    "testAuth": "cross-env NODE_ENV=test jest --runInBand auth_controller.test.ts",
+    "testGithub": "nodemon ./src/github.ts"
   },
   "repository": {
     "type": "git",
@@ -20,6 +21,7 @@
   },
   "homepage": "https://github.com/NextStepFinalProject/NextStep#readme",
   "dependencies": {
+    "axios": "^1.8.3",
     "bcrypt": "^5.1.1",
     "body-parser": "^1.20.3",
     "cors": "^2.8.5",
@@ -36,11 +38,11 @@
     "jsonwebtoken": "^9.0.2",
     "mongoose": "^8.8.2",
     "multer": "^1.4.5-lts.1",
+    "node-fetch": "^3.3.2",
     "socket.io": "^4.8.1",
     "supertest": "^7.0.0",
     "swagger-jsdoc": "^6.2.8",
-    "swagger-ui-express": "^5.0.1",
-    "axios": "^1.8.3"
+    "swagger-ui-express": "^5.0.1"
   },
   "devDependencies": {
     "@babel/preset-env": "^7.26.0",
