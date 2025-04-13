@@ -211,7 +211,7 @@ const Dashboard: React.FC = () => {
                 label="Show My Posts"
               />
             </Box>
-            <Box sx={{ width: '100%', maxHeight: '60vh', overflowY: 'auto' }}>
+            <Box sx={{ width: '100%', maxHeight: '60vh' }}>
               {isLoading ? (
                 <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%' }}>
                   <CircularProgress />

@@ -195,7 +195,7 @@ const PostDetails: React.FC = () => {
 
   return (
     <Container component="main" maxWidth="md" sx={{ height: '80vh', display: 'flex', flexDirection: 'column' }}>
-      <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', mt: 8, flexGrow: 1, overflowY: 'auto' }}>
+      <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', flexGrow: 1 }}>
         <Box sx={{ display: 'flex', alignItems: 'center', width: '100%', mb: 2 }}>
           <IconButton color="primary" onClick={() => navigate('/dashboard')}>
             <ArrowBack />
@@ -329,7 +329,7 @@ const PostDetails: React.FC = () => {
                 <Typography variant="h5" gutterBottom>
                   Comments
                 </Typography>
-                <Box sx={{ maxHeight: '300px', overflowY: 'auto', mb: 2 }}>
+                <Box sx={{ maxHeight: '300px', mb: 2 }}>
                   {comments.map((comment) => (
                     <Box key={comment.id} sx={{ mb: 2 }}>
                       <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
