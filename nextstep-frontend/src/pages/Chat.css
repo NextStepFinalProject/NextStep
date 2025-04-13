@@ -1,12 +1,14 @@
 .chat-container {
-    margin-top: 70px;
     display: flex;
     flex-direction: column;
-    height: 100%;
     padding: 20px;
     background-color: #f9f9f9;
     border: 1px solid #ccc;
     border-radius: 8px;
+}
+
+.online-users {
+    overflow-y: auto;
 }
 
 .message-input {

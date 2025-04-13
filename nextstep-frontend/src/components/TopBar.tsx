@@ -4,6 +4,7 @@ import { AppBar, Toolbar, IconButton, Tooltip, Box } from '@mui/material';
 import { Home, Person, Message, Logout } from '@mui/icons-material';
 import {getUserAuth, removeUserAuth} from "../handlers/userAuth.ts";
 import api from "../serverApi.ts";
+import './TopBar.css';
 
 const TopBar: React.FC = () => {
   const userAuthRef = useRef(getUserAuth());
@@ -20,7 +21,7 @@ const TopBar: React.FC = () => {
   };
 
   return (
-    <AppBar position="fixed" sx={{ width: '100vw', left: 0 }}>
+    <AppBar position="relative" sx={{ width: '100vw', left: 0 }} className='top-bar'>
       <Toolbar>
         <Tooltip title="Home">
           <IconButton color="inherit" onClick={() => navigate('/dashboard')} sx={{ mx: 1 }}>

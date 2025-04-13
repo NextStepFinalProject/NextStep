@@ -59,7 +59,6 @@ const NewPost: React.FC = () => {
 
   return (
     <Container component="main" maxWidth="md">
-      <TopBar />
       <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', mt: 8 }}>
         <Typography component="h1" variant="h4" gutterBottom>
           Create New Post

@@ -8,7 +8,6 @@ import 'froala-editor/css/froala_editor.pkgd.min.css';
 import 'froala-editor/js/plugins/image.min.js';
 import { Post as PostModel } from '../models/Post';
 import { Comment } from '../models/Comment';
-import TopBar from '../components/TopBar';
 import { getUserAuth } from "../handlers/userAuth.ts";
 import api from "../serverApi.ts";
 import defaultProfileImage from '../assets/defaultProfileImage.jpg';
@@ -196,7 +195,6 @@ const PostDetails: React.FC = () => {
 
   return (
     <Container component="main" maxWidth="md" sx={{ height: '80vh', display: 'flex', flexDirection: 'column' }}>
-      <TopBar />
       <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', mt: 8, flexGrow: 1, overflowY: 'auto' }}>
         <Box sx={{ display: 'flex', alignItems: 'center', width: '100%', mb: 2 }}>
           <IconButton color="primary" onClick={() => navigate('/dashboard')}>

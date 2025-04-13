@@ -67,7 +67,7 @@ const Login: React.FC = () => {
   return (
     <div className="login-container">
       <Container component="main" maxWidth="xs">
-        <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', mt: 8 }}>
+        <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center'}}>
           <Typography component="h1" variant="h3" gutterBottom>
             Next Step
           </Typography>

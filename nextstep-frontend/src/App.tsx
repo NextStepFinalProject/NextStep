@@ -11,6 +11,7 @@ import NewPost from './pages/NewPost';
 import PostDetails from './pages/PostDetails';
 import Chat from './pages/Chat';
 import ResumePage from './pages/ResumePage';
+import TopBar from './components/TopBar';
 
 const App: React.FC = () => {
   return (
@@ -20,11 +21,11 @@ const App: React.FC = () => {
           <Route path="/" element={<Login />} />
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
-          <Route path="/dashboard" element={<RequireAuth><Dashboard /></RequireAuth>} />
-          <Route path="/profile" element={<RequireAuth><Profile /></RequireAuth>} />
-          <Route path="/new-post" element={<RequireAuth><NewPost /></RequireAuth>} />
-          <Route path="/post/:postId" element={<RequireAuth><PostDetails /></RequireAuth>} />
-          <Route path="/chat" element={<RequireAuth><Chat /></RequireAuth>} />
+          <Route path="/dashboard" element={<RequireAuth><TopBar /><Dashboard /></RequireAuth>} />
+          <Route path="/profile" element={<RequireAuth><TopBar /><Profile /></RequireAuth>} />
+          <Route path="/new-post" element={<RequireAuth><TopBar /><NewPost /></RequireAuth>} />
+          <Route path="/post/:postId" element={<RequireAuth><TopBar /><PostDetails /></RequireAuth>} />
+          <Route path="/chat" element={<RequireAuth><TopBar /><Chat /></RequireAuth>} />
           <Route path="/resume" element={<RequireAuth><ResumePage /></RequireAuth>} />
           <Route path="*" element={<Navigate to="/" />} />
         </Routes>
