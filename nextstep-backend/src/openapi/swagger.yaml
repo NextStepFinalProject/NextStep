@@ -893,6 +893,13 @@ paths:
                   score:
                     type: number
                     description: The ATS score of the resume
+        '400':
+          description: Bad request
+          content:
+            text/plain:
+              examples:
+                couldNotParseResumeFile:
+                  value: "Could not parse the resume file"
         '401':
           description: Unauthorized
         '404':
@@ -931,6 +938,13 @@ paths:
                   score:
                     type: number
                     description: The stream ATS score of the resume
+        '400':
+          description: Bad request
+          content:
+            text/plain:
+              examples:
+                couldNotParseResumeFile:
+                  value: "Could not parse the resume file"
         '401':
           description: Unauthorized
         '404':
