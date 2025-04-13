@@ -182,7 +182,6 @@ const ResumePage: React.FC = () => {
 
   return (
     <Box sx={{ maxWidth: 800, mx: 'auto', p: 3 }}>
-      <TopBar />
       <Typography variant="h4" gutterBottom>
         Resume Score Analyzer
       </Typography>

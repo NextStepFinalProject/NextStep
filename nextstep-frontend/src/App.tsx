@@ -27,7 +27,7 @@ const App: React.FC = () => {
           <Route path="/new-post" element={<RequireAuth><TopBar /><Layout><NewPost /></Layout></RequireAuth>} />
           <Route path="/post/:postId" element={<RequireAuth><TopBar /><Layout><PostDetails /></Layout></RequireAuth>} />
           <Route path="/chat" element={<RequireAuth><TopBar /><Layout><Chat /></Layout></RequireAuth>} />
-          <Route path="/resume" element={<RequireAuth><Layout><ResumePage /></Layout></RequireAuth>} />
+          <Route path="/resume" element={<RequireAuth><TopBar /><Layout><ResumePage /></Layout></RequireAuth>} />
           <Route path="*" element={<Navigate to="/" />} />
         </Routes>
       </Router>

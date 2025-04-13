@@ -1,7 +1,7 @@
 import React, { useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { AppBar, Toolbar, IconButton, Tooltip, Box } from '@mui/material';
-import { Home, Person, Message, Logout } from '@mui/icons-material';
+import { Home, Person, Message, Logout, DocumentScannerTwoTone } from '@mui/icons-material';
 import {getUserAuth, removeUserAuth} from "../handlers/userAuth.ts";
 import api from "../serverApi.ts";
 
@@ -35,6 +35,11 @@ const TopBar: React.FC = () => {
         <Tooltip title="Chat">
           <IconButton color="inherit" onClick={() => navigate('/chat')} sx={{ mx: 1 }}>
             <Message fontSize='large'/>
+          </IconButton>
+        </Tooltip>
+        <Tooltip title="Resume">
+          <IconButton color="inherit" onClick={() => navigate('/resume')} sx={{ mx: 1 }}>
+            <DocumentScannerTwoTone fontSize='large'/>
           </IconButton>
         </Tooltip>
         <Box sx={{ flexGrow: 1 }} />
