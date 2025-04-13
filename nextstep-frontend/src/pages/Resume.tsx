@@ -1,10 +1,8 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Box, Button, CircularProgress, Typography, TextField } from '@mui/material';
 import { styled } from '@mui/material/styles';
-import { useNavigate } from 'react-router-dom';
 import { config } from '../config';
 import api from '../serverApi';
-import TopBar from '../components/TopBar';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 
@@ -19,7 +17,7 @@ const UploadBox = styled(Box)(({ theme }) => ({
   },
 }));
 
-const ScoreGauge = styled(Box)<{ score: number }>(({ theme, score }) => ({
+const ScoreGauge = styled(Box)<{ score: number }>(({ theme }) => ({
   width: '200px',
   height: '200px',
   borderRadius: '50%',
@@ -82,7 +80,7 @@ const FeedbackContainer = styled(Box)(({ theme }) => ({
   },
 }));
 
-const ResumePage: React.FC = () => {
+const Resume: React.FC = () => {
   const [file, setFile] = useState<File | null>(null);
   const [jobDescription, setJobDescription] = useState('');
   const [feedback, setFeedback] = useState('');
@@ -91,7 +89,6 @@ const ResumePage: React.FC = () => {
   const [error, setError] = useState('');
   const fileInputRef = useRef<HTMLInputElement>(null);
   const feedbackEndRef = useRef<HTMLDivElement>(null);
-  const navigate = useNavigate();
 
   // Auto-scroll to bottom when feedback updates
   useEffect(() => {
@@ -256,4 +253,4 @@ const ResumePage: React.FC = () => {
   );
 };
 
-export default ResumePage; 
+export default Resume; 
