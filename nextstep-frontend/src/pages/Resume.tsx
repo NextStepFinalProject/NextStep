@@ -5,6 +5,7 @@ import { config } from '../config';
 import api from '../serverApi';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
+import ScoreGauge from '../components/ScoreGauge';
 
 const UploadBox = styled(Box)(({ theme }) => ({
   border: '2px dashed #ccc',
@@ -16,35 +17,6 @@ const UploadBox = styled(Box)(({ theme }) => ({
     borderColor: theme.palette.primary.main,
   },
 }));
-
-const ScoreGauge = styled(Box)<{ score: number }>(({ theme }) => ({
-  width: '200px',
-  height: '200px',
-  borderRadius: '50%',
-  display: 'flex',
-  alignItems: 'center',
-  justifyContent: 'center',
-  background: `conic-gradient(
-    ${theme.palette.error.main} 0% 33%,
-    ${theme.palette.warning.main} 33% 66%,
-    ${theme.palette.success.main} 66% 100%
-  )`,
-  position: 'relative',
-  '&::before': {
-    content: '""',
-    position: 'absolute',
-    width: '180px',
-    height: '180px',
-    borderRadius: '50%',
-    background: theme.palette.background.paper,
-  },
-}));
-
-const ScoreText = styled(Typography)({
-  position: 'absolute',
-  fontSize: '2.5rem',
-  fontWeight: 'bold',
-});
 
 const FeedbackContainer = styled(Box)(({ theme }) => ({
   maxHeight: '60vh',
@@ -243,10 +215,8 @@ const Resume: React.FC = () => {
       )}
 
       {score !== null && (
-        <Box sx={{ display: 'flex', justifyContent: 'center', mb: 3 }}>
-          <ScoreGauge score={score}>
-            <ScoreText>{score}</ScoreText>
-          </ScoreGauge>
+        <Box sx={{ mb: 3 }}>
+          <ScoreGauge score={score} />
         </Box>
       )}
     </Box>
