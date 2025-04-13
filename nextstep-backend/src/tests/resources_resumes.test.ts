@@ -7,15 +7,22 @@ import { config } from '../config/config';
 import resumeRoutes from '../routes/resume_routes';
 import { scoreResume } from '../services/resume_service';
 import resourcesRoutes from '../routes/resources_routes';
+import { authenticateToken } from '../middleware/auth';
 
 // Mock the resume service
 jest.mock('../services/resume_service');
+
+// Mock the authentication middleware
+jest.mock('../middleware/auth', () => ({
+    authenticateToken: jest.fn((req, res, next) => next())
+}));
 
 describe('Resume API Tests', () => {
     let app: express.Application;
     const testResumePath = path.join(process.cwd(), 'test-resume.pdf');
     const testResumeContent = 'Test resume content';
     const testJobDescription = 'Software Engineer with 5 years of experience';
+    const testToken = 'test-token';
 
     beforeAll(() => {
         // Create the resumes directory if it doesn't exist
@@ -47,15 +54,17 @@ describe('Resume API Tests', () => {
             // First upload a resume
             const uploadResponse = await request(app)
                 .post('/resource/resume')
+                .set('Authorization', `Bearer ${testToken}`)
                 .attach('file', testResumePath);
 
             const filename = uploadResponse.text;
 
             // Mock the scoreResume function
-            (scoreResume as jest.Mock).mockResolvedValue(85);
+            (scoreResume as jest.Mock).mockResolvedValue({ score: 85 });
 
             const response = await request(app)
                 .get(`/resume/score/${filename}?jobDescription=${encodeURIComponent(testJobDescription)}`)
+                .set('Authorization', `Bearer ${testToken}`)
                 .expect(200);
 
             expect(response.body).toHaveProperty('score');
@@ -75,6 +84,7 @@ describe('Resume API Tests', () => {
         it('should return 404 for non-existent resume', async () => {
             const response = await request(app)
                 .get('/resume/score/nonexistent.pdf')
+                .set('Authorization', `Bearer ${testToken}`)
                 .expect(404);
 
             expect(response.text).toBe('Resume not found');
@@ -84,6 +94,7 @@ describe('Resume API Tests', () => {
             // First upload a resume
             const uploadResponse = await request(app)
                 .post('/resource/resume')
+                .set('Authorization', `Bearer ${testToken}`)
                 .attach('file', testResumePath);
 
             const filename = uploadResponse.text;
@@ -93,6 +104,7 @@ describe('Resume API Tests', () => {
 
             const response = await request(app)
                 .get(`/resume/score/${filename}?jobDescription=${encodeURIComponent(testJobDescription)}`)
+                .set('Authorization', `Bearer ${testToken}`)
                 .expect(500);
 
             expect(response.body).toHaveProperty('message');
@@ -110,6 +122,7 @@ describe('Resume API Tests', () => {
         it('should upload a resume successfully', async () => {
             const response = await request(app)
                 .post('/resource/resume')
+                .set('Authorization', `Bearer ${testToken}`)
                 .attach('file', testResumePath)
                 .expect(201);
 
@@ -126,6 +139,7 @@ describe('Resume API Tests', () => {
         it('should validate file type', async () => {
             const response = await request(app)
                 .post('/resource/resume')
+                .set('Authorization', `Bearer ${testToken}`)
                 .attach('file', Buffer.from('invalid content'), { filename: 'test.png' })
                 .expect(400);
 
@@ -135,6 +149,7 @@ describe('Resume API Tests', () => {
         it('should handle missing file', async () => {
             const response = await request(app)
                 .post('/resource/resume')
+                .set('Authorization', `Bearer ${testToken}`)
                 .expect(400);
 
             expect(response.text).toBe('No file uploaded.');
@@ -146,6 +161,7 @@ describe('Resume API Tests', () => {
             // First upload a resume
             const uploadResponse = await request(app)
                 .post('/resource/resume')
+                .set('Authorization', `Bearer ${testToken}`)
                 .attach('file', testResumePath);
 
             const filename = uploadResponse.text;
@@ -153,6 +169,7 @@ describe('Resume API Tests', () => {
             // Then try to download it
             const response = await request(app)
                 .get(`/resource/resume/${filename}`)
+                .set('Authorization', `Bearer ${testToken}`)
                 .expect(200);
 
             expect(response.body).toBeDefined();
@@ -167,6 +184,7 @@ describe('Resume API Tests', () => {
         it('should return 404 for non-existent resume', async () => {
             const response = await request(app)
                 .get('/resource/resume/nonexistent.pdf')
+                .set('Authorization', `Bearer ${testToken}`)
                 .expect(404);
 
             expect(response.text).toBe('Resume not found');
