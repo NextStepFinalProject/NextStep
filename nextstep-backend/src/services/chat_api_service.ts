@@ -5,9 +5,23 @@ const cleanResponse = (response: string): string => {
     return response.replace(/\\boxed{(.*?)}/g, "$1"); // Removes \boxed{}
 }
 
-
-
-export const chatWithAI = async (inputUserMessage: string)=> {
+/**
+ * @example
+ * await streamChatWithAI(
+ *     "How would you build the tallest building ever?",
+ *     "You are a helpful assistant.",
+ *     (chunk) => {
+ *         // Handle each chunk of the response
+ *         console.log(chunk);
+ *         // Or update your UI with the chunk
+ *     }
+ * );
+ */
+export const streamChatWithAI = async (
+    userMessageContent: string,
+    systemMessageContent: string,
+    onChunk: (chunk: string) => void
+): Promise<void> => {
     try {
         const API_URL = config.chatAi.api_url();
         const API_KEY = config.chatAi.api_key();
@@ -15,14 +29,91 @@ export const chatWithAI = async (inputUserMessage: string)=> {
 
         const systemMessage = {
             role: 'system',
-            content: 'You are an AI assistant tasked with providing the first comment on forum posts. Your responses should be relevant, engaging, and encourage further discussion, also must be short, and you must answer if you know the answer. Ensure your comments are appropriate for the content and tone of the post. Also must answer in the language of the user post. answer short answers. dont ask questions to follow up'
+            content: systemMessageContent
         };
 
         const userMessage = {
             role: 'user',
-            content: inputUserMessage
+            content: userMessageContent
         };
 
+        const response = await fetch(API_URL, {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${API_KEY}`,
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                model: MODEL_NAME,
+                messages: [systemMessage, userMessage],
+                stream: true,
+            }),
+        });
+
+        const reader = response.body?.getReader();
+        if (!reader) {
+            throw new Error('Response body is not readable');
+        }
+
+        const decoder = new TextDecoder();
+        let buffer = '';
+
+        try {
+            while (true) {
+                const { done, value } = await reader.read();
+                if (done) break;
+
+                // Append new chunk to buffer
+                buffer += decoder.decode(value, { stream: true });
+
+                // Process complete lines from buffer
+                while (true) {
+                    const lineEnd = buffer.indexOf('\n');
+                    if (lineEnd === -1) break;
+
+                    const line = buffer.slice(0, lineEnd).trim();
+                    buffer = buffer.slice(lineEnd + 1);
+
+                    if (line.startsWith('data: ')) {
+                        const data = line.slice(6);
+                        if (data === '[DONE]') break;
+
+                        try {
+                            const parsed = JSON.parse(data);
+                            const content = parsed.choices[0].delta.content;
+                            if (content) {
+                                onChunk(content);
+                            }
+                        } catch (e) {
+                            // Ignore invalid JSON
+                        }
+                    }
+                }
+            }
+        } finally {
+            reader.cancel();
+        }
+    } catch (error) {
+        console.error("Error streaming with OpenRouter:", error);
+        throw error;
+    }
+}
+
+export const chatWithAI = async (userMessageContent: string, systemMessageContent: string): Promise<string> => {
+    try {
+        const API_URL = config.chatAi.api_url();
+        const API_KEY = config.chatAi.api_key();
+        const MODEL_NAME = config.chatAi.model_name();
+
+        const systemMessage = {
+            role: 'system',
+            content: systemMessageContent
+        };
+
+        const userMessage = {
+            role: 'user',
+            content: userMessageContent
+        };
 
         const response = await axios.post(
             API_URL,

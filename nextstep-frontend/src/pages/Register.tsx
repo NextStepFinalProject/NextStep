@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 import axios from 'axios';
 import { Container, TextField, Button, Typography, Box, Paper, Link, Alert } from '@mui/material';
 import { Link as RouterLink, useNavigate } from 'react-router-dom';
-import './Register.css';
 import { config } from '../config';
 
 const Register: React.FC = () => {
@@ -41,7 +40,7 @@ const Register: React.FC = () => {
   return (
     <div className="body">
       <Container component="main" maxWidth="xs">
-        <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', mt: 8 }}>
+        <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
           <Typography component="h1" variant="h3" gutterBottom>
             Next Step
           </Typography>

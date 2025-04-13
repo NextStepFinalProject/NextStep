@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Container, Typography, Box, Button, Alert, TextField, Collapse } from '@mui/material';
 import { ExpandMore, ExpandLess } from '@mui/icons-material';
-import TopBar from '../components/TopBar';
 import {getUserAuth} from "../handlers/userAuth.ts";
 import api from "../serverApi.ts";
 import {UserProfile} from "../models/UserProfile.ts";
@@ -105,9 +104,8 @@ const Profile: React.FC = () => {
   };
 
   return (
-    <Container component="main" maxWidth="xs" sx={{ flexGrow: 1, display: 'flex', flexDirection: 'column', height: '80vh', overflowY: 'auto', mt: 3 }}>
-      <TopBar />
-      <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', mt: 8, flexGrow: 1, overflowY: isProfileOpen ? 'auto' : 'hidden' }}>
+    <Container component="main" maxWidth="xs" sx={{ flexGrow: 1, display: 'flex', flexDirection: 'column', height: '80vh', overflowY: 'auto'}}>
+      <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', flexGrow: 1, overflowY: isProfileOpen ? 'auto' : 'hidden' }}>
         <Typography component="h1" variant="h5">
           Profile
         </Typography>

@@ -16,7 +16,9 @@ export const config = {
     },
     resources: {
         imagesDirectoryPath: () => 'resources/images',
-        imageMaxSize: () => 10 * 1024 * 1024 // Max file size: 10MB
+        imageMaxSize: () => 10 * 1024 * 1024, // Max file size: 10MB
+        resumesDirectoryPath: () => 'resources/resumes',
+        resumeMaxSize: () => 5 * 1024 * 1024 // Max file size: 5MB
     },
     chatAi: {
         api_url: () => process.env.CHAT_AI_API_URL || 'https://openrouter.ai/api/v1/chat/completions',

@@ -1,4 +1,3 @@
-
 import express, {Request, Response} from 'express';
 import Resource from '../controllers/resources_controller';
 import {CustomRequest} from "types/customRequest";
@@ -10,5 +9,9 @@ router.post('/image/user', (req: Request, res: Response) => Resource.createUserI
 router.post('/image', Resource.createImageResource);
 
 router.get('/image/:filename', Resource.getImageResource);
+
+router.post('/resume', Resource.createResumeResource);
+
+router.get('/resume/:filename', Resource.getResumeResource);
 
 export default router;

@@ -19,10 +19,10 @@ import {
   DialogTitle,
   Switch,
   FormControlLabel,
+  Container,
 } from "@mui/material";
 import { ThumbUp, Message, Delete } from '@mui/icons-material';
 import { Post } from "../models/Post";
-import TopBar from "../components/TopBar";
 import api from "../serverApi";
 import {getUserAuth} from "../handlers/userAuth.ts";
 import defaultProfileImage from '../assets/defaultProfileImage.jpg'; // Import the default profile image
@@ -192,132 +192,133 @@ const Dashboard: React.FC = () => {
   };
 
   return (
-    <Box sx={{ minHeight: "100vh", display: "flex", flexDirection: "column" }}>
-      <TopBar />
-      <Box sx={{ display: "flex", flexGrow: 1, mt: "64px", px: 2 }}>
-        <Box sx={{ flexGrow: 1, maxWidth: "900px" }}>
-          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-            <Button variant="contained" color="primary" onClick={handleCreatePost} sx={{ mr: 5 }}>
-              Create New Post
-            </Button>
-            <FormControlLabel
-              control={
-                <Switch
-                  checked={filterByUser}
-                  onChange={() => setFilterByUser(!filterByUser)}
-                  color="primary"
-                />
-              }
-              label="Show My Posts"
-            />
-          </Box>
-          <Box sx={{ width: '100%', maxHeight: '60vh', overflowY: 'auto', mt: 4 }}>
-            {isLoading ? (
-              <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%' }}>
-                <CircularProgress />
-              </Box>
-            ) : error ? (
-              <Typography color="error">{error}</Typography>
-            ) : (
-              <>
-                <List>
-                  {posts.map((post) => (
-                    <React.Fragment key={post.id}>
-                      <Card sx={{
-                        mb: 2,
-                        width: '80vh',
-                        cursor: 'pointer',
-                        transition: 'transform 0.2s, box-shadow 0.2s',
-                        '&:hover': {
-                          boxShadow: 3,
-                          backgroundColor: 'rgba(0, 0, 0, 0.03)',
-                        },
-                      }} onClick={() => navigate(`/post/${post.id}`)}>
-                        <CardContent>
-                          <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-                            <Avatar
-                              src={profileImages[post.owner] || defaultProfileImage}
-                              sx={{ mr: 2 }}
-                            />
-                            <Typography variant="h6">{post.ownerUsername || post.owner}</Typography>
-                          </Box>
-                          <Typography variant="h5" component="div">
-                            {post.title}
-                          </Typography>
-                          <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
-                            <span dangerouslySetInnerHTML={{ __html: post.content }} />
-                          </Typography>
-                        </CardContent>
-                        <CardActions disableSpacing>
-                          <IconButton
-                            aria-label="add to favorites"
-                            onClick={(e) => handleLikePost(e, post.id)}
-                            color={isLikedByUser[post.id] ? 'primary' : 'default'}
-                          >
-                            <Badge badgeContent={likesCount[post.id] || 0} color="primary">
-                              <ThumbUp />
-                            </Badge>
-                          </IconButton>
-                          <IconButton aria-label="comments" sx={{ marginLeft: 'auto' }}>
-                            <Badge badgeContent={commentsCount[post.id] || 0} color="primary">
-                              <Message />
-                            </Badge>
-                          </IconButton>
-                          {post.owner === auth.userId && (
-                            <IconButton aria-label="delete" onClick={(e) => handleOpenDialog(e, post.id)}>
-                              <Delete />
+    <Container component="main" maxWidth="xs" sx={{ flexGrow: 1, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+      <Box sx={{ display: "flex", flexDirection: "column" }}>
+        <Box sx={{ display: "flex", flexGrow: 1 }}>
+          <Box sx={{ flexGrow: 1}}>
+            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+              <Button variant="contained" color="primary" onClick={handleCreatePost}>
+                Create New Post
+              </Button>
+              <FormControlLabel
+                control={
+                  <Switch
+                    checked={filterByUser}
+                    onChange={() => setFilterByUser(!filterByUser)}
+                    color="primary"
+                  />
+                }
+                label="Show My Posts"
+              />
+            </Box>
+            <Box sx={{ width: '100%', maxHeight: '60vh', overflowY: 'auto' }}>
+              {isLoading ? (
+                <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%' }}>
+                  <CircularProgress />
+                </Box>
+              ) : error ? (
+                <Typography color="error">{error}</Typography>
+              ) : (
+                <>
+                  <List>
+                    {posts.map((post) => (
+                      <React.Fragment key={post.id}>
+                        <Card sx={{
+                          mb: 2,
+                          width: '80vh',
+                          cursor: 'pointer',
+                          transition: 'transform 0.2s, box-shadow 0.2s',
+                          '&:hover': {
+                            boxShadow: 3,
+                            backgroundColor: 'rgba(0, 0, 0, 0.03)',
+                          },
+                        }} onClick={() => navigate(`/post/${post.id}`)}>
+                          <CardContent>
+                            <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+                              <Avatar
+                                src={profileImages[post.owner] || defaultProfileImage}
+                                sx={{ mr: 2 }}
+                              />
+                              <Typography variant="h6">{post.ownerUsername || post.owner}</Typography>
+                            </Box>
+                            <Typography variant="h5" component="div">
+                              {post.title}
+                            </Typography>
+                            <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
+                              <span dangerouslySetInnerHTML={{ __html: post.content }} />
+                            </Typography>
+                          </CardContent>
+                          <CardActions disableSpacing>
+                            <IconButton
+                              aria-label="add to favorites"
+                              onClick={(e) => handleLikePost(e, post.id)}
+                              color={isLikedByUser[post.id] ? 'primary' : 'default'}
+                            >
+                              <Badge badgeContent={likesCount[post.id] || 0} color="primary">
+                                <ThumbUp />
+                              </Badge>
                             </IconButton>
-                          )}
-                        </CardActions>
-                      </Card>
-                    </React.Fragment>
-                  ))}
-                </List>
-              </>
-            )}
-          </Box>
-          <Box sx={{ display: 'flex', justifyContent: 'center', mt: 2 }}>
-            <Button
-              variant="outlined"
-              onClick={() => handlePageChange(currentPage - 1)}
-              disabled={currentPage === 1}
-            >
-              Previous
-            </Button>
-            <Typography sx={{ mx: 2 }}>{`Page ${currentPage} of ${totalPages}`}</Typography>
-            <Button
-              variant="outlined"
-              onClick={() => handlePageChange(currentPage + 1)}
-              disabled={currentPage === totalPages}
-            >
-              Next
-            </Button>
+                            <IconButton aria-label="comments">
+                              <Badge badgeContent={commentsCount[post.id] || 0} color="primary">
+                                <Message />
+                              </Badge>
+                            </IconButton>
+                            {post.owner === auth.userId && (
+                              <IconButton aria-label="delete" onClick={(e) => handleOpenDialog(e, post.id)}>
+                                <Delete />
+                              </IconButton>
+                            )}
+                          </CardActions>
+                        </Card>
+                      </React.Fragment>
+                    ))}
+                  </List>
+                </>
+              )}
+            </Box>
+            <Box sx={{ display: 'flex', justifyContent: 'center', mt: 2 }}>
+              <Button
+                variant="outlined"
+                onClick={() => handlePageChange(currentPage - 1)}
+                disabled={currentPage === 1}
+              >
+                Previous
+              </Button>
+              <Typography sx={{ mx: 2 }}>{`Page ${currentPage} of ${totalPages}`}</Typography>
+              <Button
+                variant="outlined"
+                onClick={() => handlePageChange(currentPage + 1)}
+                disabled={currentPage === totalPages}
+              >
+                Next
+              </Button>
+            </Box>
           </Box>
         </Box>
-      </Box>
 
-      <Dialog
-        open={openDialog}
-        onClose={handleCloseDialog}
-        aria-labelledby="alert-dialog-title"
-        aria-describedby="alert-dialog-description"
-      >
-        <DialogTitle id="alert-dialog-title">{"Are you sure you want to delete this post?"}</DialogTitle>
-        <DialogContent>
-          <DialogContentText id="alert-dialog-description">
-            This action cannot be undone.
-          </DialogContentText>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={handleCloseDialog} color="primary">
-            Cancel
-          </Button>
-          <Button onClick={handleDeletePost} color="primary" autoFocus>
-            Delete
-          </Button>
-        </DialogActions>
-      </Dialog>
-    </Box>
+        <Dialog
+          open={openDialog}
+          onClose={handleCloseDialog}
+          aria-labelledby="alert-dialog-title"
+          aria-describedby="alert-dialog-description"
+        >
+          <DialogTitle id="alert-dialog-title">{"Are you sure you want to delete this post?"}</DialogTitle>
+          <DialogContent>
+            <DialogContentText id="alert-dialog-description">
+              This action cannot be undone.
+            </DialogContentText>
+          </DialogContent>
+          <DialogActions>
+            <Button onClick={handleCloseDialog} color="primary">
+              Cancel
+            </Button>
+            <Button onClick={handleDeletePost} color="primary" autoFocus>
+              Delete
+            </Button>
+          </DialogActions>
+        </Dialog>
+      </Box>
+    </Container>
   );
 };
 

@@ -11,8 +11,16 @@ const getTokenFromHeader = (req: CustomRequest): string | undefined => {
   return authHeader?.split(' ')[1];
 }
 
+const getTokenFromQueryParams = (req: CustomRequest): string | undefined => {
+  return req.query.accessToken as string;
+}
+
 const authenticateTokenHandler: any & { unless: typeof unless } = async (req: CustomRequest, res: Response, next: NextFunction, ignoreExpiration = false): Promise<void> => {
-  const token = getTokenFromHeader(req);
+  let token = getTokenFromHeader(req);
+  if (!token) {
+    // If the token was not found in the headers, fall back to the query params.
+    token = getTokenFromQueryParams(req);
+  }
 
   if (!token) {
     res.status(401).json({ message: 'Access token required' });

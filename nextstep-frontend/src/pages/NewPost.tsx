@@ -6,7 +6,6 @@ import FroalaEditor from 'react-froala-wysiwyg';
 import 'froala-editor/css/froala_style.min.css';
 import 'froala-editor/css/froala_editor.pkgd.min.css';
 import 'froala-editor/js/plugins/image.min.js';
-import TopBar from '../components/TopBar';
 import api from "../serverApi.ts";
 import { getUserAuth } from '../handlers/userAuth.ts';
 
@@ -59,7 +58,6 @@ const NewPost: React.FC = () => {
 
   return (
     <Container component="main" maxWidth="md">
-      <TopBar />
       <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', mt: 8 }}>
         <Typography component="h1" variant="h4" gutterBottom>
           Create New Post

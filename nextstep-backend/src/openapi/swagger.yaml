@@ -17,6 +17,8 @@ tags:
     description: Operations related to uploading & downloading resources
   - name: Rooms
     description: Operations related to chat rooms
+  - name: Resume
+    description: Operations related to resume ATS scoring
 
 paths:
   /post:
@@ -247,7 +249,6 @@ paths:
         '401':
           description: Unauthorized - Missing token
 
-  # Comment Routes
   /comment:
     get:
       tags:
@@ -409,7 +410,6 @@ paths:
         '404':
           $ref: '#/components/responses/PostNotFound'
 
-  # Authentication Routes
   /auth/register:
     post:
       tags:
@@ -577,6 +577,7 @@ paths:
           $ref: '#/components/responses/Unauthorized'
         '403':
           $ref: '#/components/responses/Forbidden'
+
   /user/{userId}:
     get:
       tags:
@@ -663,7 +664,6 @@ paths:
           $ref: '#/components/responses/Forbidden'
         '404':
           $ref: '#/components/responses/UserNotFound'
-
 
   /resource/image/user:
     post:
@@ -780,6 +780,175 @@ paths:
                 format: binary
         '404':
           description: Image not found
+        '500':
+          description: Internal server error
+
+  /resource/resume:
+    post:
+      tags:
+        - Resources
+      summary: Upload a resume
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                file:
+                  type: string
+                  format: binary
+                  description: The resume file to upload (PDF, DOC, DOCX, TXT/TEXT)
+      responses:
+        '201':
+          description: Resume uploaded successfully
+          content:
+            text/plain:
+              schema:
+                description: The name of the uploaded file
+                type: string
+        '400':
+          description: Bad request
+          content:
+            text/plain:
+              examples:
+                fileTooLarge:
+                  value: "File too large"
+                invalidFileType:
+                  value: "Invalid file type. Only PDF, DOC, DOCX and TXT/TEXT files are allowed"
+                noFileUploaded:
+                  value: "No file uploaded"
+        '401':
+          description: Unauthorized
+        '500':
+          description: Internal server error
+
+  /resource/resume/{filename}:
+    get:
+      tags:
+        - Resources
+      summary: Get resume file
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: filename
+          in: path
+          required: true
+          schema:
+            type: string
+          description: The filename of the resume
+      responses:
+        '200':
+          description: Resume file retrieved successfully
+          content:
+            application/pdf:
+              schema:
+                type: string
+                format: binary
+            application/msword:
+              schema:
+                type: string
+                format: binary
+            application/vnd.openxmlformats-officedocument.wordprocessingml.document:
+              schema:
+                type: string
+                format: binary
+        '401':
+          description: Unauthorized
+        '404':
+          description: Resume not found
+        '500':
+          description: Internal server error
+
+  /resume/score/{filename}:
+    get:
+      tags:
+        - Resume
+      summary: Get score for an existing resume
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: filename
+          in: path
+          required: true
+          schema:
+            type: string
+          description: The filename of the resume
+        - name: jobDescription
+          in: query
+          required: false
+          schema:
+            type: string
+          description: Optional job description for scoring
+      responses:
+        '200':
+          description: Resume score retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  score:
+                    type: number
+                    description: The ATS score of the resume
+        '400':
+          description: Bad request
+          content:
+            text/plain:
+              examples:
+                couldNotParseResumeFile:
+                  value: "Could not parse the resume file"
+        '401':
+          description: Unauthorized
+        '404':
+          description: Resume not found
+        '500':
+          description: Internal server error
+
+  /resume/streamScore/{filename}:
+    get:
+      tags:
+        - Resume
+      summary: Get stream score for an existing resume
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: filename
+          in: path
+          required: true
+          schema:
+            type: string
+          description: The filename of the resume
+        - name: jobDescription
+          in: query
+          required: false
+          schema:
+            type: string
+          description: Optional job description for scoring
+      responses:
+        '200':
+          description: Stream resume score retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  score:
+                    type: number
+                    description: The stream ATS score of the resume
+        '400':
+          description: Bad request
+          content:
+            text/plain:
+              examples:
+                couldNotParseResumeFile:
+                  value: "Could not parse the resume file"
+        '401':
+          description: Unauthorized
+        '404':
+          description: Resume not found
         '500':
           description: Internal server error
 

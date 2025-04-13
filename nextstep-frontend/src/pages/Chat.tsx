@@ -6,7 +6,6 @@ import { LoginResponse } from '../models/LoginResponse';
 import DividedList from '../components/DividedList';
 import { Room } from '../models/Room';
 import axios from 'axios';
-import TopBar from '../components/TopBar';
 
 const Chat: React.FC = () => {
   const [messageContent, setMessageContent] = useState('');
@@ -81,7 +80,6 @@ const Chat: React.FC = () => {
 
   return (
     <div className="chat-container">
-      <TopBar/>
         <div className="message-input">
             <input
                 type="text"
