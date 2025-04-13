@@ -4,7 +4,6 @@ import { AppBar, Toolbar, IconButton, Tooltip, Box } from '@mui/material';
 import { Home, Person, Message, Logout } from '@mui/icons-material';
 import {getUserAuth, removeUserAuth} from "../handlers/userAuth.ts";
 import api from "../serverApi.ts";
-import './TopBar.css';
 
 const TopBar: React.FC = () => {
   const userAuthRef = useRef(getUserAuth());

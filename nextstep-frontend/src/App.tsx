@@ -12,21 +12,22 @@ import PostDetails from './pages/PostDetails';
 import Chat from './pages/Chat';
 import ResumePage from './pages/ResumePage';
 import TopBar from './components/TopBar';
+import Layout from './components/Layout';
 
 const App: React.FC = () => {
   return (
     <>
       <Router>
         <Routes>
-          <Route path="/" element={<Login />} />
-          <Route path="/login" element={<Login />} />
-          <Route path="/register" element={<Register />} />
-          <Route path="/dashboard" element={<RequireAuth><TopBar /><Dashboard /></RequireAuth>} />
-          <Route path="/profile" element={<RequireAuth><TopBar /><Profile /></RequireAuth>} />
-          <Route path="/new-post" element={<RequireAuth><TopBar /><NewPost /></RequireAuth>} />
-          <Route path="/post/:postId" element={<RequireAuth><TopBar /><PostDetails /></RequireAuth>} />
-          <Route path="/chat" element={<RequireAuth><TopBar /><Chat /></RequireAuth>} />
-          <Route path="/resume" element={<RequireAuth><ResumePage /></RequireAuth>} />
+          <Route path="/" element={<Layout><Login /></Layout>} />
+          <Route path="/login" element={<Layout><Login /></Layout>} /> 
+          <Route path="/register" element={<Layout><Register /></Layout>} />
+          <Route path="/dashboard" element={<RequireAuth><TopBar /><Layout><Dashboard /></Layout></RequireAuth>} />
+          <Route path="/profile" element={<RequireAuth><TopBar /><Layout><Profile /></Layout></RequireAuth>} />
+          <Route path="/new-post" element={<RequireAuth><TopBar /><Layout><NewPost /></Layout></RequireAuth>} />
+          <Route path="/post/:postId" element={<RequireAuth><TopBar /><Layout><PostDetails /></Layout></RequireAuth>} />
+          <Route path="/chat" element={<RequireAuth><TopBar /><Layout><Chat /></Layout></RequireAuth>} />
+          <Route path="/resume" element={<RequireAuth><Layout><ResumePage /></Layout></RequireAuth>} />
           <Route path="*" element={<Navigate to="/" />} />
         </Routes>
       </Router>
