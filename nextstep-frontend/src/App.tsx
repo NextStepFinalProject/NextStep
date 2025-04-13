@@ -10,7 +10,7 @@ import RequireAuth from './hoc/RequireAuth';
 import NewPost from './pages/NewPost';
 import PostDetails from './pages/PostDetails';
 import Chat from './pages/Chat';
-
+import ResumePage from './pages/ResumePage';
 
 const App: React.FC = () => {
   return (
@@ -25,6 +25,7 @@ const App: React.FC = () => {
           <Route path="/new-post" element={<RequireAuth><NewPost /></RequireAuth>} />
           <Route path="/post/:postId" element={<RequireAuth><PostDetails /></RequireAuth>} />
           <Route path="/chat" element={<RequireAuth><Chat /></RequireAuth>} />
+          <Route path="/resume" element={<RequireAuth><ResumePage /></RequireAuth>} />
           <Route path="*" element={<Navigate to="/" />} />
         </Routes>
       </Router>
