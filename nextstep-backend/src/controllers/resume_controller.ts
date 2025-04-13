@@ -2,7 +2,7 @@ import { Request, Response } from 'express';
 import { config } from '../config/config';
 import fs from 'fs';
 import path from 'path';
-import { scoreResume, streamScoreResume } from '../services/resume_service';
+import { scoreResume, streamScoreResume, getResumeTemplates } from '../services/resume_service';
 import multer from 'multer';
 import { CustomRequest } from "types/customRequest";
 import { handleError } from "../utils/handle_error";
@@ -69,7 +69,17 @@ const getStreamResumeScore = async (req: Request, res: Response) => {
     }
 };
 
+const getTemplates = async (req: Request, res: Response) => {
+    try {
+        const templates = await getResumeTemplates();
+        return res.status(200).json(templates);
+    } catch (error) {
+        handleError(error, res);
+    }
+};
+
 export default {
     getResumeScore,
-    getStreamResumeScore
+    getStreamResumeScore,
+    getTemplates
 };

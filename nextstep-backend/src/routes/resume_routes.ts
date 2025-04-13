@@ -8,4 +8,6 @@ router.get('/score/:filename', Resume.getResumeScore);
 
 router.get('/streamScore/:filename', Resume.getStreamResumeScore);
 
+router.get('/templates', Resume.getTemplates);
+
 export default router; 

@@ -952,6 +952,41 @@ paths:
         '500':
           description: Internal server error
 
+  /resume/templates:
+    get:
+      tags:
+        - Resume
+      summary: Get available resume templates
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: List of available resume templates retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    name:
+                      type: string
+                      description: The name of the template (without extension)
+                    content:
+                      type: string
+                      description: Base64 encoded content of the template file
+                    type:
+                      type: string
+                      description: MIME type of the template file
+                      enum:
+                        - application/pdf
+                        - application/msword
+                        - application/vnd.openxmlformats-officedocument.wordprocessingml.document
+        '401':
+          description: Unauthorized
+        '500':
+          description: Internal server error
+
   /room/user/{receiverUserId}:
     get:
       tags:

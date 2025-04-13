@@ -166,4 +166,43 @@ const streamScoreResume = async (
     }
 };
 
-export { scoreResume, streamScoreResume };
+const getResumeTemplates = async (): Promise<{ name: string; content: string; type: string }[]> => {
+    try {
+        const templatesDir = config.assets.resumeTemplatesDirectoryPath();
+        if (!fs.existsSync(templatesDir)) {
+            return [];
+        }
+
+        const files = fs.readdirSync(templatesDir);
+        const templates = await Promise.all(
+            files
+                .filter(file => {
+                    const ext = path.extname(file).toLowerCase();
+                    return ['.pdf', '.doc', '.docx'].includes(ext);
+                })
+                .map(async file => {
+                    const filePath = path.join(templatesDir, file);
+                    const content = fs.readFileSync(filePath);
+                    const base64Content = content.toString('base64');
+                    const mimeType = {
+                        '.pdf': 'application/pdf',
+                        '.doc': 'application/msword',
+                        '.docx': 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+                    }[path.extname(file).toLowerCase()] || 'application/octet-stream';
+
+                    return {
+                        name: path.basename(file, path.extname(file)),
+                        content: base64Content,
+                        type: mimeType
+                    };
+                })
+        );
+
+        return templates;
+    } catch (error) {
+        console.error('Error reading resume templates:', error);
+        return [];
+    }
+};
+
+export { scoreResume, streamScoreResume, getResumeTemplates };
