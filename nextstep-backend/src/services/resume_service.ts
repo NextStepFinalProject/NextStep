@@ -2,9 +2,9 @@ import { config } from '../config/config';
 import path from 'path';
 import fs from 'fs';
 import axios from 'axios';
-import { chatWithAI } from './chat_api_service';
+import { chatWithAI, streamChatWithAI } from './chat_api_service';
 
-const systemTemplate = `You are a very experienced ATS (Application Tracking System) bot with a deep understanding named Bob the Resume builder.
+const SYSTEM_TEMPLATE = `You are a very experienced ATS (Application Tracking System) bot with a deep understanding named BOb the Resume builder.
 You will review resumes with or without job descriptions.
 You are an expert in resume evaluation and provide constructive feedback with dynamic evaluation.
 You should also provide an improvement table, taking into account:
@@ -44,33 +44,65 @@ Based on your analysis, provide a numerical score between 0-100 that represents 
 The score should be provided at the end of your response in the format: "SCORE: X" where X is the numerical score.
 `;
 
+const FEEDBACK_ERROR_MESSAGE = 'The Chat AI feature is turned off. Could not score your resume.';
+
 const scoreResume = async (resumePath: string, jobDescription?: string): Promise<{ score: number; feedback: string }> => {
     try {
-        // Read the resume file
         const resumeText = fs.readFileSync(resumePath, 'utf-8');
-        
-        // Prepare the prompt for the AI
         const prompt = feedbackTemplate(resumeText, jobDescription || 'No job description provided.');
-        
-        let feedback = 'The Chat AI feature is turned off. Could not score your resume.';
 
+        let feedback = FEEDBACK_ERROR_MESSAGE;
         if (config.chatAi.turned_on()) {
             // Get feedback from the AI
-            feedback = await chatWithAI(prompt, systemTemplate);   
+            feedback = await chatWithAI(prompt, SYSTEM_TEMPLATE);
         }
-        
+
         // Extract the score from the feedback
         const scoreMatch = feedback.match(/SCORE: (\d+)/);
         const score = scoreMatch ? parseInt(scoreMatch[1]) : 0;
-        
-        return {
-            score,
-            feedback
-        };
+        return { score, feedback };
     } catch (error) {
         console.error('Error scoring resume:', error);
         throw new Error('Failed to score resume');
     }
 };
 
-export { scoreResume }; 
+const streamScoreResume = async (
+    resumePath: string,
+    jobDescription: string | undefined,
+    onChunk: (chunk: string) => void
+): Promise<number> => {
+    try {
+        const resumeText = fs.readFileSync(resumePath, 'utf-8');
+        const prompt = feedbackTemplate(resumeText, jobDescription || 'No job description provided.');
+        
+        let fullResponse = '';
+        let finalScore = 0;
+
+        if (config.chatAi.turned_on()) {
+            await streamChatWithAI(
+                prompt,
+                SYSTEM_TEMPLATE,
+                (chunk) => {
+                    fullResponse += chunk;
+                    onChunk(chunk);
+                    
+                    // Try to extract score from the accumulated response
+                    const scoreMatch = fullResponse.match(/SCORE: (\d+)/);
+                    if (scoreMatch) {
+                        finalScore = parseInt(scoreMatch[1]);
+                    }
+                }
+            );
+        } else {
+            onChunk(FEEDBACK_ERROR_MESSAGE);
+        }
+
+        return finalScore;
+    } catch (error) {
+        console.error('Error streaming resume score:', error);
+        throw new Error('Failed to stream resume score');
+    }
+};
+
+export { scoreResume, streamScoreResume };

@@ -6,4 +6,6 @@ const router = express.Router();
 
 router.get('/score/:filename', Resume.getResumeScore);
 
+router.get('/streamScore/:filename', Resume.getStreamResumeScore);
+
 export default router; 
