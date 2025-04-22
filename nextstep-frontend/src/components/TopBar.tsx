@@ -23,7 +23,7 @@ const TopBar: React.FC = () => {
     <AppBar position="relative" sx={{ width: '100vw', left: 0 }} className='top-bar'>
       <Toolbar>
         <Tooltip title="Home">
-          <IconButton color="inherit" onClick={() => navigate('/dashboard')} sx={{ mx: 1 }}>
+          <IconButton color="inherit" onClick={() => navigate('/main-dashboard')} sx={{ mx: 1 }}>
             <Home fontSize='large'/>
           </IconButton>
         </Tooltip>

@@ -13,6 +13,7 @@ import Chat from './pages/Chat';
 import Resume from './pages/Resume';
 import TopBar from './components/TopBar';
 import Layout from './components/Layout';
+import MainDashboard from './pages/MainDashboard';
 
 const App: React.FC = () => {
   return (
@@ -28,6 +29,7 @@ const App: React.FC = () => {
           <Route path="/post/:postId" element={<RequireAuth><TopBar /><Layout><PostDetails /></Layout></RequireAuth>} />
           <Route path="/chat" element={<RequireAuth><TopBar /><Layout><Chat /></Layout></RequireAuth>} />
           <Route path="/resume" element={<RequireAuth><TopBar /><Layout><Resume /></Layout></RequireAuth>} />
+          <Route path="/main-dashboard" element={<RequireAuth><TopBar /><Layout><MainDashboard /></Layout></RequireAuth>} />
           <Route path="*" element={<Navigate to="/" />} />
         </Routes>
       </Router>
