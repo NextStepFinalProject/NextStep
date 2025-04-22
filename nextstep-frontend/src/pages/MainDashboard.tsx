@@ -225,8 +225,8 @@ const MainDashboard: React.FC = () => {
                   </a>
                 </li>
               ))}
-                      </li>
-</Paper>
+            </ul>
+        </Paper>
         </Grid>
       </Grid>
     </Container>
