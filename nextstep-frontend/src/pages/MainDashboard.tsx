@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Container, Box, Typography, Button, TextField, Chip, Stack, Grid, Paper, Autocomplete, MenuItem, Select, FormControl, InputLabel } from '@mui/material';
 import { GitHub, LinkedIn } from '@mui/icons-material';
+import { connectToGitHub, initiateGitHubOAuth, fetchRepoLanguages, handleGitHubOAuth } from '../handlers/githubAuth';
 
 const roles = [
   'Software Engineer',
@@ -41,6 +42,7 @@ const MainDashboard: React.FC = () => {
   const [skills, setSkills] = useState<string[]>(() => JSON.parse(localStorage.getItem('skills') || '[]'));
   const [newSkill, setNewSkill] = useState('');
   const [selectedRole, setSelectedRole] = useState(() => localStorage.getItem('selectedRole') || '');
+  const [repos, setRepos] = useState<{ id: number; name: string; html_url: string }[]>([]);
 
   useEffect(() => {
     localStorage.setItem('aboutMe', aboutMe);
@@ -63,6 +65,40 @@ const MainDashboard: React.FC = () => {
   const handleDeleteSkill = (skillToDelete: string) => {
     setSkills(skills.filter(skill => skill !== skillToDelete));
   };
+
+  const handleGitHubConnect = async () => {
+    try {
+      initiateGitHubOAuth();
+    } catch (error) {
+      console.error('Error initiating GitHub OAuth:', error);
+    }
+  };
+
+  useEffect(() => {
+    const queryParams = new URLSearchParams(window.location.search);
+    const code = queryParams.get('code');
+    if (code) {
+      const fetchGitHubData = async () => {
+        try {
+          const username = await handleGitHubOAuth(code);
+          const fetchedRepos = await connectToGitHub(username);
+          setRepos(fetchedRepos);
+
+          // Fetch languages and add them as skills
+          const languagesSet = new Set(skills);
+          for (const repo of fetchedRepos) {
+            const repoLanguages = await fetchRepoLanguages(repo.html_url);
+            Object.keys(repoLanguages).forEach((lang) => languagesSet.add(lang));
+          }
+          setSkills(Array.from(languagesSet));
+        } catch (error) {
+          console.error('Error fetching GitHub data:', error);
+        }
+      };
+
+      fetchGitHubData();
+    }
+  }, []);
 
   return (
     <Container
@@ -172,9 +208,22 @@ const MainDashboard: React.FC = () => {
               color="secondary"
               startIcon={<GitHub />}
               fullWidth
+              onClick={handleGitHubConnect}
             >
               Connect to GitHub
             </Button>
+            <Typography variant="h6" sx={{ mt: 3 }}>
+              GitHub Repositories
+            </Typography>
+            <ul>
+              {repos.map((repo) => (
+                <li key={repo.id}>
+                  <a href={repo.html_url} target="_blank" rel="noopener noreferrer">
+                    {repo.name}
+                  </a>
+                </li>
+              ))}
+            </ul>
           </Paper>
         </Grid>
       </Grid>
