@@ -212,9 +212,11 @@ const MainDashboard: React.FC = () => {
             >
               Connect to GitHub
             </Button>
-            <Typography variant="h6" sx={{ mt: 3 }}>
+            {
+            repos.length > 0 && <Typography variant="h6" sx={{ mt: 3 }}>
               GitHub Repositories
             </Typography>
+            }
             <ul>
               {repos.map((repo) => (
                 <li key={repo.id}>
@@ -223,8 +225,8 @@ const MainDashboard: React.FC = () => {
                   </a>
                 </li>
               ))}
-            </ul>
-          </Paper>
+                      </li>
+</Paper>
         </Grid>
       </Grid>
     </Container>
