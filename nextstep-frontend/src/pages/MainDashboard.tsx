@@ -217,10 +217,10 @@ const MainDashboard: React.FC = () => {
               GitHub Repositories
             </Typography>
             }
-            <ul>
+            <ul style={{ listStyleType: 'none', padding: 0, textAlign: 'center' }}>
               {repos.map((repo) => (
-                <li key={repo.id}>
-                  <a href={repo.html_url} target="_blank" rel="noopener noreferrer">
+                <li key={repo.id} style={{ margin: '8px 0' }}>
+                  <a href={repo.html_url} target="_blank" rel="noopener noreferrer" style={{ textDecoration: 'none', color: '#1976d2', fontWeight: 'bold' }}>
                     {repo.name}
                   </a>
                 </li>
