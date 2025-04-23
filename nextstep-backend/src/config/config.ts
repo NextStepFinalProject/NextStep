@@ -5,7 +5,8 @@ export const config = {
     app: {
         port: () => process.env.PORT || 3000,
         frontend_url: () => process.env.FRONTEND_URL || 'http://localhost:5000',
-        backend_url: () => process.env.BACKEND_URL || `http://localhost:${config.app.port()}`,
+        backend_host: () => process.env.BACKEND_HOST || `localhost`,
+        backend_url: () => process.env.BACKEND_URL || `http://${config.app.backend_host()}:${config.app.port()}`,
     },
     token: {
         refresh_token_expiration: () => process.env.REFRESH_TOKEN_EXPIRATION || '3d',
