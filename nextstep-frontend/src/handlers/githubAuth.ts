@@ -26,7 +26,7 @@ export const connectToGitHub = async (username: string) => {
 export const initiateGitHubOAuth = () => {
     const clientId = import.meta.env.VITE_GITHUB_CLIENT_ID; // Use environment variable
     const redirectUri = import.meta.env.VITE_GITHUB_REDIRECT_URI; // Use environment variable
-    const scope = 'repo'; // Adjust scope as needed
+    const scope = 'read:repo'; // Only read access to repositories
     const authUrl = `https://github.com/login/oauth/authorize?client_id=${clientId}&redirect_uri=${redirectUri}&scope=${scope}`;
     window.location.href = authUrl; // Redirect the user to GitHub's authorization page
 };
