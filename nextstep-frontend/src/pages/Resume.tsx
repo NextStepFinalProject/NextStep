@@ -131,6 +131,7 @@ const Resume: React.FC = () => {
   const [selectedTemplate, setSelectedTemplate] = useState<number | null>(null);
   const [previewOpen, setPreviewOpen] = useState(false);
   const [previewTemplate, setPreviewTemplate] = useState<{ name: string; content: string; type: string } | null>(null);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const feedbackEndRef = useRef<HTMLDivElement>(null);
 
@@ -240,20 +241,71 @@ const Resume: React.FC = () => {
     console.log('Generating resume with template:', selectedTemplate);
   };
 
-  const handlePreviewOpen = (template: { name: string; content: string; type: string }) => {
+  const uploadToTmpFiles = async (base64Content: string, fileName: string): Promise<string> => {
+    try {
+      // Convert base64 to blob
+      const byteCharacters = atob(base64Content);
+      const byteNumbers = new Array(byteCharacters.length);
+      for (let i = 0; i < byteCharacters.length; i++) {
+        byteNumbers[i] = byteCharacters.charCodeAt(i);
+      }
+      const byteArray = new Uint8Array(byteNumbers);
+      const blob = new Blob([byteArray], { type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' });
+      
+      // Create form data
+      const formData = new FormData();
+      formData.append('file', blob, fileName);
+
+      // Upload to tmpfiles.org
+      const response = await fetch('https://tmpfiles.org/api/v1/upload', {
+        method: 'POST',
+        body: formData
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to upload file');
+      }
+
+      const data = await response.json();
+
+      // Manipulate the URL to add '/dl' after the domain
+      const downloadUrl = data.data.url.replace('https://tmpfiles.org/', 'https://tmpfiles.org/dl/');
+
+      console.log(downloadUrl);
+
+      return downloadUrl;
+    } catch (error) {
+      console.error('Error uploading to tmpfiles.org:', error);
+      throw error;
+    }
+  };
+
+  const handlePreviewOpen = async (template: { name: string; content: string; type: string }) => {
     setPreviewTemplate(template);
     setPreviewOpen(true);
+    
+    if (template.type.includes('word')) {
+      try {
+        const fileName = `${template.name}${template.type.includes('docx') ? '.docx' : '.doc'}`;
+        const tmpUrl = await uploadToTmpFiles(template.content, fileName);
+        const previewUrl = `https://view.officeapps.live.com/op/embed.aspx?src=${encodeURIComponent(tmpUrl)}`;
+        setPreviewUrl(previewUrl);
+      } catch (error) {
+        console.error('Error preparing preview:', error);
+        setError('Failed to prepare document preview');
+      }
+    }
   };
 
   const handlePreviewClose = () => {
     setPreviewOpen(false);
     setPreviewTemplate(null);
+    setPreviewUrl(null);
   };
 
   const renderTemplatePreview = (template: { name: string; content: string; type: string }) => {
-    const base64Data = `data:${template.type};base64,${template.content}`;
-    
     if (template.type === 'application/pdf') {
+      const base64Data = `data:${template.type};base64,${template.content}`;
       return (
         <iframe
           src={base64Data}
@@ -262,22 +314,22 @@ const Resume: React.FC = () => {
         />
       );
     } else if (template.type.includes('word')) {
-      return (
-        <Box sx={{ p: 2, textAlign: 'center' }}>
-          <Typography variant="h6">Word Document Preview</Typography>
-          <Typography variant="body2" color="text.secondary">
-            Please download the template to view it properly
-          </Typography>
-          <Button
-            variant="contained"
-            href={base64Data}
-            download={`${template.name}${template.type.includes('docx') ? '.docx' : '.doc'}`}
-            sx={{ mt: 2 }}
-          >
-            Download Template
-          </Button>
-        </Box>
-      );
+      if (previewUrl) {
+        return (
+          <iframe
+            src={previewUrl}
+            style={{ width: '100%', height: '100%', border: 'none' }}
+            title={template.name}
+          />
+        );
+      } else {
+        return (
+          <Box sx={{ p: 2, textAlign: 'center' }}>
+            <Typography variant="h6">Loading Preview...</Typography>
+            <CircularProgress />
+          </Box>
+        );
+      }
     }
     return null;
   };
@@ -379,7 +431,10 @@ const Resume: React.FC = () => {
                       alignItems: 'center',
                       justifyContent: 'center',
                       position: 'relative',
+                      height: '100%',
+                      cursor: 'pointer'
                     }}
+                    onClick={() => handlePreviewOpen(template)}
                   >
                     {template.type === 'application/pdf' ? (
                       <iframe
@@ -391,16 +446,10 @@ const Resume: React.FC = () => {
                       <Box sx={{ p: 2, textAlign: 'center' }}>
                         <Typography variant="h6">Word Document</Typography>
                         <Typography variant="body2" color="text.secondary">
-                          Click to preview and download
+                          Click to preview
                         </Typography>
                       </Box>
                     )}
-                    <ZoomButton
-                      onClick={() => handlePreviewOpen(template)}
-                      size="small"
-                    >
-                      <ZoomInIcon />
-                    </ZoomButton>
                   </CardMedia>
                   <CardContent>
                     <Typography gutterBottom variant="h5" component="div">
