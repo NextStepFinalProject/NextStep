@@ -112,7 +112,8 @@ const TemplateCard = styled(Card)(({ theme }) => ({
   flexDirection: 'column',
   position: 'relative',
   '& .MuiCardMedia-root': {
-    height: 300,
+    height: '70vh',
+    minHeight: '500px',
     backgroundSize: 'contain',
     backgroundPosition: 'center',
     backgroundColor: theme.palette.grey[100],
@@ -129,8 +130,6 @@ const Resume: React.FC = () => {
   const [error, setError] = useState('');
   const [templates, setTemplates] = useState<Array<{ name: string; content: string; type: string }>>([]);
   const [selectedTemplate, setSelectedTemplate] = useState<number | null>(null);
-  const [previewOpen, setPreviewOpen] = useState(false);
-  const [previewTemplate, setPreviewTemplate] = useState<{ name: string; content: string; type: string } | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const feedbackEndRef = useRef<HTMLDivElement>(null);
@@ -146,6 +145,10 @@ const Resume: React.FC = () => {
       try {
         const response = await api.get('/resume/templates');
         setTemplates(response.data);
+        // Initialize preview for the first template if it's a Word document
+        if (response.data.length > 0 && response.data[0].type.includes('word')) {
+          handlePreviewOpen(response.data[0]);
+        }
       } catch (error) {
         console.error('Error fetching templates:', error);
       }
@@ -281,9 +284,6 @@ const Resume: React.FC = () => {
   };
 
   const handlePreviewOpen = async (template: { name: string; content: string; type: string }) => {
-    setPreviewTemplate(template);
-    setPreviewOpen(true);
-    
     if (template.type.includes('word')) {
       try {
         const fileName = `${template.name}${template.type.includes('docx') ? '.docx' : '.doc'}`;
@@ -298,40 +298,7 @@ const Resume: React.FC = () => {
   };
 
   const handlePreviewClose = () => {
-    setPreviewOpen(false);
-    setPreviewTemplate(null);
     setPreviewUrl(null);
-  };
-
-  const renderTemplatePreview = (template: { name: string; content: string; type: string }) => {
-    if (template.type === 'application/pdf') {
-      const base64Data = `data:${template.type};base64,${template.content}`;
-      return (
-        <iframe
-          src={base64Data}
-          style={{ width: '100%', height: '100%', border: 'none' }}
-          title={template.name}
-        />
-      );
-    } else if (template.type.includes('word')) {
-      if (previewUrl) {
-        return (
-          <iframe
-            src={previewUrl}
-            style={{ width: '100%', height: '100%', border: 'none' }}
-            title={template.name}
-          />
-        );
-      } else {
-        return (
-          <Box sx={{ p: 2, textAlign: 'center' }}>
-            <Typography variant="h6">Loading Preview...</Typography>
-            <CircularProgress />
-          </Box>
-        );
-      }
-    }
-    return null;
   };
 
   const renderStepContent = (step: number) => {
@@ -432,9 +399,7 @@ const Resume: React.FC = () => {
                       justifyContent: 'center',
                       position: 'relative',
                       height: '100%',
-                      cursor: 'pointer'
                     }}
-                    onClick={() => handlePreviewOpen(template)}
                   >
                     {template.type === 'application/pdf' ? (
                       <iframe
@@ -443,12 +408,18 @@ const Resume: React.FC = () => {
                         title={template.name}
                       />
                     ) : (
-                      <Box sx={{ p: 2, textAlign: 'center' }}>
-                        <Typography variant="h6">Word Document</Typography>
-                        <Typography variant="body2" color="text.secondary">
-                          Click to preview
-                        </Typography>
-                      </Box>
+                      previewUrl ? (
+                        <iframe
+                          src={previewUrl}
+                          style={{ width: '100%', height: '100%', border: 'none' }}
+                          title={template.name}
+                        />
+                      ) : (
+                        <Box sx={{ p: 2, textAlign: 'center' }}>
+                          <Typography variant="h6">Loading Preview...</Typography>
+                          <CircularProgress />
+                        </Box>
+                      )
                     )}
                   </CardMedia>
                   <CardContent>
@@ -475,21 +446,6 @@ const Resume: React.FC = () => {
                 </TemplateCard>
               ))}
             </Carousel>
-
-            <PreviewModal
-              open={previewOpen}
-              onClose={handlePreviewClose}
-              closeAfterTransition
-            >
-              <Zoom in={previewOpen}>
-                <ModalContent>
-                  <CloseButton onClick={handlePreviewClose}>
-                    <CloseIcon />
-                  </CloseButton>
-                  {previewTemplate && renderTemplatePreview(previewTemplate)}
-                </ModalContent>
-              </Zoom>
-            </PreviewModal>
           </Box>
         );
       case 2:
