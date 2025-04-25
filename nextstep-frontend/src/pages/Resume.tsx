@@ -146,9 +146,9 @@ const Resume: React.FC = () => {
       try {
         const response = await api.get('/resume/templates');
         setTemplates(response.data);
-        // Initialize preview for the first template if it's a Word document
-        if (response.data.length > 0 && response.data[0].type.includes('word')) {
-          handlePreviewOpen(response.data[0]);
+        // Set initial selected template and trigger preview
+        if (response.data.length > 0) {
+          setSelectedTemplate(0);
         }
       } catch (error) {
         console.error('Error fetching templates:', error);
@@ -285,30 +285,29 @@ const Resume: React.FC = () => {
   };
 
   const handlePreviewOpen = async (template: { name: string; content: string; type: string }) => {
-    if (template.type.includes('word')) {
-      // Check if we already have a cached URL for this template
-      const cacheKey = `${template.name}-${template.type}`;
-      if (previewUrlCache[cacheKey]) {
-        setPreviewUrl(previewUrlCache[cacheKey]);
-        return;
-      }
+    if (!template.type.includes('word')) return;
 
-      try {
-        const fileName = `${template.name}${template.type.includes('docx') ? '.docx' : '.doc'}`;
-        const tmpUrl = await uploadToTmpFiles(template.content, fileName);
-        const previewUrl = `https://view.officeapps.live.com/op/embed.aspx?src=${encodeURIComponent(tmpUrl)}`;
-        
-        // Cache the URL
-        setPreviewUrlCache(prev => ({
-          ...prev,
-          [cacheKey]: previewUrl
-        }));
-        
-        setPreviewUrl(previewUrl);
-      } catch (error) {
-        console.error('Error preparing preview:', error);
-        setError('Failed to prepare document preview');
-      }
+    const cacheKey = `${template.name}-${template.type}`;
+    if (previewUrlCache[cacheKey]) {
+      setPreviewUrl(previewUrlCache[cacheKey]);
+      return;
+    }
+
+    try {
+      setPreviewUrl(null); // Clear current preview while loading
+      const fileName = `${template.name}${template.type.includes('docx') ? '.docx' : '.doc'}`;
+      const tmpUrl = await uploadToTmpFiles(template.content, fileName);
+      const previewUrl = `https://view.officeapps.live.com/op/embed.aspx?src=${encodeURIComponent(tmpUrl)}`;
+      
+      setPreviewUrlCache(prev => ({
+        ...prev,
+        [cacheKey]: previewUrl
+      }));
+      
+      setPreviewUrl(previewUrl);
+    } catch (error) {
+      console.error('Error preparing preview:', error);
+      setError('Failed to prepare document preview');
     }
   };
 
@@ -320,7 +319,14 @@ const Resume: React.FC = () => {
     if (templates.length > 0 && selectedTemplate !== null) {
       const currentTemplate = templates[selectedTemplate];
       if (currentTemplate.type.includes('word')) {
-        handlePreviewOpen(currentTemplate);
+        // Check cache first
+        const cacheKey = `${currentTemplate.name}-${currentTemplate.type}`;
+        if (previewUrlCache[cacheKey]) {
+          setPreviewUrl(previewUrlCache[cacheKey]);
+        } else {
+          // If not in cache, load the preview
+          handlePreviewOpen(currentTemplate);
+        }
       } else {
         setPreviewUrl(null);
       }
