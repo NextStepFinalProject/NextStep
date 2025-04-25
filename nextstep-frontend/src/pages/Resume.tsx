@@ -112,8 +112,8 @@ const TemplateCard = styled(Card)(({ theme }) => ({
   flexDirection: 'column',
   position: 'relative',
   '& .MuiCardMedia-root': {
-    height: '70vh',
-    minHeight: '500px',
+    height: 'calc(100vh - 200px)', // Account for header and card actions
+    minHeight: '800px',
     backgroundSize: 'contain',
     backgroundPosition: 'center',
     backgroundColor: theme.palette.grey[100],
@@ -131,6 +131,7 @@ const Resume: React.FC = () => {
   const [templates, setTemplates] = useState<Array<{ name: string; content: string; type: string }>>([]);
   const [selectedTemplate, setSelectedTemplate] = useState<number | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [previewUrlCache, setPreviewUrlCache] = useState<Record<string, string>>({});
   const fileInputRef = useRef<HTMLInputElement>(null);
   const feedbackEndRef = useRef<HTMLDivElement>(null);
 
@@ -285,10 +286,24 @@ const Resume: React.FC = () => {
 
   const handlePreviewOpen = async (template: { name: string; content: string; type: string }) => {
     if (template.type.includes('word')) {
+      // Check if we already have a cached URL for this template
+      const cacheKey = `${template.name}-${template.type}`;
+      if (previewUrlCache[cacheKey]) {
+        setPreviewUrl(previewUrlCache[cacheKey]);
+        return;
+      }
+
       try {
         const fileName = `${template.name}${template.type.includes('docx') ? '.docx' : '.doc'}`;
         const tmpUrl = await uploadToTmpFiles(template.content, fileName);
         const previewUrl = `https://view.officeapps.live.com/op/embed.aspx?src=${encodeURIComponent(tmpUrl)}`;
+        
+        // Cache the URL
+        setPreviewUrlCache(prev => ({
+          ...prev,
+          [cacheKey]: previewUrl
+        }));
+        
         setPreviewUrl(previewUrl);
       } catch (error) {
         console.error('Error preparing preview:', error);
@@ -300,6 +315,17 @@ const Resume: React.FC = () => {
   const handlePreviewClose = () => {
     setPreviewUrl(null);
   };
+
+  useEffect(() => {
+    if (templates.length > 0 && selectedTemplate !== null) {
+      const currentTemplate = templates[selectedTemplate];
+      if (currentTemplate.type.includes('word')) {
+        handlePreviewOpen(currentTemplate);
+      } else {
+        setPreviewUrl(null);
+      }
+    }
+  }, [selectedTemplate, templates]);
 
   const renderStepContent = (step: number) => {
     switch (step) {
@@ -388,6 +414,11 @@ const Resume: React.FC = () => {
               animation="slide"
               navButtonsAlwaysVisible
               indicators
+              onChange={(index?: number) => {
+                if (typeof index === 'number') {
+                  setSelectedTemplate(index);
+                }
+              }}
             >
               {templates.map((template, index) => (
                 <TemplateCard key={template.name}>
@@ -408,7 +439,7 @@ const Resume: React.FC = () => {
                         title={template.name}
                       />
                     ) : (
-                      previewUrl ? (
+                      previewUrl && selectedTemplate === index ? (
                         <iframe
                           src={previewUrl}
                           style={{ width: '100%', height: '100%', border: 'none' }}
