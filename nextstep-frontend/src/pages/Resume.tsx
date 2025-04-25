@@ -111,12 +111,16 @@ const TemplateCard = styled(Card)(({ theme }) => ({
   display: 'flex',
   flexDirection: 'column',
   position: 'relative',
+  width: '100%',
+  maxWidth: '1200px',
+  margin: '0 auto',
   '& .MuiCardMedia-root': {
     height: 'calc(100vh - 200px)', // Account for header and card actions
     minHeight: '800px',
     backgroundSize: 'contain',
     backgroundPosition: 'center',
     backgroundColor: theme.palette.grey[100],
+    width: '100%',
   },
 }));
 
@@ -415,7 +419,14 @@ const Resume: React.FC = () => {
               Choose a template
             </Typography>
             <Carousel
-              sx={{ maxWidth: 600, mx: 'auto' }}
+              sx={{ 
+                width: '100%',
+                maxWidth: '1200px',
+                mx: 'auto',
+                '& .MuiCarousel-root': {
+                  width: '100%',
+                }
+              }}
               autoPlay={false}
               animation="slide"
               navButtonsAlwaysVisible
@@ -448,7 +459,13 @@ const Resume: React.FC = () => {
                       previewUrl && selectedTemplate === index ? (
                         <iframe
                           src={previewUrl}
-                          style={{ width: '100%', height: '100%', border: 'none' }}
+                          style={{ 
+                            width: '100%', 
+                            height: '100%', 
+                            border: 'none',
+                            maxWidth: '100%',
+                            overflow: 'hidden'
+                          }}
                           title={template.name}
                         />
                       ) : (
