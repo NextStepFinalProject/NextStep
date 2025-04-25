@@ -450,11 +450,18 @@ const Resume: React.FC = () => {
                     }}
                   >
                     {template.type === 'application/pdf' ? (
-                      <iframe
-                        src={`data:${template.type};base64,${template.content}`}
-                        style={{ width: '100%', height: '100%', border: 'none' }}
-                        title={template.name}
-                      />
+                      <Box sx={{ 
+                        width: '100%', 
+                        height: '100%', 
+                        transform: 'scale(0.9)',
+                        transformOrigin: 'center center'
+                      }}>
+                        <iframe
+                          src={`data:${template.type};base64,${template.content}`}
+                          style={{ width: '100%', height: '100%', border: 'none' }}
+                          title={template.name}
+                        />
+                      </Box>
                     ) : (
                       previewUrl && selectedTemplate === index ? (
                         <iframe
