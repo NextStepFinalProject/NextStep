@@ -80,8 +80,11 @@ const MainDashboard: React.FC = () => {
         try {
           await api.post('/linkedin/start-linkedin');
 
-          // Now start the redirect
-          window.location.href = 'http://localhost:3000/linkedin/auth';
+          const from = window.location.href;
+          const fromUrl = btoa(from);
+
+          // start the redirect
+          window.location.href = `http://localhost:3000/linkedin/auth?fromUrl=${encodeURIComponent(fromUrl)}`;
         } catch (err) {
           console.error('Failed to start LinkedIn auth:', err);
         }

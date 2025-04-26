@@ -7,7 +7,7 @@ export const loginFailure = (req: Request, res: Response): void => {
 };
 
 export const startLinkedIn = (req: CustomRequest, res: Response): void => {
-    res.cookie('linkedin_temp_user', req.user.id, {
+    res.cookie('temp_user', req.user.id, {
         httpOnly: true,
         sameSite: 'lax',
         secure: false, // TODO - change when https
@@ -18,15 +18,60 @@ export const startLinkedIn = (req: CustomRequest, res: Response): void => {
 };
 
 export const auth = (req: Request, res: Response, next: NextFunction): void => {
-    const userId = req.cookies.linkedin_temp_user;
+    const reqFromUrl = req.query.fromUrl as string;
+    const fromUrl = Buffer.from(reqFromUrl as string, 'base64').toString('utf-8');
+
+    const userId = req.cookies['temp_user'];
     if (!userId) {
         res.status(401).send('No temp session');
     }
     else {
-        const sese = req.session //.tempUserId = userId;
-        passport.authenticate('linkedin')(req, res, next);
+        const state = Buffer.from(JSON.stringify({ userId, fromUrl })).toString('base64');
+
+        passport.authenticate('linkedin', {state})(req, res, next);
     }
 }
+
+
+export const linkedinCallback = (req: Request, res: Response, next: NextFunction): void => {
+    passport.authenticate('linkedin',
+        { failureRedirect: '/failure' },
+        (err: any, user: any, info: any) => {
+        if (err || !user) {
+            console.error('LinkedIn auth error:', err || 'No user');
+            return res.redirect('/failure');
+        }
+
+        req.logIn(user, (err) => {
+            if (err) {
+                console.error('Session login error:', err);
+                return res.redirect('/failure');
+            }
+
+            const state = req.query.state as string;
+            let fromUrl = '/profile';
+
+            if (state) {
+                try {
+                    const decoded = JSON.parse(Buffer.from(state, 'base64').toString());
+                    const { userId } = decoded
+                    console.log('Decoded state:', decoded);
+                    console.log('userId:', userId);
+                    fromUrl = decoded.fromUrl || '/profile';
+                } catch (error) {
+                    console.error('Failed to decode state:', error);
+                }
+            }
+
+            console.log('LinkedIn user logged in:', user.displayName);
+            // Add the profile data to DB with the userId
+
+            res.clearCookie('temp_user');
+            res.redirect(fromUrl);
+        });
+    })(req, res, next);
+};
+
 
 
 export const getProfile = (req: Request, res: Response): void => {

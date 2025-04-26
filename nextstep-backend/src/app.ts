@@ -90,6 +90,7 @@ app.use(authenticateToken.unless({
 // To block queries without Authentication
 app.use(authenticateTokenForParams.unless({
     path: [
+        {url: '/linkedin/auth'},
         {url: '/linkedin/callback'}
     ]
 }));
