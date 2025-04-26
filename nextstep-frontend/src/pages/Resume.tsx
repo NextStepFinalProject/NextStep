@@ -134,8 +134,11 @@ const Resume: React.FC = () => {
   const [error, setError] = useState('');
   const [templates, setTemplates] = useState<Array<{ name: string; content: string; type: string }>>([]);
   const [selectedTemplate, setSelectedTemplate] = useState<number | null>(null);
+  const [previewOpen, setPreviewOpen] = useState(false);
+  const [previewTemplate, setPreviewTemplate] = useState<{ name: string; content: string; type: string } | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [previewUrlCache, setPreviewUrlCache] = useState<Record<string, string>>({});
+  const [generatedResume, setGeneratedResume] = useState<{ content: string; type: string } | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const feedbackEndRef = useRef<HTMLDivElement>(null);
 
@@ -244,9 +247,30 @@ const Resume: React.FC = () => {
     setActiveStep((prevStep) => prevStep - 1);
   };
 
-  const handleGenerateResume = () => {
-    // TODO: Implement resume generation
-    console.log('Generating resume with template:', selectedTemplate);
+  const handleGenerateResume = async () => {
+    if (selectedTemplate === null) {
+      setError('Please select a template');
+      return;
+    }
+
+    setLoading(true);
+    setError('');
+
+    try {
+      const selectedTemplateData = templates[selectedTemplate];
+      const response = await api.post('/resume/generate', {
+        feedback,
+        jobDescription,
+        templateName: selectedTemplateData.name
+      });
+
+      setGeneratedResume(response.data);
+      setActiveStep(2);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to generate resume');
+    } finally {
+      setLoading(false);
+    }
   };
 
   const uploadToTmpFiles = async (base64Content: string, fileName: string): Promise<string> => {
@@ -515,13 +539,23 @@ const Resume: React.FC = () => {
             <Typography variant="h4" gutterBottom>
               Generate matching resume
             </Typography>
-            <Button
-              variant="contained"
-              onClick={handleGenerateResume}
-              disabled={selectedTemplate === null}
-            >
-              Generate Resume
-            </Button>
+            {generatedResume ? (
+              <Box sx={{ mt: 3 }}>
+                <Button
+                  variant="contained"
+                  href={`data:${generatedResume.type};base64,${generatedResume.content}`}
+                  download={`improved_resume${generatedResume.type.includes('docx') ? '.docx' : '.doc'}`}
+                >
+                  Download Improved Resume
+                </Button>
+              </Box>
+            ) : (
+              <Box sx={{ mt: 3, textAlign: 'center' }}>
+                <Typography variant="body1" color="text.secondary">
+                  Your improved resume will be ready for download here.
+                </Typography>
+              </Box>
+            )}
           </Box>
         );
       default:
