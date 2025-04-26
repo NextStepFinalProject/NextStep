@@ -40,10 +40,10 @@ export const streamChatWithAI = async (
             },
             body: JSON.stringify({
                 model: MODEL_NAME,
-                messages: [ systemMessage, userMessageContents.map(userMessageContent => ({
+                messages: [ systemMessage, ...userMessageContents.map(userMessageContent => ({
                     role: 'user',
                     content: userMessageContent
-                })) ],
+                  })) ],
                 stream: true,
             }),
         });
@@ -112,10 +112,10 @@ export const chatWithAI = async (systemMessageContent: string, userMessageConten
             API_URL,
             {
                 model: MODEL_NAME,
-                messages: [ systemMessage, userMessageContents.map(userMessageContent => ({
+                messages: [ systemMessage, ...userMessageContents.map(userMessageContent => ({
                     role: 'user',
                     content: userMessageContent
-                })) ],
+                  })) ],
             },
             {
                 headers: {
