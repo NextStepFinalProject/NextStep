@@ -26,6 +26,7 @@ import ScoreGauge from '../components/ScoreGauge';
 import Carousel from 'react-material-ui-carousel';
 import CloseIcon from '@mui/icons-material/Close';
 import ZoomInIcon from '@mui/icons-material/ZoomIn';
+import './Resume.css';
 
 const steps = ['Score your resume', 'Choose a template', 'Generate matching resume'];
 
@@ -115,13 +116,34 @@ const TemplateCard = styled(Card)(({ theme }) => ({
   maxWidth: '1200px',
   margin: '0 auto',
   '& .MuiCardMedia-root': {
-    height: 'calc(100vh - 200px)', // Account for header and card actions
-    minHeight: '800px',
+    height: 'calc(100vh - 300px)',
+    minHeight: '600px',
     backgroundSize: 'contain',
     backgroundPosition: 'center',
     backgroundColor: theme.palette.grey[100],
     width: '100%',
   },
+}));
+
+const NavigationContainer = styled(Box)(({ theme }) => ({
+  top: 0,
+  zIndex: 1000,
+  backgroundColor: theme.palette.background.default,
+  padding: theme.spacing(2),
+  display: 'flex',
+  justifyContent: 'space-between',
+  alignItems: 'center',
+  borderBottom: `1px solid ${theme.palette.divider}`,
+  marginBottom: theme.spacing(2),
+}));
+
+const StepperContainer = styled(Box)(({ theme }) => ({
+  top: 64,
+  zIndex: 999,
+  backgroundColor: theme.palette.background.default,
+  padding: theme.spacing(2, 0),
+  borderBottom: `1px solid ${theme.palette.divider}`,
+  marginBottom: theme.spacing(2),
 }));
 
 const Resume: React.FC = () => {
@@ -565,17 +587,7 @@ const Resume: React.FC = () => {
 
   return (
     <Box sx={{ width: '100%' }}>
-      <Stepper activeStep={activeStep} alternativeLabel sx={{ mb: 4 }}>
-        {steps.map((label) => (
-          <Step key={label}>
-            <StepLabel>{label}</StepLabel>
-          </Step>
-        ))}
-      </Stepper>
-
-      {renderStepContent(activeStep)}
-
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', mt: 2 }}>
+      <NavigationContainer>
         <Button
           disabled={activeStep === 0}
           onClick={handleBack}
@@ -589,7 +601,19 @@ const Resume: React.FC = () => {
         >
           Next
         </Button>
-      </Box>
+      </NavigationContainer>
+
+      <StepperContainer>
+        <Stepper activeStep={activeStep} alternativeLabel>
+          {steps.map((label) => (
+            <Step key={label}>
+              <StepLabel>{label}</StepLabel>
+            </Step>
+          ))}
+        </Stepper>
+      </StepperContainer>
+
+      {renderStepContent(activeStep)}
     </Box>
   );
 };
