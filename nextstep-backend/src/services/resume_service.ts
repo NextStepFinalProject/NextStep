@@ -166,4 +166,92 @@ const streamScoreResume = async (
     }
 };
 
-export { scoreResume, streamScoreResume };
+const getResumeTemplates = async (): Promise<{ name: string; content: string; type: string }[]> => {
+    try {
+        const templatesDir = config.assets.resumeTemplatesDirectoryPath();
+        if (!fs.existsSync(templatesDir)) {
+            return [];
+        }
+
+        const files = fs.readdirSync(templatesDir);
+        const templates = await Promise.all(
+            files
+                .filter(file => {
+                    const ext = path.extname(file).toLowerCase();
+                    return ['.pdf', '.doc', '.docx'].includes(ext);
+                })
+                .map(async file => {
+                    const filePath = path.join(templatesDir, file);
+                    const content = fs.readFileSync(filePath);
+                    const base64Content = content.toString('base64');
+                    const mimeType = {
+                        '.pdf': 'application/pdf',
+                        '.doc': 'application/msword',
+                        '.docx': 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+                    }[path.extname(file).toLowerCase()] || 'application/octet-stream';
+
+                    return {
+                        name: path.basename(file),
+                        content: base64Content,
+                        type: mimeType
+                    };
+                })
+        );
+
+        return templates;
+    } catch (error) {
+        console.error('Error reading resume templates:', error);
+        return [];
+    }
+};
+
+const generateImprovedResume = async (
+    feedback: string,
+    jobDescription: string,
+    templateName: string
+): Promise<{ content: string; type: string }> => {
+    try {
+        const templatesDir = config.assets.resumeTemplatesDirectoryPath();
+        const templatePath = path.join(templatesDir, templateName);
+        
+        if (!fs.existsSync(templatePath)) {
+            throw new Error(`Template ${templateName} not found`);
+        }
+
+        const prompt = `You are an expert resume writer. Using the following feedback and job description, modify the resume template to implement all suggested improvements.
+
+Feedback:
+${feedback}
+
+Job Description:
+${jobDescription}
+
+Please modify the template to:
+1. Keep the exact same format and structure as the template
+2. Implement all suggested improvements from the feedback
+3. Ensure the content matches the job description requirements
+4. Maintain professional formatting and style
+
+Return the modified resume in the same format as the template.`;
+
+        if (!config.chatAi.turned_on()) {
+            throw new Error('Chat AI feature is turned off');
+        }
+
+        const modifiedContent = await chatWithAI(prompt, SYSTEM_TEMPLATE);
+        
+        // For now, we'll return the original template content
+        // TODO: Implement actual document modification
+        const content = fs.readFileSync(templatePath);
+        
+        return {
+            content: content.toString('base64'),
+            type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+        };
+    } catch (error) {
+        console.error('Error generating improved resume:', error);
+        throw error;
+    }
+};
+
+export { scoreResume, streamScoreResume, getResumeTemplates, generateImprovedResume };

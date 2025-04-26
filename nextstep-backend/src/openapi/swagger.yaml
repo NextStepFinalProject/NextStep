@@ -952,6 +952,110 @@ paths:
         '500':
           description: Internal server error
 
+  /resume/templates:
+    get:
+      tags:
+        - Resume
+      summary: Get available resume templates
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: List of available resume templates retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    name:
+                      type: string
+                      description: The name of the template (with extension)
+                    content:
+                      type: string
+                      description: Base64 encoded content of the template file
+                    type:
+                      type: string
+                      description: MIME type of the template file
+                      enum:
+                        - application/pdf
+                        - application/msword
+                        - application/vnd.openxmlformats-officedocument.wordprocessingml.document
+        '401':
+          description: Unauthorized
+        '500':
+          description: Internal server error
+
+  /resume/generate:
+    post:
+      tags:
+        - Resume
+      summary: Generate an improved resume based on a resume template, feedback and job description
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - feedback
+                - jobDescription
+                - templateName
+              properties:
+                feedback:
+                  type: string
+                  description: The feedback received from the resume scoring process
+                jobDescription:
+                  type: string
+                  description: The job description used for scoring the resume
+                templateName:
+                  type: string
+                  description: The name of the template to use for generating the improved resume
+      responses:
+        '200':
+          description: The generated improved resume
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  content:
+                    type: string
+                    description: Base64 encoded content of the generated resume file
+                  type:
+                    type: string
+                    description: MIME type of the generated resume file
+                    enum:
+                      - application/msword
+                      - application/vnd.openxmlformats-officedocument.wordprocessingml.document
+        '400':
+          description: Bad request - Missing required fields
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    description: Error message indicating missing fields
+        '401':
+          description: Unauthorized - Missing or invalid authentication token
+        '404':
+          description: Template not found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    description: Error message indicating template not found
+        '500':
+          description: Internal server error
+
   /room/user/{receiverUserId}:
     get:
       tags:
