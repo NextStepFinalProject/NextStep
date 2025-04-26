@@ -460,7 +460,7 @@ const Resume: React.FC = () => {
         );
       case 1:
         return (
-          <Box sx={{ maxWidth: 800, mx: 'auto', p: 3 }}>
+          <Box sx={{ maxWidth: 800, mx: 'auto', p: 3, pt: 12 }}>
             <Typography variant="h4" gutterBottom>
               Choose a template
             </Typography>
@@ -483,8 +483,32 @@ const Resume: React.FC = () => {
                 }
               }}
             >
-              {templates.map((template, index) => (
+              {templates.map((template, templateIndex) => (
                 <TemplateCard key={template.name}>
+                  <CardContent>
+                    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+                      <Typography gutterBottom variant="h5" component="div">
+                        {template.name}
+                      </Typography>
+                      <Box>
+                        <Button 
+                          size="small" 
+                          variant={selectedTemplate === templateIndex ? "contained" : "outlined"}
+                          onClick={() => setSelectedTemplate(templateIndex)}
+                          sx={{ mr: 1 }}
+                        >
+                          {selectedTemplate === templateIndex ? "Selected" : "Select"}
+                        </Button>
+                        <Button
+                          size="small"
+                          href={`data:${template.type};base64,${template.content}`}
+                          download={`${template.name}${template.type.includes('docx') ? '.docx' : '.doc'}`}
+                        >
+                          Download
+                        </Button>
+                      </Box>
+                    </Box>
+                  </CardContent>
                   <CardMedia
                     component="div"
                     sx={{
@@ -504,12 +528,12 @@ const Resume: React.FC = () => {
                       }}>
                         <iframe
                           src={`data:${template.type};base64,${template.content}`}
-                          style={{ width: '100%', height: '100%', border: 'none' }}
+                          style={{ width: '100%', height: '100%', border: 'none', background: '#fff' }}
                           title={template.name}
                         />
                       </Box>
                     ) : (
-                      previewUrl && selectedTemplate === index ? (
+                      previewUrl && selectedTemplate === templateIndex ? (
                         <iframe
                           src={previewUrl}
                           style={{ 
@@ -517,7 +541,8 @@ const Resume: React.FC = () => {
                             height: '100%', 
                             border: 'none',
                             maxWidth: '100%',
-                            overflow: 'hidden'
+                            overflow: 'hidden',
+                            background: '#fff'
                           }}
                           title={template.name}
                         />
@@ -529,27 +554,6 @@ const Resume: React.FC = () => {
                       )
                     )}
                   </CardMedia>
-                  <CardContent>
-                    <Typography gutterBottom variant="h5" component="div">
-                      {template.name}
-                    </Typography>
-                  </CardContent>
-                  <CardActions>
-                    <Button 
-                      size="small" 
-                      variant={selectedTemplate === index ? "contained" : "outlined"}
-                      onClick={() => setSelectedTemplate(index)}
-                    >
-                      {selectedTemplate === index ? "Selected" : "Select"}
-                    </Button>
-                    <Button
-                      size="small"
-                      href={`data:${template.type};base64,${template.content}`}
-                      download={`${template.name}${template.type.includes('docx') ? '.docx' : '.doc'}`}
-                    >
-                      Download
-                    </Button>
-                  </CardActions>
                 </TemplateCard>
               ))}
             </Carousel>
