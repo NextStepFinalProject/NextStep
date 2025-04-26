@@ -43,6 +43,8 @@ const MainDashboard: React.FC = () => {
   const [newSkill, setNewSkill] = useState('');
   const [selectedRole, setSelectedRole] = useState(() => localStorage.getItem('selectedRole') || '');
   const [repos, setRepos] = useState<{ id: number; name: string; html_url: string }[]>([]);
+  const [useOAuth, setUseOAuth] = useState(true); // Toggle for GitHub connection method
+  const [showAuthOptions, setShowAuthOptions] = useState(false); // Toggle for showing auth options
 
   useEffect(() => {
     localStorage.setItem('aboutMe', aboutMe);
@@ -67,10 +69,35 @@ const MainDashboard: React.FC = () => {
   };
 
   const handleGitHubConnect = async () => {
+    if (!showAuthOptions) {
+      setShowAuthOptions(true); // Show auth options first
+      return;
+    }
+
     try {
-      initiateGitHubOAuth();
+      if (useOAuth) {
+        initiateGitHubOAuth();
+      } else {
+        const username = prompt('Enter GitHub username:');
+        if (!username) {
+          alert('GitHub username is required for No Auth connection.');
+          return;
+        }
+        const fetchedRepos = await connectToGitHub(username);
+        setRepos(fetchedRepos);
+
+        // Fetch languages and add them as skills
+        const languagesSet = new Set(skills);
+        for (const repo of fetchedRepos) {
+          const repoLanguages = await fetchRepoLanguages(repo.html_url);
+          Object.keys(repoLanguages).forEach((lang) => languagesSet.add(lang));
+        }
+        setSkills(Array.from(languagesSet));
+      }
     } catch (error) {
-      console.error('Error initiating GitHub OAuth:', error);
+      console.error('Error connecting to GitHub:', error);
+    } finally {
+      setShowAuthOptions(false); // Close auth options after proceeding
     }
   };
 
@@ -203,6 +230,18 @@ const MainDashboard: React.FC = () => {
             >
               Connect to LinkedIn
             </Button>
+            {showAuthOptions && (
+              <FormControl fullWidth sx={{ mb: 2 }}>
+                <InputLabel>GitHub Connection Method</InputLabel>
+                <Select
+                  value={useOAuth ? 'oauth' : 'no-auth'}
+                  onChange={(e) => setUseOAuth(e.target.value === 'oauth')}
+                >
+                  <MenuItem value="oauth">OAuth</MenuItem>
+                  <MenuItem value="no-auth">No Auth</MenuItem>
+                </Select>
+              </FormControl>
+            )}
             <Button
               variant="contained"
               color="secondary"
@@ -210,7 +249,7 @@ const MainDashboard: React.FC = () => {
               fullWidth
               onClick={handleGitHubConnect}
             >
-              Connect to GitHub
+              {showAuthOptions ? 'Proceed' : 'Connect to GitHub'}
             </Button>
             {
             repos.length > 0 && <Typography variant="h6" sx={{ mt: 3 }}>
@@ -226,7 +265,7 @@ const MainDashboard: React.FC = () => {
                 </li>
               ))}
             </ul>
-        </Paper>
+          </Paper>
         </Grid>
       </Grid>
     </Container>

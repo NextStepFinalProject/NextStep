@@ -46,10 +46,16 @@ export const handleGitHubOAuth = async (req: Request, res: Response) => {
 
 export const fetchGitHubRepos = async (req: Request, res: Response) => {
     const { username } = req.params;
+    const { accessToken } = req.query; // Optional access token for authenticated requests
 
     try {
         const apiUrl = `https://api.github.com/users/${username}/repos`;
-        const response = await axios.get(apiUrl) as {data: any, status: number};
+
+        const headers = accessToken
+            ? { Authorization: `Bearer ${accessToken}` }
+            : undefined;
+
+        const response = await axios.get(apiUrl, { headers }) as { data: any, status: number };
 
         if (response.status !== 200) {
             return res.status(400).json({ error: `Error fetching repos: ${response.status}` });
