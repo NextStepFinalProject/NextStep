@@ -6,7 +6,7 @@ import { chatWithAI, streamChatWithAI } from './chat_api_service';
 import mammoth from 'mammoth';
 import pdfParse from 'pdf-parse';
 
-const SYSTEM_TEMPLATE = `You are a very experienced ATS (Application Tracking System) bot with a deep understanding named BOb the Resume builder.
+const SYSTEM_TEMPLATE = `You are a very experienced ATS (Application Tracking System) bot with a deep understanding named Bob the Resume builder.
 You will review resumes with or without job descriptions.
 You are an expert in resume evaluation and provide constructive feedback with dynamic evaluation.
 You should also provide an improvement table, taking into account:
@@ -102,7 +102,7 @@ const scoreResume = async (resumePath: string, jobDescription?: string): Promise
         let feedback = FEEDBACK_ERROR_MESSAGE;
         if (config.chatAi.turned_on()) {
             // Get feedback from the AI
-            feedback = await chatWithAI(prompt, SYSTEM_TEMPLATE);
+            feedback = await chatWithAI(SYSTEM_TEMPLATE, [prompt]);
         }
 
         // Extract the score from the feedback
@@ -137,8 +137,8 @@ const streamScoreResume = async (
 
         if (config.chatAi.turned_on()) {
             await streamChatWithAI(
-                prompt,
                 SYSTEM_TEMPLATE,
+                [prompt],
                 (chunk) => {
                     fullResponse += chunk;
                     onChunk(chunk);
@@ -205,6 +205,12 @@ const getResumeTemplates = async (): Promise<{ name: string; content: string; ty
     }
 };
 
+// Helper to split a string into N parts
+function splitString(str: string, parts: number): string[] {
+    const len = Math.ceil(str.length / parts);
+    return Array.from({ length: parts }, (_, i) => str.slice(i * len, (i + 1) * len));
+}
+
 const generateImprovedResume = async (
     feedback: string,
     jobDescription: string,
@@ -219,14 +225,21 @@ const generateImprovedResume = async (
         }
 
         const resumeTemplateContentAsBase64 = fs.readFileSync(templatePath).toString('base64');
+        const numberOfSplits = 3;
+        const parts = splitString(resumeTemplateContentAsBase64, numberOfSplits);
 
+        let prompts = [`You will receive a resume template as a base64 string, split into ${numberOfSplits} parts. Please concatenate them in order before proceeding.`];
+        const splitPrompts = parts.map((part, i) => `PART ${i + 1} of ${numberOfSplits}:\n${parts[i]}`);
+        prompts = prompts.concat(splitPrompts);
+
+        // Prepare final prompt.
         const mimeType = {
             '.pdf': 'application/pdf',
             '.doc': 'application/msword',
             '.docx': 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
         }[path.extname(templateName).toLowerCase()] || 'application/octet-stream';
 
-        const prompt = `You are an expert resume writer. Using the following feedback and job description, modify the resume template to implement all suggested improvements.
+        const finalPrompt = `Now, using the concatenated base64 template, feedback, and job description below, modify the resume as instructed.
 
 Feedback:
 ${feedback}
@@ -240,23 +253,18 @@ ${templateName}
 Resume Template MIME-type:
 ${mimeType}
 
-Resume Template Content (as base64 string):
-${resumeTemplateContentAsBase64}
+Instructions:
+1. Keep the exact same format and structure as the template.
+2. Implement all suggested improvements from the feedback.
+3. Ensure the content matches the job description requirements.
+4. Maintain professional formatting and style.
 
-Please modify the template to:
-1. Keep the exact same format and structure as the template
-2. Implement all suggested improvements from the feedback
-3. Ensure the content matches the job description requirements
-4. Maintain professional formatting and style
+Return the modified resume in the same format as the template, as base64 string, and in the same MIME-type.`;
 
-Return the modified resume in the same format as the template, as base64 string, and in the same MIME-type, as the original template was.`;
+        prompts.push(finalPrompt);
 
-        if (!config.chatAi.turned_on()) {
-            throw new Error('Chat AI feature is turned off');
-        }
+        const modifiedContent = await chatWithAI(SYSTEM_TEMPLATE, prompts);
 
-        const modifiedContent = await chatWithAI(prompt, SYSTEM_TEMPLATE);
-        
         return {
             content: modifiedContent,
             type: mimeType
