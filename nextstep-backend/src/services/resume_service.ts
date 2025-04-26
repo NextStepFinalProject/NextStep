@@ -191,7 +191,7 @@ const getResumeTemplates = async (): Promise<{ name: string; content: string; ty
                     }[path.extname(file).toLowerCase()] || 'application/octet-stream';
 
                     return {
-                        name: path.basename(file, path.extname(file)),
+                        name: path.basename(file),
                         content: base64Content,
                         type: mimeType
                     };
@@ -212,7 +212,7 @@ const generateImprovedResume = async (
 ): Promise<{ content: string; type: string }> => {
     try {
         const templatesDir = config.assets.resumeTemplatesDirectoryPath();
-        const templatePath = path.join(templatesDir, `${templateName}.docx`);
+        const templatePath = path.join(templatesDir, templateName);
         
         if (!fs.existsSync(templatePath)) {
             throw new Error(`Template ${templateName} not found`);
