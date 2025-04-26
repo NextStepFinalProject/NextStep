@@ -1,6 +1,7 @@
 export const config = {
     app: {
         backend_url: () => import.meta.env.VITE_BACKEND_URL || 'http://localhost:3000',
+        backend_linkedin__url: () => import.meta.env.VITE_BACKEND_LINKEDIN_URL
     },
     socketMethods: {
         messageFromServer: "message-from-server",

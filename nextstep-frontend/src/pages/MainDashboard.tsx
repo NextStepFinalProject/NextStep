@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { Container, Box, Typography, Button, TextField, Chip, Stack, Grid, Paper, Autocomplete, MenuItem, Select, FormControl, InputLabel } from '@mui/material';
 import { GitHub, LinkedIn } from '@mui/icons-material';
 import { connectToGitHub, initiateGitHubOAuth, fetchRepoLanguages, handleGitHubOAuth } from '../handlers/githubAuth';
+import {config} from '../config';
+import api from "../serverApi.ts";
 
 const roles = [
   'Software Engineer',
@@ -73,6 +75,23 @@ const MainDashboard: React.FC = () => {
       console.error('Error initiating GitHub OAuth:', error);
     }
   };
+
+  const handleLinkedinConnect = async () => {
+        try {
+          await api.post('/linkedin/start-linkedin');
+
+          // Now start the redirect
+          window.location.href = 'http://localhost:3000/linkedin/auth';
+        } catch (err) {
+          console.error('Failed to start LinkedIn auth:', err);
+        }
+      };
+    //   // Redirect to server LinkedIn auth URL
+    //   window.location.href = `${config.app.backend_linkedin__url()}`;
+    // } catch (error) {
+    //   console.error('Error initiating LinkedIn OAuth:', error);
+    // }
+  // }
 
   useEffect(() => {
     const queryParams = new URLSearchParams(window.location.search);
@@ -198,6 +217,7 @@ const MainDashboard: React.FC = () => {
               variant="contained"
               color="primary"
               startIcon={<LinkedIn />}
+              onClick={handleLinkedinConnect}
               fullWidth
               sx={{ mb: 2 }}
             >

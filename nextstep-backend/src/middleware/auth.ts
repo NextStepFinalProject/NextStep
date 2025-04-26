@@ -71,6 +71,9 @@ const authenticateTokenForParams: any & { unless: typeof unless } = async (req: 
   }
 }
 
+authenticateTokenForParams.unless = unless;
+
+
 const authenticateLogoutToken = async (req: CustomRequest, res: Response, next: NextFunction) => {
     authenticateTokenHandler(req, res, next, true)
 }

@@ -7,6 +7,7 @@ import {getUserAuth, removeUserAuth, setUserAuth} from "./handlers/userAuth.ts";
 // Create an Axios instance
 const api: AxiosInstance = axios.create({
     baseURL: config.app.backend_url(),
+    withCredentials: true // Send cookies
 });
 
 // Function to refresh the token

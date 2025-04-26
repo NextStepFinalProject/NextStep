@@ -16,6 +16,11 @@ import loadOpenApiFile from "./openapi/openapi_loader";
 import resource_routes from './routes/resources_routes';
 import resume_routes from './routes/resume_routes';
 import githubRoutes from './routes/github_routes';
+import linkedinRoutes from './routes/linkedin_routes';
+import session from 'express-session';
+import passport from 'passport';
+import cookieParser from 'cookie-parser';
+import('./config/passport');
 
 const specs = swaggerJsdoc(options);
 
@@ -40,6 +45,22 @@ const removeUndefinedOrEmptyFields = (req: Request, res: Response, next: NextFun
     next();
 };
 
+
+app.use(cookieParser());
+app.use(session({
+    secret: 'your-secret',
+    resave: false,
+    saveUninitialized: false,
+}));
+
+// Initialize Passport
+app.use(passport.initialize());
+app.use(passport.session());
+
+// Load Passport config
+import('./config/passport');
+
+
 app.use(bodyParser.json());
 app.use(removeUndefinedOrEmptyFields);
 app.use(bodyParser.urlencoded({ extended: true }));
@@ -60,12 +81,18 @@ app.use(authenticateToken.unless({
         { url: '/comment', methods: ['GET'] },
         { url: '/post', methods: ['GET'] },  // Allow GET to /post
         { url: /^\/resource\/image\/[^\/]+$/, methods: ['GET'] },  // Allow GET to /resource/image/{anything}
+        {url: '/linkedin/auth'},
+        {url: '/linkedin/callback'},
     ]
 }));
 
 // Add AUTH middleware for params queries
 // To block queries without Authentication
-app.use(authenticateTokenForParams);
+app.use(authenticateTokenForParams.unless({
+    path: [
+        {url: '/linkedin/callback'}
+    ]
+}));
 
 app.use('/auth', authRoutes);
 app.use('/comment', commentsRoutes);
@@ -76,5 +103,6 @@ app.use('/resource', resource_routes);
 app.use('/room', roomsRoutes);
 app.use('/resume', resume_routes);
 app.use('/github', githubRoutes);
+app.use('/linkedin', linkedinRoutes);
 
 export { app, corsOptions };
