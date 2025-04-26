@@ -326,6 +326,14 @@ const Resume: React.FC = () => {
       setError('Please select a template');
       return;
     }
+    if (!feedback.trim()) {
+      setError('Please analyze your resume and get feedback first.');
+      return;
+    }
+    if (!jobDescription.trim()) {
+      setError('Please provide a job description.');
+      return;
+    }
 
     setLoading(true);
     setError('');
@@ -543,8 +551,8 @@ const Resume: React.FC = () => {
                         {template.name}
                       </Typography>
                       <Box>
-                        <Button 
-                          size="small" 
+                        <Button
+                          size="small"
                           variant={selectedTemplate === templateIndex ? "contained" : "outlined"}
                           onClick={() => setSelectedTemplate(templateIndex)}
                           sx={{ mr: 1 }}
@@ -612,16 +620,33 @@ const Resume: React.FC = () => {
           </Box>
         );
       case 2:
+        const selectedTemplateName = selectedTemplate !== null ? templates[selectedTemplate]?.name : '';
+        const canGenerate =
+          selectedTemplate !== null &&
+          feedback.trim() !== '' &&
+          jobDescription.trim() !== '' &&
+          !loading;
         return (
           <Box sx={{ maxWidth: 800, mx: 'auto', p: 3 }}>
             <Typography variant="h4" gutterBottom>
               Generate matching resume
             </Typography>
+            <Box sx={{ mb: 2 }}>
+              <Typography variant="subtitle1">
+                <strong>Selected Template:</strong> {selectedTemplateName || <span style={{color: 'red'}}>None selected</span>}
+              </Typography>
+              <Typography variant="subtitle1" sx={{ mt: 1 }}>
+                <strong>Job Description:</strong>
+              </Typography>
+              <Box sx={{ p: 2, background: '#f5f5f5', borderRadius: 1, minHeight: 60 }}>
+                {jobDescription ? jobDescription : <span style={{color: 'red'}}>No job description provided</span>}
+              </Box>
+            </Box>
             {!generatedResume && (
               <Button
                 variant="contained"
                 onClick={handleGenerateResume}
-                disabled={loading || !selectedTemplate}
+                disabled={!canGenerate}
                 sx={{ mt: 2 }}
               >
                 {loading ? 'Generating...' : 'Generate Resume'}
