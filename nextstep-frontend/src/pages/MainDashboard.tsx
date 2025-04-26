@@ -104,6 +104,7 @@ const MainDashboard: React.FC = () => {
       sx={{
         height: 'calc(100vh - 64px)', // Adjust height to account for headers/footers
         display: 'flex',
+        mt: '-20px',
         flexDirection: 'column',
         overflowY: 'hidden', // Prevent scrolling on the entire page
         maxHeight: '100%', // Ensure the container does not exceed viewport height
