@@ -102,11 +102,11 @@ const MainDashboard: React.FC = () => {
     <Container
       maxWidth="lg"
       sx={{
-        // mt: 5,
         height: 'calc(100vh - 64px)', // Adjust height to account for headers/footers
         display: 'flex',
         flexDirection: 'column',
         overflowY: 'hidden', // Prevent scrolling on the entire page
+        maxHeight: '100%', // Ensure the container does not exceed viewport height
       }}
     >
       <Grid
@@ -115,7 +115,7 @@ const MainDashboard: React.FC = () => {
         sx={{
           flex: 1,
           height: '100%', // Ensure the grid fills the container height
-          overflow: 'hidden', // Prevent grid-level scrolling
+          overflowY: 'hidden', // Prevent grid-level scrolling
         }}
       >
         {/* Left Side (Main Content) */}
@@ -138,6 +138,7 @@ const MainDashboard: React.FC = () => {
               flex: 1,
               display: 'flex',
               flexDirection: 'column',
+              height: '100%', // Ensure it fills the parent height
             }}
           >
             <Typography variant="h4" gutterBottom color="primary.dark">
@@ -151,7 +152,7 @@ const MainDashboard: React.FC = () => {
               placeholder="Write about yourself..."
               value={aboutMe}
               onChange={(e) => setAboutMe(e.target.value)}
-              sx={{ mb: 3 }}
+              sx={{ mb: 3, }}
             />
             <Divider sx={{ mb: 3 }} />
             <Typography variant="h5" gutterBottom>Desired Role</Typography>
