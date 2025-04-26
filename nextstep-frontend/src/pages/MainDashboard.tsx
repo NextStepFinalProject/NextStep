@@ -1,40 +1,27 @@
 import React, { useState, useEffect } from 'react';
-import { Container, Box, Typography, Button, TextField, Chip, Stack, Grid, Paper, Autocomplete, MenuItem, Select, FormControl, InputLabel } from '@mui/material';
+import {
+  Container, Box, Typography, TextField, Chip, Stack,
+  Grid, Paper, Autocomplete, MenuItem, Select, FormControl,
+  InputLabel, Divider, Avatar, Button
+} from '@mui/material';
 import { GitHub, LinkedIn } from '@mui/icons-material';
-import { connectToGitHub, initiateGitHubOAuth, fetchRepoLanguages, handleGitHubOAuth } from '../handlers/githubAuth';
+import {
+  connectToGitHub,
+  initiateGitHubOAuth,
+  fetchRepoLanguages,
+  handleGitHubOAuth
+} from '../handlers/githubAuth';
 
 const roles = [
-  'Software Engineer',
-  'Software Developer',
-  'Frontend Developer',
-  'Backend Developer',
-  'Full Stack Developer',
-  'DevOps Engineer',
-  'Data Scientist',
-  'Machine Learning Engineer',
-  'Product Manager',
-  'UI/UX Designer',
+  'Software Engineer', 'Software Developer', 'Frontend Developer',
+  'Backend Developer', 'Full Stack Developer', 'DevOps Engineer',
+  'Data Scientist', 'Machine Learning Engineer', 'Product Manager', 'UI/UX Designer'
 ];
 
 const skillsList = [
-  'Leadership',
-  'React',
-  'JavaScript',
-  'TypeScript',
-  'Python',
-  'Java',
-  'C++',
-  'Node.js',
-  'Express',
-  'MongoDB',
-  'SQL',
-  'AWS',
-  'Docker',
-  'Kubernetes',
-  'Git',
-  'Agile Methodologies',
-  'Problem Solving',
-  'Communication',
+  'Leadership', 'React', 'JavaScript', 'TypeScript', 'Python', 'Java',
+  'C++', 'Node.js', 'Express', 'MongoDB', 'SQL', 'AWS', 'Docker',
+  'Kubernetes', 'Git', 'Agile Methodologies', 'Problem Solving', 'Communication'
 ];
 
 const MainDashboard: React.FC = () => {
@@ -43,24 +30,17 @@ const MainDashboard: React.FC = () => {
   const [newSkill, setNewSkill] = useState('');
   const [selectedRole, setSelectedRole] = useState(() => localStorage.getItem('selectedRole') || '');
   const [repos, setRepos] = useState<{ id: number; name: string; html_url: string }[]>([]);
-  const [useOAuth, setUseOAuth] = useState(true); // Toggle for GitHub connection method
-  const [showAuthOptions, setShowAuthOptions] = useState(false); // Toggle for showing auth options
+  const [useOAuth, setUseOAuth] = useState(true);
+  const [showAuthOptions, setShowAuthOptions] = useState(false);
 
-  useEffect(() => {
-    localStorage.setItem('aboutMe', aboutMe);
-  }, [aboutMe]);
-
-  useEffect(() => {
-    localStorage.setItem('skills', JSON.stringify(skills));
-  }, [skills]);
-
-  useEffect(() => {
-    localStorage.setItem('selectedRole', selectedRole);
-  }, [selectedRole]);
+  useEffect(() => { localStorage.setItem('aboutMe', aboutMe); }, [aboutMe]);
+  useEffect(() => { localStorage.setItem('skills', JSON.stringify(skills)); }, [skills]);
+  useEffect(() => { localStorage.setItem('selectedRole', selectedRole); }, [selectedRole]);
 
   const handleAddSkill = (skill: string) => {
     if (skill.trim() && !skills.includes(skill.trim())) {
       setSkills([...skills, skill.trim()]);
+      setNewSkill('');
     }
   };
 
@@ -69,60 +49,51 @@ const MainDashboard: React.FC = () => {
   };
 
   const handleGitHubConnect = async () => {
-    if (!showAuthOptions) {
-      setShowAuthOptions(true); // Show auth options first
-      return;
-    }
-
+    if (!showAuthOptions) { setShowAuthOptions(true); return; }
     try {
       if (useOAuth) {
         initiateGitHubOAuth();
       } else {
         const username = prompt('Enter GitHub username:');
-        if (!username) {
-          alert('GitHub username is required for No Auth connection.');
-          return;
-        }
+        if (!username) { alert('GitHub username is required.'); return; }
         const fetchedRepos = await connectToGitHub(username);
         setRepos(fetchedRepos);
-
-        // Fetch languages and add them as skills
         const languagesSet = new Set(skills);
         for (const repo of fetchedRepos) {
           const repoLanguages = await fetchRepoLanguages(repo.html_url);
-          Object.keys(repoLanguages).forEach((lang) => languagesSet.add(lang));
+          Object.keys(repoLanguages).forEach(lang => languagesSet.add(lang));
         }
         setSkills(Array.from(languagesSet));
       }
     } catch (error) {
       console.error('Error connecting to GitHub:', error);
     } finally {
-      setShowAuthOptions(false); // Close auth options after proceeding
+      setShowAuthOptions(false);
     }
   };
 
+  const handleBackToGitHubOptions = () => {
+    setShowAuthOptions(false); // Reset the GitHub connection options
+  };
+
   useEffect(() => {
-    const queryParams = new URLSearchParams(window.location.search);
-    const code = queryParams.get('code');
+    const code = new URLSearchParams(window.location.search).get('code');
     if (code) {
       const fetchGitHubData = async () => {
         try {
           const username = await handleGitHubOAuth(code);
           const fetchedRepos = await connectToGitHub(username);
           setRepos(fetchedRepos);
-
-          // Fetch languages and add them as skills
           const languagesSet = new Set(skills);
           for (const repo of fetchedRepos) {
             const repoLanguages = await fetchRepoLanguages(repo.html_url);
-            Object.keys(repoLanguages).forEach((lang) => languagesSet.add(lang));
+            Object.keys(repoLanguages).forEach(lang => languagesSet.add(lang));
           }
           setSkills(Array.from(languagesSet));
         } catch (error) {
           console.error('Error fetching GitHub data:', error);
         }
       };
-
       fetchGitHubData();
     }
   }, []);
@@ -131,39 +102,59 @@ const MainDashboard: React.FC = () => {
     <Container
       maxWidth="lg"
       sx={{
-        mt: 5,
-        height: '100vh',
-        overflow: 'hidden', // Prevent scrolling on the entire page
+        // mt: 5,
+        height: 'calc(100vh - 64px)', // Adjust height to account for headers/footers
+        display: 'flex',
+        flexDirection: 'column',
+        overflowY: 'hidden', // Prevent scrolling on the entire page
       }}
     >
-      <Grid container spacing={4} sx={{ height: '100%' }}>
-        {/* Main Content */}
+      <Grid
+        container
+        spacing={4}
+        sx={{
+          flex: 1,
+          height: '100%', // Ensure the grid fills the container height
+          overflow: 'hidden', // Prevent grid-level scrolling
+        }}
+      >
+        {/* Left Side (Main Content) */}
         <Grid
           item
           xs={12}
           md={8}
           sx={{
-            height: '100%',
-            overflowY: 'auto', // Make only the left side scrollable
+            display: 'flex',
+            flexDirection: 'column',
+            height: '100%', // Ensure it fills the parent height
+            overflowY: 'auto', // Allow scrolling only if content exceeds height
           }}
         >
-          <Paper elevation={3} sx={{ p: 4 }}>
-            <Typography variant="h4" gutterBottom>
+          <Paper
+            elevation={4}
+            sx={{
+              p: 4,
+              borderRadius: 3,
+              flex: 1,
+              display: 'flex',
+              flexDirection: 'column',
+            }}
+          >
+            <Typography variant="h4" gutterBottom color="primary.dark">
               About Me
             </Typography>
             <TextField
               fullWidth
               multiline
-              rows={2} // Reduce the height of the "About Me" section
+              rows={2}
               variant="outlined"
               placeholder="Write about yourself..."
               value={aboutMe}
               onChange={(e) => setAboutMe(e.target.value)}
               sx={{ mb: 3 }}
             />
-            <Typography variant="h5" gutterBottom>
-              Desired Role
-            </Typography>
+            <Divider sx={{ mb: 3 }} />
+            <Typography variant="h5" gutterBottom>Desired Role</Typography>
             <Autocomplete
               freeSolo
               options={roles}
@@ -179,16 +170,25 @@ const MainDashboard: React.FC = () => {
                 />
               )}
             />
-            <Typography variant="h5" gutterBottom>
-              Skills
-            </Typography>
-            <Stack direction="row" spacing={1} sx={{ flexWrap: 'wrap', mb: 2 }}>
+            <Divider sx={{ mb: 3 }} />
+            <Typography variant="h5" gutterBottom>Skills</Typography>
+            <Stack
+              direction="row"
+              spacing={1}
+              sx={{
+                flexWrap: 'wrap',
+                mb: 2,
+                maxHeight: '150px',
+                overflowY: 'auto', // Allow scrolling for skills if they overflow
+              }}
+            >
               {skills.map((skill, index) => (
                 <Chip
                   key={index}
                   label={skill}
                   onDelete={() => handleDeleteSkill(skill)}
-                  color="primary"
+                  color="secondary"
+                  variant="outlined"
                   sx={{ mb: 1 }}
                 />
               ))}
@@ -209,62 +209,102 @@ const MainDashboard: React.FC = () => {
               )}
               sx={{ mb: 2 }}
             />
-            <Button variant="contained" color="primary" onClick={() => handleAddSkill(newSkill)}>
-              Add Skill
-            </Button>
           </Paper>
         </Grid>
 
-        {/* Sidebar */}
-        <Grid item xs={12} md={4}>
-          <Paper elevation={3} sx={{ p: 4, textAlign: 'center' }}>
-            <Typography variant="h5" gutterBottom>
-              Connect Accounts
-            </Typography>
-            <Button
-              variant="contained"
-              color="primary"
-              startIcon={<LinkedIn />}
-              fullWidth
-              sx={{ mb: 2 }}
-            >
-              Connect to LinkedIn
-            </Button>
-            {showAuthOptions && (
-              <FormControl fullWidth sx={{ mb: 2 }}>
-                <InputLabel>GitHub Connection Method</InputLabel>
-                <Select
-                  value={useOAuth ? 'oauth' : 'no-auth'}
-                  onChange={(e) => setUseOAuth(e.target.value === 'oauth')}
+        {/* Right Side (Sidebar) */}
+        <Grid
+          item
+          xs={12}
+          md={4}
+          sx={{
+            height: '100%', // Ensure it fills the parent height
+            overflow: 'hidden', // Prevent scrolling on the sidebar
+          }}
+        >
+          <Paper
+            elevation={4}
+            sx={{
+              p: 4,
+              textAlign: 'center',
+              borderRadius: 3,
+              height: '100%', // Ensure it fills the parent height
+            }}
+          >
+            <Avatar sx={{ width: 80, height: 80, mx: 'auto', mb: 2 }} />
+            <Typography variant="h5" gutterBottom>Connect Accounts</Typography>
+            {showAuthOptions ? (
+              <>
+                <FormControl fullWidth sx={{ mb: 2 }}>
+                  <InputLabel>GitHub Connection Method</InputLabel>
+                  <Select
+                    value={useOAuth ? 'oauth' : 'no-auth'}
+                    onChange={(e) => setUseOAuth(e.target.value === 'oauth')}
+                  >
+                    <MenuItem value="oauth">OAuth</MenuItem>
+                    <MenuItem value="no-auth">No Auth</MenuItem>
+                  </Select>
+                </FormControl>
+                <Button
+                  variant="contained"
+                  color="secondary"
+                  startIcon={<GitHub />}
+                  fullWidth
+                  onClick={handleGitHubConnect}
+                  sx={{ mb: 2 }}
                 >
-                  <MenuItem value="oauth">OAuth</MenuItem>
-                  <MenuItem value="no-auth">No Auth</MenuItem>
-                </Select>
-              </FormControl>
+                  Proceed
+                </Button>
+                <Button
+                  variant="outlined"
+                  color="primary"
+                  fullWidth
+                  onClick={handleBackToGitHubOptions}
+                >
+                  Back
+                </Button>
+              </>
+            ) : (
+              <>
+                <Button
+                  variant="contained"
+                  color="primary"
+                  startIcon={<LinkedIn />}
+                  fullWidth
+                  sx={{ mb: 2 }}
+                >
+                  Connect to LinkedIn
+                </Button>
+                <Button
+                  variant="contained"
+                  color="secondary"
+                  startIcon={<GitHub />}
+                  fullWidth
+                  onClick={() => setShowAuthOptions(true)}
+                >
+                  Connect to GitHub
+                </Button>
+              </>
             )}
-            <Button
-              variant="contained"
-              color="secondary"
-              startIcon={<GitHub />}
-              fullWidth
-              onClick={handleGitHubConnect}
-            >
-              {showAuthOptions ? 'Proceed' : 'Connect to GitHub'}
-            </Button>
-            {
-            repos.length > 0 && <Typography variant="h6" sx={{ mt: 3 }}>
-              GitHub Repositories
-            </Typography>
-            }
-            <ul style={{ listStyleType: 'none', padding: 0, textAlign: 'center' }}>
-              {repos.map((repo) => (
-                <li key={repo.id} style={{ margin: '8px 0' }}>
-                  <a href={repo.html_url} target="_blank" rel="noopener noreferrer" style={{ textDecoration: 'none', color: '#1976d2', fontWeight: 'bold' }}>
-                    {repo.name}
-                  </a>
-                </li>
-              ))}
-            </ul>
+            {repos.length > 0 && (
+              <Box sx={{ mt: 3, textAlign: 'left' }}>
+                <Typography variant="h6">GitHub Repositories</Typography>
+                <Box sx={{ maxHeight: '150px', overflowY: 'auto', mt: 1 }}>
+                  {repos.map(repo => (
+                    <Box key={repo.id} sx={{ mb: 1 }}>
+                      <a
+                        href={repo.html_url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        style={{ textDecoration: 'none', color: '#1976d2', fontWeight: 'bold' }}
+                      >
+                        {repo.name}
+                      </a>
+                    </Box>
+                  ))}
+                </Box>
+              </Box>
+            )}
           </Paper>
         </Grid>
       </Grid>
