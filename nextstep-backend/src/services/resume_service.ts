@@ -218,6 +218,14 @@ const generateImprovedResume = async (
             throw new Error(`Template ${templateName} not found`);
         }
 
+        const resumeTemplateContentAsBase64 = fs.readFileSync(templatePath).toString('base64');
+
+        const mimeType = {
+            '.pdf': 'application/pdf',
+            '.doc': 'application/msword',
+            '.docx': 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+        }[path.extname(templateName).toLowerCase()] || 'application/octet-stream';
+
         const prompt = `You are an expert resume writer. Using the following feedback and job description, modify the resume template to implement all suggested improvements.
 
 Feedback:
@@ -226,13 +234,22 @@ ${feedback}
 Job Description:
 ${jobDescription}
 
+Resume Template Name:
+${templateName}
+
+Resume Template MIME-type:
+${mimeType}
+
+Resume Template Content (as base64 string):
+${resumeTemplateContentAsBase64}
+
 Please modify the template to:
 1. Keep the exact same format and structure as the template
 2. Implement all suggested improvements from the feedback
 3. Ensure the content matches the job description requirements
 4. Maintain professional formatting and style
 
-Return the modified resume in the same format as the template.`;
+Return the modified resume in the same format as the template, as base64 string, and in the same MIME-type, as the original template was.`;
 
         if (!config.chatAi.turned_on()) {
             throw new Error('Chat AI feature is turned off');
@@ -240,13 +257,9 @@ Return the modified resume in the same format as the template.`;
 
         const modifiedContent = await chatWithAI(prompt, SYSTEM_TEMPLATE);
         
-        // For now, we'll return the original template content
-        // TODO: Implement actual document modification
-        const content = fs.readFileSync(templatePath);
-        
         return {
-            content: content.toString('base64'),
-            type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+            content: modifiedContent,
+            type: mimeType
         };
     } catch (error) {
         console.error('Error generating improved resume:', error);
