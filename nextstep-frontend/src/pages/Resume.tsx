@@ -146,6 +146,58 @@ const StepperContainer = styled(Box)(({ theme }) => ({
   marginBottom: theme.spacing(2),
 }));
 
+const GeneratedWordPreview: React.FC<{ base64Content: string }> = ({ base64Content }) => {
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const uploadAndPreview = async () => {
+      setLoading(true);
+      setError(null);
+      try {
+        // Convert base64 to blob
+        const byteCharacters = atob(base64Content);
+        const byteNumbers = new Array(byteCharacters.length);
+        for (let i = 0; i < byteCharacters.length; i++) {
+          byteNumbers[i] = byteCharacters.charCodeAt(i);
+        }
+        const byteArray = new Uint8Array(byteNumbers);
+        const blob = new Blob([byteArray], { type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' });
+        const formData = new FormData();
+        formData.append('file', blob, 'generated.docx');
+        const response = await fetch('https://tmpfiles.org/api/v1/upload', {
+          method: 'POST',
+          body: formData
+        });
+        if (!response.ok) throw new Error('Failed to upload file');
+        const data = await response.json();
+        const downloadUrl = data.data.url.replace('https://tmpfiles.org/', 'https://tmpfiles.org/dl/');
+        const officeUrl = `https://view.officeapps.live.com/op/embed.aspx?src=${encodeURIComponent(downloadUrl)}`;
+        setPreviewUrl(officeUrl);
+      } catch (err: any) {
+        setError('Failed to prepare document preview');
+      } finally {
+        setLoading(false);
+      }
+    };
+    uploadAndPreview();
+  }, [base64Content]);
+
+  if (loading) return <Box sx={{ p: 2, textAlign: 'center' }}><CircularProgress /></Box>;
+  if (error) return <Typography color="error">{error}</Typography>;
+  if (!previewUrl) return null;
+  return (
+    <Box sx={{ width: '100%', height: 700, mt: 2 }}>
+      <iframe
+        src={previewUrl}
+        style={{ width: '100%', height: '100%', border: 'none', background: '#fff' }}
+        title="Generated Resume Word Preview"
+      />
+    </Box>
+  );
+};
+
 const Resume: React.FC = () => {
   const [activeStep, setActiveStep] = useState(0);
   const [file, setFile] = useState<File | null>(null);
@@ -565,21 +617,41 @@ const Resume: React.FC = () => {
             <Typography variant="h4" gutterBottom>
               Generate matching resume
             </Typography>
-            {generatedResume ? (
+            {!generatedResume && (
+              <Button
+                variant="contained"
+                onClick={handleGenerateResume}
+                disabled={loading || !selectedTemplate}
+                sx={{ mt: 2 }}
+              >
+                {loading ? 'Generating...' : 'Generate Resume'}
+              </Button>
+            )}
+            {error && (
+              <Typography color="error" sx={{ mt: 2 }}>{error}</Typography>
+            )}
+            {generatedResume && (
               <Box sx={{ mt: 3 }}>
                 <Button
                   variant="contained"
                   href={`data:${generatedResume.type};base64,${generatedResume.content}`}
-                  download={`improved_resume${generatedResume.type.includes('docx') ? '.docx' : '.doc'}`}
+                  download={`improved_resume${generatedResume.type.includes('docx') ? '.docx' : generatedResume.type.includes('pdf') ? '.pdf' : ''}`}
+                  sx={{ mb: 2 }}
                 >
                   Download Improved Resume
                 </Button>
-              </Box>
-            ) : (
-              <Box sx={{ mt: 3, textAlign: 'center' }}>
-                <Typography variant="body1" color="text.secondary">
-                  Your improved resume will be ready for download here.
-                </Typography>
+                {/* Preview for generated resume */}
+                {generatedResume.type.includes('word') ? (
+                  <GeneratedWordPreview base64Content={generatedResume.content} />
+                ) : generatedResume.type.includes('pdf') ? (
+                  <Box sx={{ width: '100%', height: 700, mt: 2 }}>
+                    <iframe
+                      src={`data:${generatedResume.type};base64,${generatedResume.content}`}
+                      style={{ width: '100%', height: '100%', border: 'none', background: '#fff' }}
+                      title="Generated Resume PDF Preview"
+                    />
+                  </Box>
+                ) : null}
               </Box>
             )}
           </Box>
