@@ -621,9 +621,10 @@ const Resume: React.FC = () => {
         );
       case 2:
         const selectedTemplateName = selectedTemplate !== null ? templates[selectedTemplate]?.name : '';
+        const hasFeedback = feedback.trim() !== '';
         const canGenerate =
           selectedTemplate !== null &&
-          feedback.trim() !== '' &&
+          hasFeedback &&
           jobDescription.trim() !== '' &&
           !loading;
         return (
@@ -638,9 +639,12 @@ const Resume: React.FC = () => {
               <Typography variant="subtitle1" sx={{ mt: 1 }}>
                 <strong>Job Description:</strong>
               </Typography>
-              <Box sx={{ p: 2, background: '#f5f5f5', borderRadius: 1, minHeight: 60 }}>
+              <Box sx={{ p: 2, background: '#f5f5f5', borderRadius: 1, minHeight: 60, mb: 1 }}>
                 {jobDescription ? jobDescription : <span style={{color: 'red'}}>No job description provided</span>}
               </Box>
+              <Typography variant="subtitle1" sx={{ mt: 1 }}>
+                <strong>Feedback:</strong> {hasFeedback ? <span style={{color: 'green'}}>Feedback available</span> : <span style={{color: 'red'}}>No feedback. Please get feedback in the "Score your resume" step first.</span>}
+              </Typography>
             </Box>
             {!generatedResume && (
               <Button
