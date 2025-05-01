@@ -5,6 +5,8 @@ import axios from 'axios';
 import { chatWithAI, streamChatWithAI } from './chat_api_service';
 import mammoth from 'mammoth';
 import pdfParse from 'pdf-parse';
+import AdmZip from 'adm-zip';
+import { DOMParser, XMLSerializer } from 'xmldom';
 
 const SYSTEM_TEMPLATE = `You are a very experienced ATS (Application Tracking System) bot with a deep understanding named Bob the Resume builder.
 You will review resumes with or without job descriptions.
@@ -224,22 +226,34 @@ const generateImprovedResume = async (
             throw new Error(`Template ${templateName} not found`);
         }
 
-        const resumeTemplateContentAsBase64 = fs.readFileSync(templatePath).toString('base64');
-        const numberOfSplits = 3;
-        const parts = splitString(resumeTemplateContentAsBase64, numberOfSplits);
+        // Only handle DOCX files for now
+        if (!templateName.toLowerCase().endsWith('.docx')) {
+            throw new Error('Only DOCX templates are currently supported');
+        }
 
-        let prompts = [`You will receive a resume template as a base64 string, split into ${numberOfSplits} parts. Please concatenate them in order before proceeding.`];
-        const splitPrompts = parts.map((part, i) => `PART ${i + 1} of ${numberOfSplits}:\n${parts[i]}`);
-        prompts = prompts.concat(splitPrompts);
+        // Read and unzip the DOCX template
+        const zip = new AdmZip(templatePath);
+        const documentXml = zip.getEntry('word/document.xml');
+        if (!documentXml) {
+            throw new Error('Could not find document.xml in the template');
+        }
 
-        // Prepare final prompt.
-        const mimeType = {
-            '.pdf': 'application/pdf',
-            '.doc': 'application/msword',
-            '.docx': 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
-        }[path.extname(templateName).toLowerCase()] || 'application/octet-stream';
+        // Parse the XML content
+        const parser = new DOMParser();
+        const xmlDoc = parser.parseFromString(documentXml.getData().toString(), 'text/xml');
 
-        const finalPrompt = `Now, using the concatenated base64 template, feedback, and job description below, modify the resume as instructed.
+        // Get the text content from the document
+        const textContent = xmlDoc.getElementsByTagName('w:t');
+        let fullText = '';
+        for (let i = 0; i < textContent.length; i++) {
+            fullText += textContent[i].textContent + ' ';
+        }
+
+        // Prepare the prompt for AI to modify the content
+        const prompt = `You are a resume expert. Please modify the following resume content based on the feedback and job description.
+        
+Current Resume Content:
+${fullText}
 
 Feedback:
 ${feedback}
@@ -247,27 +261,29 @@ ${feedback}
 Job Description:
 ${jobDescription}
 
-Resume Template Name:
-${templateName}
+Please provide the modified content that should replace the existing text in the document. Keep the same XML structure and only modify the text content.`;
 
-Resume Template MIME-type:
-${mimeType}
+        // Get the modified content from AI
+        const modifiedContent = await chatWithAI(SYSTEM_TEMPLATE, [prompt]);
 
-Instructions:
-1. Keep the exact same format and structure as the template.
-2. Implement all suggested improvements from the feedback.
-3. Ensure the content matches the job description requirements.
-4. Maintain professional formatting and style.
+        // Replace the text content in the XML
+        for (let i = 0; i < textContent.length; i++) {
+            textContent[i].textContent = modifiedContent;
+        }
 
-Return the modified resume in the same format as the template, as base64 string, and in the same MIME-type.`;
+        // Serialize the modified XML
+        const serializer = new XMLSerializer();
+        const modifiedXml = serializer.serializeToString(xmlDoc);
 
-        prompts.push(finalPrompt);
+        // Update the document.xml in the zip
+        zip.updateFile('word/document.xml', Buffer.from(modifiedXml));
 
-        const modifiedContent = await chatWithAI(SYSTEM_TEMPLATE, prompts);
+        // Get the modified DOCX as a buffer
+        const modifiedDocxBuffer = zip.toBuffer();
 
         return {
-            content: modifiedContent,
-            type: mimeType
+            content: modifiedDocxBuffer.toString('base64'),
+            type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
         };
     } catch (error) {
         console.error('Error generating improved resume:', error);
