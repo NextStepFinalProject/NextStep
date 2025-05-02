@@ -242,18 +242,45 @@ const generateImprovedResume = async (
         const parser = new DOMParser();
         const xmlDoc = parser.parseFromString(documentXml.getData().toString(), 'text/xml');
 
-        // Get the text content from the document
-        const textContent = xmlDoc.getElementsByTagName('w:t');
-        let fullText = '';
-        for (let i = 0; i < textContent.length; i++) {
-            fullText += textContent[i].textContent + ' ';
+        // Extract the content structure
+        const paragraphs = xmlDoc.getElementsByTagName('w:p');
+        const contentStructure = [];
+        
+        for (let i = 0; i < paragraphs.length; i++) {
+            const paragraph = paragraphs[i];
+            const runs = paragraph.getElementsByTagName('w:r');
+            const paragraphContent = [];
+            
+            for (let j = 0; j < runs.length; j++) {
+                const run = runs[j];
+                const text = run.getElementsByTagName('w:t')[0];
+                if (text) {
+                    paragraphContent.push({
+                        text: text.textContent,
+                        style: run.getElementsByTagName('w:rPr')[0]?.toString() || ''
+                    });
+                }
+            }
+            
+            if (paragraphContent.length > 0) {
+                contentStructure.push({
+                    type: 'paragraph',
+                    content: paragraphContent,
+                    style: paragraph.getElementsByTagName('w:pPr')[0]?.toString() || ''
+                });
+            }
         }
+
+        // Convert structure to readable text for AI
+        const readableContent = contentStructure.map(para => 
+            para.content.map(run => run.text).join('')
+        ).join('\n');
 
         // Prepare the prompt for AI to modify the content
         const prompt = `You are a resume expert. Please modify the following resume content based on the feedback and job description.
         
 Current Resume Content:
-${fullText}
+${readableContent}
 
 Feedback:
 ${feedback}
@@ -261,14 +288,84 @@ ${feedback}
 Job Description:
 ${jobDescription}
 
-Please provide the modified content that should replace the existing text in the document. Keep the same XML structure and only modify the text content.`;
+IMPORTANT: You must return your response in the following EXACT JSON format. Do not include any other text or explanation:
+
+[
+  {
+    "text": "First paragraph content here",
+    "style": "original style"
+  },
+  {
+    "text": "Second paragraph content here",
+    "style": "original style"
+  }
+]
+
+Rules:
+1. Return ONLY the JSON array, nothing else
+2. Each object must have exactly "text" and "style" properties
+3. The "text" property should contain the modified paragraph content
+4. The "style" property should be copied from the original paragraph
+5. Maintain the same number of paragraphs as the original
+6. Do not include any markdown, formatting, or additional text`;
 
         // Get the modified content from AI
         const modifiedContent = await chatWithAI(SYSTEM_TEMPLATE, [prompt]);
+        console.log('AI Response:', modifiedContent); // Debug log
+        
+        let modifiedParagraphs;
+        try {
+            // Clean the response to ensure it's valid JSON
+            const cleanedResponse = modifiedContent.trim()
+                .replace(/^```json\s*/, '') // Remove JSON code block if present
+                .replace(/```\s*$/, '')     // Remove trailing code block if present
+                .replace(/^\[/, '[')        // Ensure it starts with [
+                .replace(/\]$/, ']');       // Ensure it ends with ]
+            
+            modifiedParagraphs = JSON.parse(cleanedResponse);
+            
+            // Validate the structure
+            if (!Array.isArray(modifiedParagraphs)) {
+                throw new Error('Response is not an array');
+            }
+            
+            for (const para of modifiedParagraphs) {
+                if (!para.text || typeof para.text !== 'string') {
+                    throw new Error('Invalid paragraph structure: missing or invalid text property');
+                }
+                if (!para.style || typeof para.style !== 'string') {
+                    throw new Error('Invalid paragraph structure: missing or invalid style property');
+                }
+            }
+            
+        } catch (error: any) {
+            console.error('Error parsing AI response:', error);
+            console.error('Raw AI response:', modifiedContent);
+            throw new Error(`Failed to parse AI response: ${error.message}`);
+        }
 
-        // Replace the text content in the XML
-        for (let i = 0; i < textContent.length; i++) {
-            textContent[i].textContent = modifiedContent;
+        // Update the document with modified content
+        for (let i = 0; i < paragraphs.length && i < modifiedParagraphs.length; i++) {
+            const paragraph = paragraphs[i];
+            const runs = paragraph.getElementsByTagName('w:r');
+            const modifiedParagraph = modifiedParagraphs[i];
+
+            // Clear existing text content
+            for (let j = 0; j < runs.length; j++) {
+                const text = runs[j].getElementsByTagName('w:t')[0];
+                if (text) {
+                    text.textContent = '';
+                }
+            }
+
+            // Add new text content to the first run
+            if (runs.length > 0) {
+                const firstRun = runs[0];
+                const text = firstRun.getElementsByTagName('w:t')[0];
+                if (text) {
+                    text.textContent = modifiedParagraph.text;
+                }
+            }
         }
 
         // Serialize the modified XML
