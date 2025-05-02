@@ -213,6 +213,37 @@ function splitString(str: string, parts: number): string[] {
     return Array.from({ length: parts }, (_, i) => str.slice(i * len, (i + 1) * len));
 }
 
+interface Run {
+    text: string;
+    style: string;
+}
+
+interface Paragraph {
+    index: number;
+    text: string;
+    style: string;
+    runs: Run[];
+}
+
+interface ResumeSections {
+    header: Paragraph[];
+    summary: Paragraph[];
+    experience: Paragraph[];
+    education: Paragraph[];
+    skills: Paragraph[];
+    other: Paragraph[];
+}
+
+interface ModifiedSection {
+    text: string;
+}
+
+interface ModifiedSections {
+    [key: string]: ModifiedSection[];
+}
+
+type SectionKey = keyof ResumeSections;
+
 const generateImprovedResume = async (
     feedback: string,
     jobDescription: string,
@@ -246,51 +277,77 @@ const generateImprovedResume = async (
         const paragraphs = xmlDoc.getElementsByTagName('w:p');
         const contentStructure = [];
         
+        // Identify different sections of the resume
+        const sections: ResumeSections = {
+            header: [],
+            summary: [],
+            experience: [],
+            education: [],
+            skills: [],
+            other: []
+        };
+
+        let currentSection = 'other' as SectionKey;
+        
         for (let i = 0; i < paragraphs.length; i++) {
             const paragraph = paragraphs[i];
             const runs = paragraph.getElementsByTagName('w:r');
             const paragraphContent = [];
             
-            // Get paragraph properties
+            // Get paragraph properties for styling
             const pPr = paragraph.getElementsByTagName('w:pPr')[0];
             const paragraphStyle = pPr ? pPr.toString().replace(/"/g, '\\"') : '';
             
+            // Get the text content
+            let fullText = '';
             for (let j = 0; j < runs.length; j++) {
                 const run = runs[j];
                 const text = run.getElementsByTagName('w:t')[0];
                 if (text) {
-                    // Get run properties
-                    const rPr = run.getElementsByTagName('w:rPr')[0];
-                    const runStyle = rPr ? rPr.toString().replace(/"/g, '\\"') : '';
-                    
-                    paragraphContent.push({
-                        text: text.textContent,
-                        style: runStyle
-                    });
+                    fullText += text.textContent;
                 }
             }
-            
-            if (paragraphContent.length > 0) {
-                contentStructure.push({
-                    type: 'paragraph',
-                    content: paragraphContent,
-                    style: paragraphStyle
-                });
-            }
-        }
 
-        // Convert structure to readable text for AI while preserving context
-        const readableContent = contentStructure.map((para, index) => {
-            const content = para.content.map(run => run.text).join('');
-            return `[Paragraph ${index + 1}]
-Content: ${content}`;
-        }).join('\n\n');
+            // Identify section based on content and formatting
+            const text = fullText.toLowerCase().trim();
+            if (text.includes('summary') || text.includes('objective') || text.includes('profile')) {
+                currentSection = 'summary' as SectionKey;
+            } else if (text.includes('experience') || text.includes('work history') || text.includes('employment')) {
+                currentSection = 'experience' as SectionKey;
+            } else if (text.includes('education') || text.includes('academic')) {
+                currentSection = 'education' as SectionKey;
+            } else if (text.includes('skills') || text.includes('competencies')) {
+                currentSection = 'skills' as SectionKey;
+            } else if (i === 0) { // First paragraph is usually header
+                currentSection = 'header' as SectionKey;
+            }
+
+            // Store paragraph with its section and style information
+            sections[currentSection].push({
+                index: i,
+                text: fullText,
+                style: paragraphStyle,
+                runs: Array.from(runs).map(run => {
+                    const text = run.getElementsByTagName('w:t')[0];
+                    const rPr = run.getElementsByTagName('w:rPr')[0];
+                    return {
+                        text: text ? text.textContent || '' : '',
+                        style: rPr ? rPr.toString().replace(/"/g, '\\"') : ''
+                    };
+                })
+            });
+        }
 
         // Prepare the prompt for AI to modify the content
         const prompt = `You are a resume expert. Please modify the following resume content based on the feedback and job description.
         
 Current Resume Content:
-${readableContent}
+${Object.entries(sections)
+    .filter(([_, content]) => content.length > 0)
+    .map(([section, content]) => 
+        `[${section.toUpperCase()} SECTION]
+${content.map((p: Paragraph) => p.text).join('\n')}`
+    ).join('\n\n')}
 
 Feedback:
 ${feedback}
@@ -300,47 +357,86 @@ ${jobDescription}
 
 IMPORTANT: You must return your response in the following EXACT JSON format. Do not include any other text or explanation:
 
-[
-  {
-    "paragraphIndex": 0,
-    "text": "First paragraph content here"
-  }
-]
+{
+  "header": [
+    {
+      "text": "Updated header text"
+    }
+  ],
+  "summary": [
+    {
+      "text": "Updated summary text"
+    }
+  ],
+  "experience": [
+    {
+      "text": "Updated experience text"
+    }
+  ],
+  "education": [
+    {
+      "text": "Updated education text"
+    }
+  ],
+  "skills": [
+    {
+      "text": "Updated skills text"
+    }
+  ],
+  "other": [
+    {
+      "text": "Updated other text"
+    }
+  ]
+}
 
 Rules:
-1. Return ONLY the JSON array, nothing else
-2. Each paragraph must maintain its original structure
-3. The text content should be updated based on the feedback while preserving formatting
-4. Maintain the same number of paragraphs as the original
-5. Do not include any markdown, formatting, or additional text`;
+1. Return ONLY the JSON object, nothing else
+2. Each section must maintain its original structure and formatting
+3. The text content should be updated based on the feedback while preserving professional formatting
+4. Maintain bullet points, lists, and other formatting elements
+5. Keep the same number of paragraphs in each section
+6. Do not include any markdown, formatting, or additional text
+7. Ensure the content fits naturally within the template's layout
+8. Maintain consistent spacing and alignment`;
 
         // Get the modified content from AI
         const modifiedContent = await chatWithAI(SYSTEM_TEMPLATE, [prompt]);
         console.log('AI Response:', modifiedContent); // Debug log
         
-        let modifiedParagraphs;
+        let modifiedSections: ModifiedSections;
         try {
             // Clean the response to ensure it's valid JSON
             const cleanedResponse = modifiedContent.trim()
                 .replace(/^```json\s*/, '')
                 .replace(/```\s*$/, '')
-                .replace(/^\[/, '[')
-                .replace(/\]$/, ']')
-                .replace(/\n/g, ' ') // Remove newlines that might break JSON
-                .replace(/\r/g, '')  // Remove carriage returns
-                .replace(/\t/g, ' ') // Replace tabs with spaces
-                .replace(/\s+/g, ' '); // Normalize whitespace
+                .replace(/\n/g, ' ')
+                .replace(/\r/g, '')
+                .replace(/\t/g, ' ')
+                .replace(/\s+/g, ' ');
             
-            modifiedParagraphs = JSON.parse(cleanedResponse);
+            modifiedSections = JSON.parse(cleanedResponse);
             
             // Validate the structure
-            if (!Array.isArray(modifiedParagraphs)) {
-                throw new Error('Response is not an array');
+            if (typeof modifiedSections !== 'object') {
+                throw new Error('Response is not an object');
             }
             
-            for (const para of modifiedParagraphs) {
-                if (!para.text || typeof para.text !== 'string') {
-                    throw new Error('Invalid paragraph structure: missing or invalid text property');
+            // Update the document with modified content while preserving structure
+            for (const [section, content] of Object.entries(sections)) {
+                const modifiedContent = modifiedSections[section] || [];
+                for (let i = 0; i < content.length && i < modifiedContent.length; i++) {
+                    const paragraph = paragraphs[content[i].index];
+                    const runs = paragraph.getElementsByTagName('w:r');
+                    
+                    // Update the first run's text content while preserving its style
+                    if (runs.length > 0) {
+                        const firstRun = runs[0];
+                        const text = firstRun.getElementsByTagName('w:t')[0];
+                        if (text) {
+                            text.textContent = modifiedContent[i].text;
+                        }
+                    }
                 }
             }
             
@@ -348,22 +444,6 @@ Rules:
             console.error('Error parsing AI response:', error);
             console.error('Raw AI response:', modifiedContent);
             throw new Error(`Failed to parse AI response: ${error.message}`);
-        }
-
-        // Update the document with modified content while preserving structure
-        for (let i = 0; i < paragraphs.length && i < modifiedParagraphs.length; i++) {
-            const paragraph = paragraphs[i];
-            const modifiedParagraph = modifiedParagraphs[i];
-            const runs = paragraph.getElementsByTagName('w:r');
-            
-            // Update the first run's text content while preserving its style
-            if (runs.length > 0) {
-                const firstRun = runs[0];
-                const text = firstRun.getElementsByTagName('w:t')[0];
-                if (text) {
-                    text.textContent = modifiedParagraph.text;
-                }
-            }
         }
 
         // Serialize the modified XML
