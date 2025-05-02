@@ -242,7 +242,7 @@ const generateImprovedResume = async (
         const parser = new DOMParser();
         const xmlDoc = parser.parseFromString(documentXml.getData().toString(), 'text/xml');
 
-        // Extract the content structure
+        // Extract the content structure with full XML context
         const paragraphs = xmlDoc.getElementsByTagName('w:p');
         const contentStructure = [];
         
@@ -251,13 +251,22 @@ const generateImprovedResume = async (
             const runs = paragraph.getElementsByTagName('w:r');
             const paragraphContent = [];
             
+            // Get paragraph properties
+            const pPr = paragraph.getElementsByTagName('w:pPr')[0];
+            const paragraphStyle = pPr ? pPr.toString().replace(/"/g, '\\"') : '';
+            
             for (let j = 0; j < runs.length; j++) {
                 const run = runs[j];
                 const text = run.getElementsByTagName('w:t')[0];
                 if (text) {
+                    // Get run properties
+                    const rPr = run.getElementsByTagName('w:rPr')[0];
+                    const runStyle = rPr ? rPr.toString().replace(/"/g, '\\"') : '';
+                    
                     paragraphContent.push({
                         text: text.textContent,
-                        style: run.getElementsByTagName('w:rPr')[0]?.toString() || ''
+                        style: runStyle,
+                        xml: run.toString().replace(/"/g, '\\"')
                     });
                 }
             }
@@ -266,15 +275,19 @@ const generateImprovedResume = async (
                 contentStructure.push({
                     type: 'paragraph',
                     content: paragraphContent,
-                    style: paragraph.getElementsByTagName('w:pPr')[0]?.toString() || ''
+                    style: paragraphStyle,
+                    xml: paragraph.toString().replace(/"/g, '\\"')
                 });
             }
         }
 
-        // Convert structure to readable text for AI
-        const readableContent = contentStructure.map(para => 
-            para.content.map(run => run.text).join('')
-        ).join('\n');
+        // Convert structure to readable text for AI while preserving context
+        const readableContent = contentStructure.map((para, index) => {
+            const content = para.content.map(run => run.text).join('');
+            return `[Paragraph ${index + 1}]
+Style: ${para.style}
+Content: ${content}`;
+        }).join('\n\n');
 
         // Prepare the prompt for AI to modify the content
         const prompt = `You are a resume expert. Please modify the following resume content based on the feedback and job description.
@@ -292,22 +305,27 @@ IMPORTANT: You must return your response in the following EXACT JSON format. Do 
 
 [
   {
+    "paragraphIndex": 0,
     "text": "First paragraph content here",
-    "style": "original style"
-  },
-  {
-    "text": "Second paragraph content here",
-    "style": "original style"
+    "style": "original style",
+    "runs": [
+      {
+        "text": "First run content",
+        "style": "original run style"
+      }
+    ]
   }
 ]
 
 Rules:
 1. Return ONLY the JSON array, nothing else
-2. Each object must have exactly "text" and "style" properties
-3. The "text" property should contain the modified paragraph content
-4. The "style" property should be copied from the original paragraph
-5. Maintain the same number of paragraphs as the original
-6. Do not include any markdown, formatting, or additional text`;
+2. Each paragraph must maintain its original style and structure
+3. Each run within a paragraph must maintain its original style
+4. The text content should be updated based on the feedback while preserving formatting
+5. Maintain the same number of paragraphs and runs as the original
+6. Do not include any markdown, formatting, or additional text
+7. All style properties must be properly escaped (use \\" for quotes)
+8. Do not include any XML comments or processing instructions`;
 
         // Get the modified content from AI
         const modifiedContent = await chatWithAI(SYSTEM_TEMPLATE, [prompt]);
@@ -317,10 +335,14 @@ Rules:
         try {
             // Clean the response to ensure it's valid JSON
             const cleanedResponse = modifiedContent.trim()
-                .replace(/^```json\s*/, '') // Remove JSON code block if present
-                .replace(/```\s*$/, '')     // Remove trailing code block if present
-                .replace(/^\[/, '[')        // Ensure it starts with [
-                .replace(/\]$/, ']');       // Ensure it ends with ]
+                .replace(/^```json\s*/, '')
+                .replace(/```\s*$/, '')
+                .replace(/^\[/, '[')
+                .replace(/\]$/, ']')
+                .replace(/\n/g, ' ') // Remove newlines that might break JSON
+                .replace(/\r/g, '')  // Remove carriage returns
+                .replace(/\t/g, ' ') // Replace tabs with spaces
+                .replace(/\s+/g, ' '); // Normalize whitespace
             
             modifiedParagraphs = JSON.parse(cleanedResponse);
             
@@ -336,6 +358,17 @@ Rules:
                 if (!para.style || typeof para.style !== 'string') {
                     throw new Error('Invalid paragraph structure: missing or invalid style property');
                 }
+                if (!Array.isArray(para.runs)) {
+                    throw new Error('Invalid paragraph structure: missing or invalid runs array');
+                }
+                for (const run of para.runs) {
+                    if (!run.text || typeof run.text !== 'string') {
+                        throw new Error('Invalid run structure: missing or invalid text property');
+                    }
+                    if (!run.style || typeof run.style !== 'string') {
+                        throw new Error('Invalid run structure: missing or invalid style property');
+                    }
+                }
             }
             
         } catch (error: any) {
@@ -344,26 +377,18 @@ Rules:
             throw new Error(`Failed to parse AI response: ${error.message}`);
         }
 
-        // Update the document with modified content
+        // Update the document with modified content while preserving structure
         for (let i = 0; i < paragraphs.length && i < modifiedParagraphs.length; i++) {
             const paragraph = paragraphs[i];
-            const runs = paragraph.getElementsByTagName('w:r');
             const modifiedParagraph = modifiedParagraphs[i];
-
-            // Clear existing text content
-            for (let j = 0; j < runs.length; j++) {
-                const text = runs[j].getElementsByTagName('w:t')[0];
+            const runs = paragraph.getElementsByTagName('w:r');
+            
+            // Update each run's text content while preserving its style
+            for (let j = 0; j < runs.length && j < modifiedParagraph.runs.length; j++) {
+                const run = runs[j];
+                const text = run.getElementsByTagName('w:t')[0];
                 if (text) {
-                    text.textContent = '';
-                }
-            }
-
-            // Add new text content to the first run
-            if (runs.length > 0) {
-                const firstRun = runs[0];
-                const text = firstRun.getElementsByTagName('w:t')[0];
-                if (text) {
-                    text.textContent = modifiedParagraph.text;
+                    text.textContent = modifiedParagraph.runs[j].text;
                 }
             }
         }
@@ -382,7 +407,7 @@ Rules:
             content: modifiedDocxBuffer.toString('base64'),
             type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
         };
-    } catch (error) {
+    } catch (error: any) {
         console.error('Error generating improved resume:', error);
         throw error;
     }
