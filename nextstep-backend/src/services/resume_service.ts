@@ -265,8 +265,7 @@ const generateImprovedResume = async (
                     
                     paragraphContent.push({
                         text: text.textContent,
-                        style: runStyle,
-                        xml: run.toString().replace(/"/g, '\\"')
+                        style: runStyle
                     });
                 }
             }
@@ -275,8 +274,7 @@ const generateImprovedResume = async (
                 contentStructure.push({
                     type: 'paragraph',
                     content: paragraphContent,
-                    style: paragraphStyle,
-                    xml: paragraph.toString().replace(/"/g, '\\"')
+                    style: paragraphStyle
                 });
             }
         }
@@ -285,7 +283,6 @@ const generateImprovedResume = async (
         const readableContent = contentStructure.map((para, index) => {
             const content = para.content.map(run => run.text).join('');
             return `[Paragraph ${index + 1}]
-Style: ${para.style}
 Content: ${content}`;
         }).join('\n\n');
 
@@ -306,26 +303,16 @@ IMPORTANT: You must return your response in the following EXACT JSON format. Do 
 [
   {
     "paragraphIndex": 0,
-    "text": "First paragraph content here",
-    "style": "original style",
-    "runs": [
-      {
-        "text": "First run content",
-        "style": "original run style"
-      }
-    ]
+    "text": "First paragraph content here"
   }
 ]
 
 Rules:
 1. Return ONLY the JSON array, nothing else
-2. Each paragraph must maintain its original style and structure
-3. Each run within a paragraph must maintain its original style
-4. The text content should be updated based on the feedback while preserving formatting
-5. Maintain the same number of paragraphs and runs as the original
-6. Do not include any markdown, formatting, or additional text
-7. All style properties must be properly escaped (use \\" for quotes)
-8. Do not include any XML comments or processing instructions`;
+2. Each paragraph must maintain its original structure
+3. The text content should be updated based on the feedback while preserving formatting
+4. Maintain the same number of paragraphs as the original
+5. Do not include any markdown, formatting, or additional text`;
 
         // Get the modified content from AI
         const modifiedContent = await chatWithAI(SYSTEM_TEMPLATE, [prompt]);
@@ -355,20 +342,6 @@ Rules:
                 if (!para.text || typeof para.text !== 'string') {
                     throw new Error('Invalid paragraph structure: missing or invalid text property');
                 }
-                if (!para.style || typeof para.style !== 'string') {
-                    throw new Error('Invalid paragraph structure: missing or invalid style property');
-                }
-                if (!Array.isArray(para.runs)) {
-                    throw new Error('Invalid paragraph structure: missing or invalid runs array');
-                }
-                for (const run of para.runs) {
-                    if (!run.text || typeof run.text !== 'string') {
-                        throw new Error('Invalid run structure: missing or invalid text property');
-                    }
-                    if (!run.style || typeof run.style !== 'string') {
-                        throw new Error('Invalid run structure: missing or invalid style property');
-                    }
-                }
             }
             
         } catch (error: any) {
@@ -383,12 +356,12 @@ Rules:
             const modifiedParagraph = modifiedParagraphs[i];
             const runs = paragraph.getElementsByTagName('w:r');
             
-            // Update each run's text content while preserving its style
-            for (let j = 0; j < runs.length && j < modifiedParagraph.runs.length; j++) {
-                const run = runs[j];
-                const text = run.getElementsByTagName('w:t')[0];
+            // Update the first run's text content while preserving its style
+            if (runs.length > 0) {
+                const firstRun = runs[0];
+                const text = firstRun.getElementsByTagName('w:t')[0];
                 if (text) {
-                    text.textContent = modifiedParagraph.runs[j].text;
+                    text.textContent = modifiedParagraph.text;
                 }
             }
         }
