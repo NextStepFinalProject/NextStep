@@ -247,7 +247,8 @@ type SectionKey = keyof ResumeSections;
 const generateImprovedResume = async (
     feedback: string,
     jobDescription: string,
-    templateName: string
+    templateName: string,
+    resumePath: string
 ): Promise<{ content: string; type: string }> => {
     try {
         const templatesDir = config.assets.resumeTemplatesDirectoryPath();
@@ -260,6 +261,12 @@ const generateImprovedResume = async (
         // Only handle DOCX files for now
         if (!templateName.toLowerCase().endsWith('.docx')) {
             throw new Error('Only DOCX templates are currently supported');
+        }
+
+        // Read and parse the user's resume
+        const resumeText = await parseDocument(resumePath);
+        if (resumeText.trim() == '') {
+            throw new TypeError('Could not parse the resume file');
         }
 
         // Read and unzip the DOCX template
@@ -278,14 +285,14 @@ const generateImprovedResume = async (
         const contentStructure = [];
         
         // Identify different sections of the resume
-        const sections: ResumeSections = {
+        const sections = {
             header: [],
             summary: [],
             experience: [],
             education: [],
             skills: [],
             other: []
-        };
+        } as ResumeSections;
 
         let currentSection = 'other' as SectionKey;
         
@@ -341,7 +348,10 @@ const generateImprovedResume = async (
         // Prepare the prompt for AI to modify the content
         const prompt = `You are a resume expert. Please modify the following resume content based on the feedback and job description.
         
-Current Resume Content:
+Original Resume Content:
+${resumeText}
+
+Template Structure:
 ${Object.entries(sections)
     .filter(([_, content]) => content.length > 0)
     .map(([section, content]) => 
@@ -398,7 +408,9 @@ Rules:
 5. Keep the same number of paragraphs in each section
 6. Do not include any markdown, formatting, or additional text
 7. Ensure the content fits naturally within the template's layout
-8. Maintain consistent spacing and alignment`;
+8. Maintain consistent spacing and alignment
+9. Use relevant content from the original resume where appropriate
+10. Ensure the content matches the job description requirements`;
 
         // Get the modified content from AI
         const modifiedContent = await chatWithAI(SYSTEM_TEMPLATE, [prompt]);

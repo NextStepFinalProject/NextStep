@@ -201,6 +201,7 @@ const GeneratedWordPreview: React.FC<{ base64Content: string }> = ({ base64Conte
 const Resume: React.FC = () => {
   const [activeStep, setActiveStep] = useState(0);
   const [file, setFile] = useState<File | null>(null);
+  const [uploadedResumeFilename, setUploadedResumeFilename] = useState<string | null>(null);
   const [jobDescription, setJobDescription] = useState('');
   const [feedback, setFeedback] = useState('');
   const [score, setScore] = useState<number | null>(null);
@@ -274,6 +275,7 @@ const Resume: React.FC = () => {
       formData.append('file', file);
 
       const filename = await uploadResume(formData);
+      setUploadedResumeFilename(filename);
 
       const token = localStorage.getItem(config.localStorageKeys.userAuth) 
         ? JSON.parse(localStorage.getItem(config.localStorageKeys.userAuth)!).accessToken 
@@ -334,22 +336,29 @@ const Resume: React.FC = () => {
       setError('Please provide a job description.');
       return;
     }
+    if (!uploadedResumeFilename) {
+      setError('Please upload your resume first.');
+      return;
+    }
 
     setLoading(true);
     setError('');
 
     try {
       const selectedTemplateData = templates[selectedTemplate];
+      
       const response = await api.post('/resume/generate', {
         feedback,
         jobDescription,
-        templateName: selectedTemplateData.name
+        templateName: selectedTemplateData.name,
+        userResumeFilename: uploadedResumeFilename
       });
 
       setGeneratedResume(response.data);
-      setActiveStep(2);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to generate resume');
+      setActiveStep(3);
+    } catch (error) {
+      console.error('Error generating resume:', error);
+      setError('Failed to generate resume. Please try again.');
     } finally {
       setLoading(false);
     }
