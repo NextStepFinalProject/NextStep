@@ -20,15 +20,15 @@ const App: React.FC = () => {
     <>
       <Router>
         <Routes>
-          <Route path="/" element={<Layout><Login /></Layout>} />
-          <Route path="/login" element={<Layout><Login /></Layout>} /> 
-          <Route path="/register" element={<Layout><Register /></Layout>} />
-          <Route path="/dashboard" element={<RequireAuth><TopBar /><Layout><Dashboard /></Layout></RequireAuth>} />
-          <Route path="/profile" element={<RequireAuth><TopBar /><Layout><Profile /></Layout></RequireAuth>} />
-          <Route path="/new-post" element={<RequireAuth><TopBar /><Layout><NewPost /></Layout></RequireAuth>} />
-          <Route path="/post/:postId" element={<RequireAuth><TopBar /><Layout><PostDetails /></Layout></RequireAuth>} />
-          <Route path="/chat" element={<RequireAuth><TopBar /><Layout><Chat /></Layout></RequireAuth>} />
-          <Route path="/resume" element={<RequireAuth><TopBar /><Layout><Resume /></Layout></RequireAuth>} />
+        <Route path="/" element={<Layout className="login"><Login /></Layout>} />
+          <Route path="/login" element={<Layout className="login"><Login /></Layout>} /> 
+          <Route path="/register" element={<Layout className="register"><Register /></Layout>} />
+          <Route path="/dashboard" element={<RequireAuth><TopBar /><Layout className="dashboard"><Dashboard /></Layout></RequireAuth>} />
+          <Route path="/profile" element={<RequireAuth><TopBar /><Layout className="profile"><Profile /></Layout></RequireAuth>} />
+          <Route path="/new-post" element={<RequireAuth><TopBar /><Layout className="new-post"><NewPost /></Layout></RequireAuth>} />
+          <Route path="/post/:postId" element={<RequireAuth><TopBar /><Layout className="post-details"><PostDetails /></Layout></RequireAuth>} />
+          <Route path="/chat" element={<RequireAuth><TopBar /><Layout className="chat"><Chat /></Layout></RequireAuth>} />
+          <Route path="/resume" element={<RequireAuth><TopBar /><Layout className="resume"><Resume /></Layout></RequireAuth>} />
           <Route path="/main-dashboard" element={<RequireAuth><TopBar /><Layout><MainDashboard /></Layout></RequireAuth>} />
           <Route path="*" element={<Navigate to="/" />} />
         </Routes>
