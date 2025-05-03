@@ -621,7 +621,7 @@ const Resume: React.FC = () => {
             )}
             {generatedResume && (
               <Box sx={{ mt: 3 }}>
-                <Box sx={{ display: 'flex', gap: 2, mb: 2 }}>
+                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
                   <Button
                     variant="contained"
                     href={`data:${generatedResume.type};base64,${generatedResume.content}`}
