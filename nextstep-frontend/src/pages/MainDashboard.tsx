@@ -32,6 +32,7 @@ const MainDashboard: React.FC = () => {
   const [repos, setRepos] = useState<{ id: number; name: string; html_url: string }[]>([]);
   const [useOAuth, setUseOAuth] = useState(true);
   const [showAuthOptions, setShowAuthOptions] = useState(false);
+  const [showAllSkills, setShowAllSkills] = useState(false);
 
   useEffect(() => { localStorage.setItem('aboutMe', aboutMe); }, [aboutMe]);
   useEffect(() => { localStorage.setItem('skills', JSON.stringify(skills)); }, [skills]);
@@ -73,7 +74,7 @@ const MainDashboard: React.FC = () => {
   };
 
   const handleBackToGitHubOptions = () => {
-    setShowAuthOptions(false); // Reset the GitHub connection options
+    setShowAuthOptions(false);
   };
 
   useEffect(() => {
@@ -99,52 +100,19 @@ const MainDashboard: React.FC = () => {
   }, []);
 
   return (
-    <Container
-      maxWidth="lg"
-      sx={{
-        height: 'calc(100vh - 64px)', // Adjust height to account for headers/footers
-        display: 'flex',
-        mt: '-20px',
-        flexDirection: 'column',
-        overflowY: 'hidden', // Prevent scrolling on the entire page
-        maxHeight: '100%', // Ensure the container does not exceed viewport height
-      }}
-    >
-      <Grid
-        container
-        spacing={4}
-        sx={{
-          flex: 1,
-          height: '100%', // Ensure the grid fills the container height
-          overflowY: 'hidden', // Prevent grid-level scrolling
-        }}
-      >
-        {/* Left Side (Main Content) */}
-        <Grid
-          item
-          xs={12}
-          md={8}
-          sx={{
-            display: 'flex',
-            flexDirection: 'column',
-            height: '100%', // Ensure it fills the parent height
-            overflowY: 'auto', // Allow scrolling only if content exceeds height
-          }}
-        >
-          <Paper
-            elevation={4}
-            sx={{
-              p: 4,
-              borderRadius: 3,
-              flex: 1,
-              display: 'flex',
-              flexDirection: 'column',
-              height: '100%', // Ensure it fills the parent height
-            }}
-          >
-            <Typography variant="h4" gutterBottom color="primary.dark">
-              About Me
-            </Typography>
+    <Container maxWidth="lg" sx={{ flexGrow: 1, mt: 4, mb: 4, 
+      // "&.MuiContainer-root": {
+          overflowY: 'hidden',
+          marginTop: '-2vh',
+          height: '70vh',
+          // maxHeight: '90vh',
+        // },
+      }}>
+      <Grid container spacing={4}>
+        {/* Left Side */}
+        <Grid item xs={12} md={8}>
+          <Paper elevation={4} sx={{ p: 4, borderRadius: 3, height: '70vh', display: 'flex', flexDirection: 'column', overflowY: 'auto' }}>
+            <Typography variant="h4" gutterBottom>About Me</Typography>
             <TextField
               fullWidth
               multiline
@@ -153,7 +121,7 @@ const MainDashboard: React.FC = () => {
               placeholder="Write about yourself..."
               value={aboutMe}
               onChange={(e) => setAboutMe(e.target.value)}
-              sx={{ mb: 3, }}
+              sx={{ mb: 3 }}
             />
             <Divider sx={{ mb: 3 }} />
             <Typography variant="h5" gutterBottom>Desired Role</Typography>
@@ -164,12 +132,7 @@ const MainDashboard: React.FC = () => {
               onInputChange={(e, value) => setSelectedRole(value)}
               onChange={(e, value) => setSelectedRole(value || '')}
               renderInput={(params) => (
-                <TextField
-                  {...params}
-                  variant="outlined"
-                  placeholder="Select or write a role..."
-                  sx={{ mb: 3 }}
-                />
+                <TextField {...params} variant="outlined" placeholder="Select or write a role..." sx={{ mb: 3 }} />
               )}
             />
             <Divider sx={{ mb: 3 }} />
@@ -180,8 +143,8 @@ const MainDashboard: React.FC = () => {
               sx={{
                 flexWrap: 'wrap',
                 mb: 2,
-                maxHeight: '150px',
-                overflowY: 'auto', // Allow scrolling for skills if they overflow
+                minHeight: showAllSkills ? '22vh' : '9vh',
+                overflowY: showAllSkills ? 'auto' : 'hidden',
               }}
             >
               {skills.map((skill, index) => (
@@ -195,44 +158,43 @@ const MainDashboard: React.FC = () => {
                 />
               ))}
             </Stack>
-            <Autocomplete
-              freeSolo
-              options={skillsList}
-              onInputChange={(e, value) => setNewSkill(value)}
-              onChange={(e, value) => handleAddSkill(value || '')}
-              renderInput={(params) => (
-                <TextField
-                  {...params}
-                  variant="outlined"
-                  placeholder="Add a skill..."
-                  value={newSkill}
-                  onChange={(e) => setNewSkill(e.target.value)}
-                />
-              )}
-              sx={{ mb: 2 }}
-            />
+            <Button
+              variant="text"
+              onClick={() => setShowAllSkills(!showAllSkills)}
+              sx={{ textTransform: 'none' }}
+            >
+              {showAllSkills ? 'Show Less' : 'Show More'}
+            </Button>
+            <Stack direction="row" spacing={2} alignItems="center" sx={{ mb: 2}}>
+              <Autocomplete
+                freeSolo
+                fullWidth
+                options={skillsList}
+                value={newSkill}
+                onInputChange={(e, value) => setNewSkill(value)}
+                onChange={(e, value) => value && handleAddSkill(value)}
+                renderInput={(params) => (
+                  <TextField
+                    {...params}
+                    variant="outlined"
+                    label="Add a skill"
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        e.preventDefault();
+                        handleAddSkill(newSkill);
+                      }
+                    }}
+                  />
+                )}
+              />
+              <Button variant="contained" onClick={() => handleAddSkill(newSkill)}>Add</Button>
+            </Stack>
           </Paper>
         </Grid>
 
-        {/* Right Side (Sidebar) */}
-        <Grid
-          item
-          xs={12}
-          md={4}
-          sx={{
-            height: '100%', // Ensure it fills the parent height
-            overflow: 'hidden', // Prevent scrolling on the sidebar
-          }}
-        >
-          <Paper
-            elevation={4}
-            sx={{
-              p: 4,
-              textAlign: 'center',
-              borderRadius: 3,
-              height: '100%', // Ensure it fills the parent height
-            }}
-          >
+        {/* Right Side */}
+        <Grid item xs={12} md={4}>
+          <Paper elevation={4} sx={{ p: 4, borderRadius: 3, height: '70vh', textAlign: 'center'}}>
             <Avatar sx={{ width: 80, height: 80, mx: 'auto', mb: 2 }} />
             <Typography variant="h5" gutterBottom>Connect Accounts</Typography>
             {showAuthOptions ? (
@@ -247,45 +209,13 @@ const MainDashboard: React.FC = () => {
                     <MenuItem value="no-auth">No Auth</MenuItem>
                   </Select>
                 </FormControl>
-                <Button
-                  variant="contained"
-                  color="secondary"
-                  startIcon={<GitHub />}
-                  fullWidth
-                  onClick={handleGitHubConnect}
-                  sx={{ mb: 2 }}
-                >
-                  Proceed
-                </Button>
-                <Button
-                  variant="outlined"
-                  color="primary"
-                  fullWidth
-                  onClick={handleBackToGitHubOptions}
-                >
-                  Back
-                </Button>
+                <Button variant="contained" color="secondary" startIcon={<GitHub />} fullWidth onClick={handleGitHubConnect} sx={{ mb: 2 }}>Proceed</Button>
+                <Button variant="outlined" color="primary" fullWidth onClick={handleBackToGitHubOptions}>Back</Button>
               </>
             ) : (
               <>
-                <Button
-                  variant="contained"
-                  color="primary"
-                  startIcon={<LinkedIn />}
-                  fullWidth
-                  sx={{ mb: 2 }}
-                >
-                  Connect to LinkedIn
-                </Button>
-                <Button
-                  variant="contained"
-                  color="secondary"
-                  startIcon={<GitHub />}
-                  fullWidth
-                  onClick={() => setShowAuthOptions(true)}
-                >
-                  Connect to GitHub
-                </Button>
+                <Button variant="contained" color="primary" startIcon={<LinkedIn />} fullWidth sx={{ mb: 2 }}>Connect to LinkedIn</Button>
+                <Button variant="contained" color="secondary" startIcon={<GitHub />} fullWidth onClick={() => setShowAuthOptions(true)}>Connect to GitHub</Button>
               </>
             )}
             {repos.length > 0 && (
@@ -294,14 +224,7 @@ const MainDashboard: React.FC = () => {
                 <Box sx={{ maxHeight: '150px', overflowY: 'auto', mt: 1 }}>
                   {repos.map(repo => (
                     <Box key={repo.id} sx={{ mb: 1 }}>
-                      <a
-                        href={repo.html_url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        style={{ textDecoration: 'none', color: '#1976d2', fontWeight: 'bold' }}
-                      >
-                        {repo.name}
-                      </a>
+                      <a href={repo.html_url} target="_blank" rel="noopener noreferrer" style={{ textDecoration: 'none', color: '#1976d2', fontWeight: 'bold' }}>{repo.name}</a>
                     </Box>
                   ))}
                 </Box>
