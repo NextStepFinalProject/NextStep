@@ -272,12 +272,17 @@ const Resume: React.FC = () => {
     }
   };
 
-  const handleNext = () => {
-    setActiveStep((prevStep) => prevStep + 1);
-  };
-
   const handleBack = () => {
     setActiveStep((prevStep) => prevStep - 1);
+  };
+
+  const handleTryAnotherTemplate = () => {
+    setGeneratedResume(null); // Clear the generated resume
+    setActiveStep(1); // Go back to template selection
+  };
+
+  const handleNext = () => {
+    setActiveStep((prevStep) => prevStep + 1);
   };
 
   const handleGenerateResume = async () => {
@@ -616,14 +621,21 @@ const Resume: React.FC = () => {
             )}
             {generatedResume && (
               <Box sx={{ mt: 3 }}>
-                <Button
-                  variant="contained"
-                  href={`data:${generatedResume.type};base64,${generatedResume.content}`}
-                  download={`improved_resume${generatedResume.type.includes('docx') ? '.docx' : generatedResume.type.includes('pdf') ? '.pdf' : ''}`}
-                  sx={{ mb: 2 }}
-                >
-                  Download Improved Resume
-                </Button>
+                <Box sx={{ display: 'flex', gap: 2, mb: 2 }}>
+                  <Button
+                    variant="contained"
+                    href={`data:${generatedResume.type};base64,${generatedResume.content}`}
+                    download={`improved_resume${generatedResume.type.includes('docx') ? '.docx' : generatedResume.type.includes('pdf') ? '.pdf' : ''}`}
+                  >
+                    Download Improved Resume
+                  </Button>
+                  <Button
+                    variant="outlined"
+                    onClick={handleTryAnotherTemplate}
+                  >
+                    Try Another Template
+                  </Button>
+                </Box>
                 {/* Preview for generated resume */}
                 {generatedResume.type.includes('word') ? (
                   <GeneratedWordPreview base64Content={generatedResume.content} />
@@ -657,7 +669,7 @@ const Resume: React.FC = () => {
         <Button
           variant="contained"
           onClick={handleNext}
-          disabled={activeStep === steps.length - 1}
+          disabled={activeStep === steps.length - 1 || (activeStep === 2 && !generatedResume)}
         >
           Next
         </Button>
