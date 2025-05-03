@@ -11,11 +11,6 @@ import {
   Card,
   CardMedia,
   CardContent,
-  CardActions,
-  Grid,
-  Modal,
-  IconButton,
-  Zoom
 } from '@mui/material';
 import { styled } from '@mui/material/styles';
 import { config } from '../config';
@@ -24,8 +19,6 @@ import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import ScoreGauge from '../components/ScoreGauge';
 import Carousel from 'react-material-ui-carousel';
-import CloseIcon from '@mui/icons-material/Close';
-import ZoomInIcon from '@mui/icons-material/ZoomIn';
 import './Resume.css';
 
 const steps = ['Score your resume', 'Choose a template', 'Generate matching resume'];
@@ -72,38 +65,6 @@ const FeedbackContainer = styled(Box)(({ theme }) => ({
   },
   '& p': {
     textAlign: 'left',
-  },
-}));
-
-const PreviewModal = styled(Modal)(({ theme }) => ({
-  display: 'flex',
-  alignItems: 'center',
-  justifyContent: 'center',
-}));
-
-const ModalContent = styled(Box)(({ theme }) => ({
-  position: 'relative',
-  backgroundColor: theme.palette.background.paper,
-  padding: theme.spacing(2),
-  borderRadius: theme.shape.borderRadius,
-  maxWidth: '90vw',
-  maxHeight: '90vh',
-  overflow: 'auto',
-}));
-
-const CloseButton = styled(IconButton)(({ theme }) => ({
-  position: 'absolute',
-  right: theme.spacing(1),
-  top: theme.spacing(1),
-}));
-
-const ZoomButton = styled(IconButton)(({ theme }) => ({
-  position: 'absolute',
-  right: theme.spacing(1),
-  bottom: theme.spacing(1),
-  backgroundColor: theme.palette.background.paper,
-  '&:hover': {
-    backgroundColor: theme.palette.background.paper,
   },
 }));
 
@@ -208,8 +169,6 @@ const Resume: React.FC = () => {
   const [error, setError] = useState('');
   const [templates, setTemplates] = useState<Array<{ name: string; content: string; type: string }>>([]);
   const [selectedTemplate, setSelectedTemplate] = useState<number | null>(null);
-  const [previewOpen, setPreviewOpen] = useState(false);
-  const [previewTemplate, setPreviewTemplate] = useState<{ name: string; content: string; type: string } | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [previewUrlCache, setPreviewUrlCache] = useState<Record<string, string>>({});
   const [generatedResume, setGeneratedResume] = useState<{ content: string; type: string } | null>(null);
@@ -313,12 +272,17 @@ const Resume: React.FC = () => {
     }
   };
 
-  const handleNext = () => {
-    setActiveStep((prevStep) => prevStep + 1);
-  };
-
   const handleBack = () => {
     setActiveStep((prevStep) => prevStep - 1);
+  };
+
+  const handleTryAnotherTemplate = () => {
+    setGeneratedResume(null); // Clear the generated resume
+    setActiveStep(1); // Go back to template selection
+  };
+
+  const handleNext = () => {
+    setActiveStep((prevStep) => prevStep + 1);
   };
 
   const handleGenerateResume = async () => {
@@ -419,10 +383,6 @@ const Resume: React.FC = () => {
       console.error('Error preparing preview:', error);
       setError('Failed to prepare document preview');
     }
-  };
-
-  const handlePreviewClose = () => {
-    setPreviewUrl(null);
   };
 
   useEffect(() => {
@@ -661,14 +621,21 @@ const Resume: React.FC = () => {
             )}
             {generatedResume && (
               <Box sx={{ mt: 3 }}>
-                <Button
-                  variant="contained"
-                  href={`data:${generatedResume.type};base64,${generatedResume.content}`}
-                  download={`improved_resume${generatedResume.type.includes('docx') ? '.docx' : generatedResume.type.includes('pdf') ? '.pdf' : ''}`}
-                  sx={{ mb: 2 }}
-                >
-                  Download Improved Resume
-                </Button>
+                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+                  <Button
+                    variant="contained"
+                    href={`data:${generatedResume.type};base64,${generatedResume.content}`}
+                    download={`improved_resume${generatedResume.type.includes('docx') ? '.docx' : generatedResume.type.includes('pdf') ? '.pdf' : ''}`}
+                  >
+                    Download Improved Resume
+                  </Button>
+                  <Button
+                    variant="outlined"
+                    onClick={handleTryAnotherTemplate}
+                  >
+                    Try Another Template
+                  </Button>
+                </Box>
                 {/* Preview for generated resume */}
                 {generatedResume.type.includes('word') ? (
                   <GeneratedWordPreview base64Content={generatedResume.content} />
@@ -702,7 +669,7 @@ const Resume: React.FC = () => {
         <Button
           variant="contained"
           onClick={handleNext}
-          disabled={activeStep === steps.length - 1}
+          disabled={activeStep === steps.length - 1 || (activeStep === 2 && !generatedResume)}
         >
           Next
         </Button>
