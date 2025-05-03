@@ -129,8 +129,8 @@ const MainDashboard: React.FC = () => {
               freeSolo
               options={roles}
               value={selectedRole}
-              onInputChange={(e, value) => setSelectedRole(value)}
-              onChange={(e, value) => setSelectedRole(value || '')}
+              onInputChange={(_e, value) => setSelectedRole(value)}
+              onChange={(_e, value) => setSelectedRole(value || '')}
               renderInput={(params) => (
                 <TextField {...params} variant="outlined" placeholder="Select or write a role..." sx={{ mb: 3 }} />
               )}
@@ -171,8 +171,8 @@ const MainDashboard: React.FC = () => {
                 fullWidth
                 options={skillsList}
                 value={newSkill}
-                onInputChange={(e, value) => setNewSkill(value)}
-                onChange={(e, value) => value && handleAddSkill(value)}
+                onInputChange={(_e, value) => setNewSkill(value)}
+                onChange={(_e, value) => value && handleAddSkill(value)}
                 renderInput={(params) => (
                   <TextField
                     {...params}
