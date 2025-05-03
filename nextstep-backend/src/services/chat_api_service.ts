@@ -8,7 +8,7 @@ const cleanResponse = (response: string): string => {
 /**
  * @example
  * await streamChatWithAI(
- *     "How would you build the tallest building ever?",
+ *     ["How would you build the tallest building ever?"],
  *     "You are a helpful assistant.",
  *     (chunk) => {
  *         // Handle each chunk of the response
@@ -18,8 +18,8 @@ const cleanResponse = (response: string): string => {
  * );
  */
 export const streamChatWithAI = async (
-    userMessageContent: string,
     systemMessageContent: string,
+    userMessageContents: string[],
     onChunk: (chunk: string) => void
 ): Promise<void> => {
     try {
@@ -32,11 +32,6 @@ export const streamChatWithAI = async (
             content: systemMessageContent
         };
 
-        const userMessage = {
-            role: 'user',
-            content: userMessageContent
-        };
-
         const response = await fetch(API_URL, {
             method: 'POST',
             headers: {
@@ -45,7 +40,10 @@ export const streamChatWithAI = async (
             },
             body: JSON.stringify({
                 model: MODEL_NAME,
-                messages: [systemMessage, userMessage],
+                messages: [ systemMessage, ...userMessageContents.map(userMessageContent => ({
+                    role: 'user',
+                    content: userMessageContent
+                  })) ],
                 stream: true,
             }),
         });
@@ -99,7 +97,7 @@ export const streamChatWithAI = async (
     }
 }
 
-export const chatWithAI = async (userMessageContent: string, systemMessageContent: string): Promise<string> => {
+export const chatWithAI = async (systemMessageContent: string, userMessageContents: string[]): Promise<string> => {
     try {
         const API_URL = config.chatAi.api_url();
         const API_KEY = config.chatAi.api_key();
@@ -110,16 +108,14 @@ export const chatWithAI = async (userMessageContent: string, systemMessageConten
             content: systemMessageContent
         };
 
-        const userMessage = {
-            role: 'user',
-            content: userMessageContent
-        };
-
         const response = await axios.post(
             API_URL,
             {
                 model: MODEL_NAME,
-                messages: [ systemMessage, userMessage ],
+                messages: [ systemMessage, ...userMessageContents.map(userMessageContent => ({
+                    role: 'user',
+                    content: userMessageContent
+                  })) ],
             },
             {
                 headers: {

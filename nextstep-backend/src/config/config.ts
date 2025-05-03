@@ -20,6 +20,9 @@ export const config = {
         resumesDirectoryPath: () => 'resources/resumes',
         resumeMaxSize: () => 5 * 1024 * 1024 // Max file size: 5MB
     },
+    assets: {
+        resumeTemplatesDirectoryPath: () => 'assets/resume-templates',
+    },
     chatAi: {
         api_url: () => process.env.CHAT_AI_API_URL || 'https://openrouter.ai/api/v1/chat/completions',
         api_key: () => process.env.OPENROUTER_API_KEY || undefined,

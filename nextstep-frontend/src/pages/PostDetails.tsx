@@ -10,7 +10,7 @@ import { Post as PostModel } from '../models/Post';
 import { Comment } from '../models/Comment';
 import { getUserAuth } from "../handlers/userAuth.ts";
 import api from "../serverApi.ts";
-import defaultProfileImage from '../assets/defaultProfileImage.jpg';
+import defaultProfileImage from '../../assets/defaultProfileImage.jpg';
 import { config } from '../config.ts';
 
 const PostDetails: React.FC = () => {

@@ -25,7 +25,7 @@ import { ThumbUp, Message, Delete } from '@mui/icons-material';
 import { Post } from "../models/Post";
 import api from "../serverApi";
 import {getUserAuth} from "../handlers/userAuth.ts";
-import defaultProfileImage from '../assets/defaultProfileImage.jpg'; // Import the default profile image
+import defaultProfileImage from '../../assets/defaultProfileImage.jpg'; // Import the default profile image
 
 
 const Dashboard: React.FC = () => {
