@@ -15,6 +15,7 @@ import validateUser from "./middleware/validateUser";
 import loadOpenApiFile from "./openapi/openapi_loader";
 import resource_routes from './routes/resources_routes';
 import resume_routes from './routes/resume_routes';
+import githubRoutes from './routes/github_routes';
 
 const specs = swaggerJsdoc(options);
 
@@ -74,5 +75,6 @@ app.use('/user', usersRoutes);
 app.use('/resource', resource_routes);
 app.use('/room', roomsRoutes);
 app.use('/resume', resume_routes);
+app.use('/github', githubRoutes);
 
 export { app, corsOptions };
