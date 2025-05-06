@@ -20,7 +20,7 @@ const TopBar: React.FC = () => {
   };
 
   return (
-    <AppBar position="relative" sx={{ width: '100vw', left: 0 }} className='top-bar'>
+    <AppBar position="relative" sx={{ width: '100vw', left: 0, backgroundColor: '#233752' }} className='top-bar'>
       <Toolbar>
         <Tooltip title="Home">
           <IconButton color="inherit" onClick={() => navigate('/main-dashboard')} sx={{ mx: 1 }}>
