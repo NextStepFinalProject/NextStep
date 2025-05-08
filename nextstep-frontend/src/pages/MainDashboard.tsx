@@ -58,6 +58,7 @@ const MainDashboard: React.FC = () => {
   const [parsing, setParsing] = useState(false);
   const [resumeExperience, setResumeExperience] = useState<string[]>([]);
   const [roleMatch, setRoleMatch] = useState<string>('');
+  const [resumeFileName, setResumeFileName] = useState<string>('');
 
   // Skills toggle
   const [showAllSkills, setShowAllSkills] = useState(false);
@@ -86,7 +87,6 @@ const MainDashboard: React.FC = () => {
     }
   }, []);
 
-  // Merge fetched repo languages into skills
   const mergeRepoLanguages = async (fetchedRepos: typeof repos) => {
     const langSet = new Set(skills);
     for (const repo of fetchedRepos) {
@@ -125,24 +125,19 @@ const MainDashboard: React.FC = () => {
     }
   };
 
-  // **New**: upload & parse resume
+  // Upload & parse resume
   const handleResumeUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (!e.target.files?.[0]) return;
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setResumeFileName(file.name);
     setParsing(true);
     const form = new FormData();
-    form.append('resume', e.target.files[0]);
+    form.append('resume', file);
     try {
       const res = await api.post('/resume/parseResume', form, {
-        headers: { 'Content-Type': 'multipart/form-data' },
+        headers: { 'Content-Type': 'multipart/form-data' }
       });
-      const {
-        aboutMe: aiAbout,
-        skills: aiSkills,
-        roleMatch: aiRole,
-        experience: aiExp
-      } = res.data;
-
-      // Overwrite UI sections
+      const { aboutMe: aiAbout, skills: aiSkills, roleMatch: aiRole, experience: aiExp } = res.data;
       setAboutMe(aiAbout);
       setSkills(aiSkills);
       setRoleMatch(aiRole);
@@ -161,33 +156,51 @@ const MainDashboard: React.FC = () => {
         {/* Left Column */}
         <Grid item xs={12} md={8}>
           <Stack spacing={4}>
-
-            {/* About Me with Upload */}
+            {/* About Me Section */}
             <Box sx={{ bgcolor: 'background.paper', p: 3, borderRadius: 2, boxShadow: 1 }}>
-              <Box display="flex" alignItems="center" mb={2}>
-                <PersonIcon fontSize="large" color="primary" sx={{ mr: 1 }} />
-                <Typography variant="h6" align="center" sx={{ flexGrow: 1 }}>
-                  About Me
-                </Typography>
-
+              {/* Upload icon & filename above the title, right-aligned */}
+              <Box display="flex" justifyContent="flex-end" mb={1}>
                 <input
                   accept=".pdf,.docx"
                   id="upload-resume"
                   type="file"
-                  onChange={handleResumeUpload}
                   hidden
+                  onChange={handleResumeUpload}
                 />
                 <Tooltip title="Upload CV" arrow placement="left">
                 <label htmlFor="upload-resume">
-                  <IconButton color="primary" component="span">
+                  <IconButton component="span" sx={{ p: 0 }}>
                     <UploadFileIcon />
                   </IconButton>
                 </label>
                 </Tooltip>
-
-                {parsing && <CircularProgress size={24} sx={{ ml: 1 }} />}
+                
+                {resumeFileName && (
+                  <Typography
+                    variant="caption"
+                    sx={{
+                      ml: 1,
+                      maxWidth: 200,
+                      whiteSpace: 'nowrap',
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis'
+                    }}
+                  >
+                    {resumeFileName}
+                  </Typography>
+                )}
+                {parsing && <CircularProgress size={16} sx={{ ml: 1 }} />}
               </Box>
 
+              {/* Header */}
+              <Box display="flex" alignItems="center" mb={2}>
+                <PersonIcon fontSize="large" color="primary" sx={{ mr: 1 }} />
+                <Typography variant="h6" sx={{ flexGrow: 1 }} align="center">
+                  About Me
+                </Typography>
+              </Box>
+
+              {/* Content */}
               <TextField
                 fullWidth
                 multiline
@@ -201,9 +214,9 @@ const MainDashboard: React.FC = () => {
 
             {/* Desired Role */}
             <Box sx={{ bgcolor: 'background.paper', p: 3, borderRadius: 2, boxShadow: 1 }}>
-              <Box display="flex" alignItems="end" mb={2}>
+              <Box display="flex" alignItems="center" mb={2}>
                 <WorkIcon fontSize="large" color="secondary" sx={{ mr: 1 }} />
-                <Typography variant="h6" align="center" sx={{ flexGrow: 1 }}>
+                <Typography variant="h6" sx={{ flexGrow: 1 }} align="center">
                   Desired Role
                 </Typography>
               </Box>
@@ -222,7 +235,7 @@ const MainDashboard: React.FC = () => {
             <Box sx={{ bgcolor: 'background.paper', p: 3, borderRadius: 2, boxShadow: 1 }}>
               <Box display="flex" alignItems="center" mb={2}>
                 <BuildIcon fontSize="large" color="success" sx={{ mr: 1 }} />
-                <Typography variant="h6" align="center" sx={{ flexGrow: 1 }}>
+                <Typography variant="h6" sx={{ flexGrow: 1 }} align="center">
                   Skills
                 </Typography>
               </Box>
@@ -259,12 +272,12 @@ const MainDashboard: React.FC = () => {
               </Box>
             </Box>
 
-            {/* Suggested Role (AI) */}
+            {/* Suggested Role Match */}
             {roleMatch && (
               <Box sx={{ bgcolor: 'background.paper', p: 3, borderRadius: 2, boxShadow: 1 }}>
                 <Box display="flex" alignItems="center" mb={2}>
                   <WorkIcon fontSize="large" color="secondary" sx={{ mr: 1 }} />
-                  <Typography variant="h6" align="center" sx={{ flexGrow: 1 }}>
+                  <Typography variant="h6" sx={{ flexGrow: 1 }} align="center">
                     Suggested Role Match
                   </Typography>
                 </Box>
@@ -272,12 +285,12 @@ const MainDashboard: React.FC = () => {
               </Box>
             )}
 
-            {/* Experience (AI) */}
+            {/* Experience */}
             {resumeExperience.length > 0 && (
               <Box sx={{ bgcolor: 'background.paper', p: 3, borderRadius: 2, boxShadow: 1 }}>
                 <Box display="flex" alignItems="center" mb={2}>
                   <BuildIcon fontSize="large" color="info" sx={{ mr: 1 }} />
-                  <Typography variant="h6" align="center" sx={{ flexGrow: 1 }}>
+                  <Typography variant="h6" sx={{ flexGrow: 1 }} align="center">
                     Experience
                   </Typography>
                 </Box>
