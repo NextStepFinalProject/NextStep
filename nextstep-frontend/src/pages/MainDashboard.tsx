@@ -15,14 +15,17 @@ import {
   InputLabel,
   Select,
   MenuItem,
-  CircularProgress
+  CircularProgress,
+  IconButton,
+  Tooltip
 } from '@mui/material';
 import {
   GitHub,
   LinkedIn,
   Person as PersonIcon,
   Work as WorkIcon,
-  Build as BuildIcon
+  Build as BuildIcon,
+  UploadFile as UploadFileIcon
 } from '@mui/icons-material';
 import {
   connectToGitHub,
@@ -130,9 +133,7 @@ const MainDashboard: React.FC = () => {
     form.append('resume', e.target.files[0]);
     try {
       const res = await api.post('/resume/parseResume', form, {
-        headers: {
-          'Content-Type': 'multipart/form-data',
-        },
+        headers: { 'Content-Type': 'multipart/form-data' },
       });
       const {
         aboutMe: aiAbout,
@@ -155,216 +156,217 @@ const MainDashboard: React.FC = () => {
   };
 
   return (
-    <>
-      {/* ─── Upload CV ───────────────────────────────────────────── */}
-      <Box textAlign="center" mb={4}>
-        <Button variant="contained" component="label" startIcon={<PersonIcon />}>
-          Upload CV
-          <input
-            hidden
-            type="file"
-            accept=".pdf,.docx"
-            onChange={handleResumeUpload}
-          />
-        </Button>
-        {parsing && <CircularProgress size={24} sx={{ ml: 2, verticalAlign: 'middle' }} />}
-      </Box>
+    <Container maxWidth="lg" sx={{ py: 4 }}>
+      <Grid container spacing={4}>
+        {/* Left Column */}
+        <Grid item xs={12} md={8}>
+          <Stack spacing={4}>
 
-      <Container maxWidth="lg" sx={{ py: 4 }}>
-        <Grid container spacing={4}>
+            {/* About Me with Upload */}
+            <Box sx={{ bgcolor: 'background.paper', p: 3, borderRadius: 2, boxShadow: 1 }}>
+              <Box display="flex" alignItems="center" mb={2}>
+                <PersonIcon fontSize="large" color="primary" sx={{ mr: 1 }} />
+                <Typography variant="h6" align="center" sx={{ flexGrow: 1 }}>
+                  About Me
+                </Typography>
 
-          {/* ─── Left Column ───────────────────────────────────────── */}
-          <Grid item xs={12} md={8}>
-            <Stack spacing={4}>
-
-              {/* About Me */}
-              <Box sx={{ bgcolor: 'background.paper', p: 3, borderRadius: 2, boxShadow: 1 }}>
-                <Box display="flex" alignItems="center" mb={2}>
-                  <PersonIcon fontSize="large" color="primary" sx={{ mr: 1 }} />
-                  <Typography variant="h6" align="center" sx={{ flexGrow: 1 }}>
-                    About Me
-                  </Typography>
-                </Box>
-                <TextField
-                  fullWidth
-                  multiline
-                  rows={3}
-                  variant="outlined"
-                  placeholder="Write about yourself..."
-                  value={aboutMe}
-                  onChange={e => setAboutMe(e.target.value)}
+                <input
+                  accept=".pdf,.docx"
+                  id="upload-resume"
+                  type="file"
+                  onChange={handleResumeUpload}
+                  hidden
                 />
+                <Tooltip title="Upload CV" arrow placement="left">
+                <label htmlFor="upload-resume">
+                  <IconButton color="primary" component="span">
+                    <UploadFileIcon />
+                  </IconButton>
+                </label>
+                </Tooltip>
+
+                {parsing && <CircularProgress size={24} sx={{ ml: 1 }} />}
               </Box>
 
-              {/* Desired Role */}
+              <TextField
+                fullWidth
+                multiline
+                rows={3}
+                variant="outlined"
+                placeholder="Write about yourself..."
+                value={aboutMe}
+                onChange={e => setAboutMe(e.target.value)}
+              />
+            </Box>
+
+            {/* Desired Role */}
+            <Box sx={{ bgcolor: 'background.paper', p: 3, borderRadius: 2, boxShadow: 1 }}>
+              <Box display="flex" alignItems="end" mb={2}>
+                <WorkIcon fontSize="large" color="secondary" sx={{ mr: 1 }} />
+                <Typography variant="h6" align="center" sx={{ flexGrow: 1 }}>
+                  Desired Role
+                </Typography>
+              </Box>
+              <Autocomplete
+                freeSolo
+                options={roles}
+                value={selectedRole}
+                onInputChange={(_, val) => setSelectedRole(val)}
+                renderInput={params => (
+                  <TextField {...params} variant="outlined" placeholder="Select or type a role" />
+                )}
+              />
+            </Box>
+
+            {/* Skills */}
+            <Box sx={{ bgcolor: 'background.paper', p: 3, borderRadius: 2, boxShadow: 1 }}>
+              <Box display="flex" alignItems="center" mb={2}>
+                <BuildIcon fontSize="large" color="success" sx={{ mr: 1 }} />
+                <Typography variant="h6" align="center" sx={{ flexGrow: 1 }}>
+                  Skills
+                </Typography>
+              </Box>
+              <Divider sx={{ my: 2 }} />
+              <Stack direction="row" spacing={1} sx={{ flexWrap: 'wrap', mb: 2 }}>
+                {(showAllSkills ? skills : skills.slice(0, SKILL_DISPLAY_LIMIT)).map(skill => (
+                  <Chip key={skill} label={skill} onDelete={() => handleDeleteSkill(skill)} />
+                ))}
+              </Stack>
+              {shouldShowToggle && (
+                <Button size="small" onClick={() => setShowAllSkills(prev => !prev)}>
+                  {showAllSkills ? 'Show Less' : 'Show More'}
+                </Button>
+              )}
+              <Box mt={2} display="flex" gap={2}>
+                <Autocomplete
+                  freeSolo
+                  options={skillsList}
+                  value={newSkill}
+                  onInputChange={(_, val) => setNewSkill(val)}
+                  onChange={(_, val) => val && handleAddSkill(val)}
+                  renderInput={params => (
+                    <TextField
+                      {...params}
+                      label="Add a skill"
+                      onKeyDown={e => e.key === 'Enter' && handleAddSkill(newSkill)}
+                    />
+                  )}
+                  sx={{ flexGrow: 1 }}
+                />
+                <Button variant="contained" onClick={() => handleAddSkill(newSkill)}>
+                  Add
+                </Button>
+              </Box>
+            </Box>
+
+            {/* Suggested Role (AI) */}
+            {roleMatch && (
               <Box sx={{ bgcolor: 'background.paper', p: 3, borderRadius: 2, boxShadow: 1 }}>
                 <Box display="flex" alignItems="center" mb={2}>
                   <WorkIcon fontSize="large" color="secondary" sx={{ mr: 1 }} />
                   <Typography variant="h6" align="center" sx={{ flexGrow: 1 }}>
-                    Desired Role
+                    Suggested Role Match
                   </Typography>
                 </Box>
-                <Autocomplete
-                  freeSolo
-                  options={roles}
-                  value={selectedRole}
-                  onInputChange={(_, val) => setSelectedRole(val)}
-                  renderInput={params => (
-                    <TextField {...params} variant="outlined" placeholder="Select or type a role" />
-                  )}
-                />
+                <Typography>{roleMatch}</Typography>
               </Box>
+            )}
 
-              {/* Skills */}
+            {/* Experience (AI) */}
+            {resumeExperience.length > 0 && (
               <Box sx={{ bgcolor: 'background.paper', p: 3, borderRadius: 2, boxShadow: 1 }}>
                 <Box display="flex" alignItems="center" mb={2}>
-                  <BuildIcon fontSize="large" color="success" sx={{ mr: 1 }} />
+                  <BuildIcon fontSize="large" color="info" sx={{ mr: 1 }} />
                   <Typography variant="h6" align="center" sx={{ flexGrow: 1 }}>
-                    Skills
+                    Experience
                   </Typography>
                 </Box>
-                <Divider sx={{ my: 2 }} />
-                <Stack direction="row" spacing={1} sx={{ flexWrap: 'wrap', mb: 2 }}>
-                  {(showAllSkills ? skills : skills.slice(0, SKILL_DISPLAY_LIMIT)).map(skill => (
-                    <Chip key={skill} label={skill} onDelete={() => handleDeleteSkill(skill)} />
+                <Stack component="ul" spacing={1} sx={{ pl: 2 }}>
+                  {resumeExperience.map((exp, i) => (
+                    <Typography component="li" key={i}>{exp}</Typography>
                   ))}
                 </Stack>
-                {shouldShowToggle && (
-                  <Button size="small" onClick={() => setShowAllSkills(prev => !prev)}>
-                    {showAllSkills ? 'Show Less' : 'Show More'}
-                  </Button>
-                )}
-                <Box mt={2} display="flex" gap={2}>
-                  <Autocomplete
-                    freeSolo
-                    options={skillsList}
-                    value={newSkill}
-                    onInputChange={(_, val) => setNewSkill(val)}
-                    onChange={(_, val) => val && handleAddSkill(val)}
-                    renderInput={params => (
-                      <TextField
-                        {...params}
-                        label="Add a skill"
-                        onKeyDown={e => e.key === 'Enter' && handleAddSkill(newSkill)}
-                      />
-                    )}
-                    sx={{ flexGrow: 1 }}
-                  />
-                  <Button variant="contained" onClick={() => handleAddSkill(newSkill)}>
-                    Add
-                  </Button>
-                </Box>
               </Box>
+            )}
 
-              {/* Suggested Role (AI) */}
-              {roleMatch && (
-                <Box sx={{ bgcolor: 'background.paper', p: 3, borderRadius: 2, boxShadow: 1 }}>
-                  <Box display="flex" alignItems="center" mb={2}>
-                    <WorkIcon fontSize="large" color="secondary" sx={{ mr: 1 }} />
-                    <Typography variant="h6" align="center" sx={{ flexGrow: 1 }}>
-                      Suggested Role Match
-                    </Typography>
-                  </Box>
-                  <Typography>{roleMatch}</Typography>
-                </Box>
-              )}
-
-              {/* Experience (AI) */}
-              {resumeExperience.length > 0 && (
-                <Box sx={{ bgcolor: 'background.paper', p: 3, borderRadius: 2, boxShadow: 1 }}>
-                  <Box display="flex" alignItems="center" mb={2}>
-                    <BuildIcon fontSize="large" color="info" sx={{ mr: 1 }} />
-                    <Typography variant="h6" align="center" sx={{ flexGrow: 1 }}>
-                      Experience
-                    </Typography>
-                  </Box>
-                  <Stack component="ul" spacing={1} sx={{ pl: 2 }}>
-                    {resumeExperience.map((exp, i) => (
-                      <Typography component="li" key={i}>{exp}</Typography>
-                    ))}
-                  </Stack>
-                </Box>
-              )}
-
-            </Stack>
-          </Grid>
-
-          {/* ─── Right Column ─────────────────────────────────────── */}
-          <Grid item xs={12} md={4}>
-            <Box sx={{ bgcolor: 'background.paper', p: 3, borderRadius: 2, boxShadow: 1, textAlign: 'center' }}>
-              <Box display="flex" alignItems="center" justifyContent="center" mb={2}>
-                <Avatar sx={{ width: 64, height: 64, mr: 2 }} />
-                <Typography variant="h6">Connect Accounts</Typography>
-              </Box>
-
-              {showAuthOptions ? (
-                <Box>
-                  <FormControl fullWidth sx={{ mb: 2 }}>
-                    <InputLabel>Method</InputLabel>
-                  </FormControl>
-                  <Select
-                    value={useOAuth ? 'oauth' : 'no-auth'}
-                    label="Method"
-                    onChange={e => setUseOAuth(e.target.value === 'oauth')}
-                  >
-                    <MenuItem value="oauth">OAuth</MenuItem>
-                    <MenuItem value="no-auth">Username</MenuItem>
-                  </Select>
-                  <Button
-                    fullWidth
-                    variant="contained"
-                    startIcon={<GitHub />}
-                    sx={{ my: 1 }}
-                    onClick={handleGitHubConnect}
-                  >
-                    Proceed with GitHub
-                  </Button>
-                  <Button fullWidth variant="outlined" onClick={() => setShowAuthOptions(false)}>
-                    Cancel
-                  </Button>
-                </Box>
-              ) : (
-                <Stack spacing={2}>
-                  <Button variant="contained" startIcon={<LinkedIn />} fullWidth>
-                    Connect LinkedIn
-                  </Button>
-                  <Button
-                    variant="contained"
-                    color="secondary"
-                    startIcon={<GitHub />}
-                    fullWidth
-                    onClick={() => setShowAuthOptions(true)}
-                  >
-                    Connect GitHub
-                  </Button>
-                </Stack>
-              )}
-
-              {repos.length > 0 && (
-                <Box mt={3} textAlign="left">
-                  <Typography variant="subtitle1" gutterBottom>
-                    Repositories:
-                  </Typography>
-                  <Stack spacing={1} sx={{ maxHeight: 150, overflow: 'auto' }}>
-                    {repos.map(repo => (
-                      <Button
-                        key={repo.id}
-                        href={repo.html_url}
-                        target="_blank"
-                        variant="text"
-                        sx={{ justifyContent: 'flex-start', textTransform: 'none' }}
-                      >
-                        {repo.name}
-                      </Button>
-                    ))}
-                  </Stack>
-                </Box>
-              )}
-            </Box>
-          </Grid>
+          </Stack>
         </Grid>
-      </Container>
-    </>
+
+        {/* Right Column */}
+        <Grid item xs={12} md={4}>
+          <Box sx={{ bgcolor: 'background.paper', p: 3, borderRadius: 2, boxShadow: 1, textAlign: 'center' }}>
+            <Box display="flex" alignItems="center" justifyContent="center" mb={2}>
+              <Avatar sx={{ width: 64, height: 64, mr: 2 }} />
+              <Typography variant="h6">Connect Accounts</Typography>
+            </Box>
+
+            {showAuthOptions ? (
+              <Box>
+                <FormControl fullWidth sx={{ mb: 2 }}>
+                  <InputLabel>Method</InputLabel>
+                </FormControl>
+                <Select
+                  value={useOAuth ? 'oauth' : 'no-auth'}
+                  label="Method"
+                  onChange={e => setUseOAuth(e.target.value === 'oauth')}
+                >
+                  <MenuItem value="oauth">OAuth</MenuItem>
+                  <MenuItem value="no-auth">Username</MenuItem>
+                </Select>
+                <Button
+                  fullWidth
+                  variant="contained"
+                  startIcon={<GitHub />}
+                  sx={{ my: 1 }}
+                  onClick={handleGitHubConnect}
+                >
+                  Proceed with GitHub
+                </Button>
+                <Button fullWidth variant="outlined" onClick={() => setShowAuthOptions(false)}>
+                  Cancel
+                </Button>
+              </Box>
+            ) : (
+              <Stack spacing={2}>
+                <Button variant="contained" startIcon={<LinkedIn />} fullWidth>
+                  Connect LinkedIn
+                </Button>
+                <Button
+                  variant="contained"
+                  color="secondary"
+                  startIcon={<GitHub />}
+                  fullWidth
+                  onClick={() => setShowAuthOptions(true)}
+                >
+                  Connect GitHub
+                </Button>
+              </Stack>
+            )}
+
+            {repos.length > 0 && (
+              <Box mt={3} textAlign="left">
+                <Typography variant="subtitle1" gutterBottom>
+                  Repositories:
+                </Typography>
+                <Stack spacing={1} sx={{ maxHeight: 150, overflow: 'auto' }}>
+                  {repos.map(repo => (
+                    <Button
+                      key={repo.id}
+                      href={repo.html_url}
+                      target="_blank"
+                      variant="text"
+                      sx={{ justifyContent: 'flex-start', textTransform: 'none' }}
+                    >
+                      {repo.name}
+                    </Button>
+                  ))}
+                </Stack>
+              </Box>
+            )}
+          </Box>
+        </Grid>
+      </Grid>
+    </Container>
   );
 };
 
