@@ -1,43 +1,29 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
-  Container,
-  Grid,
-  Box,
-  Typography,
-  TextField,
-  Button,
-  Chip,
-  Stack,
-  Avatar,
-  Divider,
-  Autocomplete,
-  FormControl,
-  InputLabel,
-  Select,
-  MenuItem
+  Container, Box, Typography, TextField, Chip, Stack,
+  Grid, Autocomplete, MenuItem, Select, FormControl,
+  InputLabel, Divider, Avatar, Button
 } from '@mui/material';
-import {
-  GitHub,
-  LinkedIn,
-  Person as PersonIcon,
-  Work as WorkIcon,
-  Build as BuildIcon
-} from '@mui/icons-material';
+import { GitHub, LinkedIn, UploadFile } from '@mui/icons-material';
 import {
   connectToGitHub,
   initiateGitHubOAuth,
   fetchRepoLanguages,
   handleGitHubOAuth
 } from '../handlers/githubAuth';
+import api from '../serverApi';
+import { config } from '../config';
 
 const roles = [
-  'Software Engineer', 'Frontend Developer', 'Backend Developer',
-  'Full Stack Developer', 'DevOps Engineer', 'Product Manager', 'UI/UX Designer'
+  'Software Engineer', 'Software Developer', 'Frontend Developer',
+  'Backend Developer', 'Full Stack Developer', 'DevOps Engineer',
+  'Data Scientist', 'Machine Learning Engineer', 'Product Manager', 'UI/UX Designer'
 ];
 
 const skillsList = [
-  'React', 'JavaScript', 'TypeScript', 'Python', 'Java', 'Node.js',
-  'Express', 'MongoDB', 'AWS', 'Docker', 'Kubernetes', 'Git', 'Agile'
+  'Leadership', 'React', 'JavaScript', 'TypeScript', 'Python', 'Java',
+  'C++', 'Node.js', 'Express', 'MongoDB', 'SQL', 'AWS', 'Docker',
+  'Kubernetes', 'Git', 'Agile Methodologies', 'Problem Solving', 'Communication'
 ];
 
 const MainDashboard: React.FC = () => {
@@ -48,239 +34,211 @@ const MainDashboard: React.FC = () => {
   const [repos, setRepos] = useState<{ id: number; name: string; html_url: string }[]>([]);
   const [useOAuth, setUseOAuth] = useState(true);
   const [showAuthOptions, setShowAuthOptions] = useState(false);
-
-  // NEW: control how many skills to show before toggling
-  const [showAllSkills, setShowAllSkills] = useState(false);
-  const SKILL_DISPLAY_LIMIT = 6;
-  const shouldShowToggle = skills.length > SKILL_DISPLAY_LIMIT;
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => { localStorage.setItem('aboutMe', aboutMe); }, [aboutMe]);
   useEffect(() => { localStorage.setItem('skills', JSON.stringify(skills)); }, [skills]);
   useEffect(() => { localStorage.setItem('selectedRole', selectedRole); }, [selectedRole]);
 
-  useEffect(() => {
-    const code = new URLSearchParams(window.location.search).get('code');
-    if (code) {
-      (async () => {
-        try {
-          const username = await handleGitHubOAuth(code);
-          const fetched = await connectToGitHub(username);
-          setRepos(fetched);
-          mergeRepoLanguages(fetched);
-        } catch (e) {
-          console.error(e);
-        }
-      })();
-    }
-  }, []);
-
-  const mergeRepoLanguages = async (fetchedRepos: typeof repos) => {
-    const langSet = new Set(skills);
-    for (const repo of fetchedRepos) {
-      const langs = await fetchRepoLanguages(repo.html_url);
-      Object.keys(langs).forEach(lang => langSet.add(lang));
-    }
-    setSkills(Array.from(langSet));
-  };
-
   const handleAddSkill = (skill: string) => {
-    const trimmed = skill.trim();
-    if (!trimmed || skills.includes(trimmed)) return;
-    setSkills(prev => [trimmed, ...prev]);
-    setNewSkill('');
+    if (skill.trim() && !skills.includes(skill.trim())) {
+      setSkills([...skills, skill.trim()]);
+      setNewSkill('');
+    }
   };
 
   const handleDeleteSkill = (skillToDelete: string) => {
-    setSkills(prev => prev.filter(s => s !== skillToDelete));
+    setSkills(skills.filter(skill => skill !== skillToDelete));
   };
 
   const handleGitHubConnect = async () => {
-    if (!showAuthOptions) return setShowAuthOptions(true);
+    if (!showAuthOptions) { setShowAuthOptions(true); return; }
     try {
-      if (useOAuth) initiateGitHubOAuth();
-      else {
+      if (useOAuth) {
+        initiateGitHubOAuth();
+      } else {
         const username = prompt('Enter GitHub username:');
-        if (!username) return alert('Username required');
-        const fetched = await connectToGitHub(username);
-        setRepos(fetched);
-        mergeRepoLanguages(fetched);
+        if (!username) { alert('GitHub username is required.'); return; }
+        const fetchedRepos = await connectToGitHub(username);
+        setRepos(fetchedRepos);
+        const languagesSet = new Set(skills);
+        for (const repo of fetchedRepos) {
+          const repoLanguages = await fetchRepoLanguages(repo.html_url);
+          Object.keys(repoLanguages).forEach(lang => languagesSet.add(lang));
+        }
+        setSkills(Array.from(languagesSet));
       }
-    } catch (e) {
-      console.error(e);
+    } catch (error) {
+      console.error('Error connecting to GitHub:', error);
     } finally {
       setShowAuthOptions(false);
     }
   };
 
+  const handleBackToGitHubOptions = () => {
+    setShowAuthOptions(false);
+  };
+
+  const handleResumeUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+    const formData = new FormData();
+    formData.append('file', file);
+
+    try {
+      const response = await api.post('/resource/resume', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' }
+      });
+      const filename = response.data;
+
+      const token = localStorage.getItem(config.localStorageKeys.userAuth) 
+              ? JSON.parse(localStorage.getItem(config.localStorageKeys.userAuth)!).accessToken 
+              : '';      
+      const eventSource = new EventSource(`${config.app.backend_url()}/resume/streamScore/${filename}?accessToken=${encodeURIComponent(token)}`);
+      let feedbackBuffer = '';
+      eventSource.onmessage = (event) => {
+        try {
+          const data = JSON.parse(event.data);
+          if (data.chunk) {
+            feedbackBuffer += data.chunk;
+          }
+          if (data.done) {
+            const foundSkills = skillsList.filter(skill => feedbackBuffer.toLowerCase().includes(skill.toLowerCase()));
+            const uniqueSkills = Array.from(new Set([...skills, ...foundSkills]));
+            setSkills(uniqueSkills);
+            eventSource.close();
+          }
+        } catch (e) {
+          console.error('Error parsing stream chunk:', e);
+        }
+      };
+    } catch (err) {
+      console.error('Resume upload failed:', err);
+    }
+  };
+
+  useEffect(() => {
+    const code = new URLSearchParams(window.location.search).get('code');
+    if (code) {
+      const fetchGitHubData = async () => {
+        try {
+          const username = await handleGitHubOAuth(code);
+          const fetchedRepos = await connectToGitHub(username);
+          setRepos(fetchedRepos);
+          const languagesSet = new Set(skills);
+          for (const repo of fetchedRepos) {
+            const repoLanguages = await fetchRepoLanguages(repo.html_url);
+            Object.keys(repoLanguages).forEach(lang => languagesSet.add(lang));
+          }
+          setSkills(Array.from(languagesSet));
+        } catch (error) {
+          console.error('Error fetching GitHub data:', error);
+        }
+      };
+      fetchGitHubData();
+    }
+  }, []);
+
   return (
-    <Container maxWidth="lg" sx={{ py: 4 }}>
+    <Container maxWidth="lg" sx={{ flexGrow: 1, mt: 4, mb: 4 }}>
       <Grid container spacing={4}>
-        {/* Left Side */}
         <Grid item xs={12} md={8}>
-          <Stack spacing={4}>
-            {/* About Me Section */}
-            <Box sx={{ backgroundColor: 'background.paper', p: 3, borderRadius: 2, boxShadow: 1 }}>
-              <Box display="flex" alignItems="center" mb={2}>
-                <PersonIcon fontSize="large" color="primary" sx={{ mr: 1 }} />
-                <Typography variant="h6" align="center" sx={{ flexGrow: 1 }}>
-                  About Me
-                </Typography>
-              </Box>
-              <TextField
-                fullWidth
-                multiline
-                rows={3}
-                variant="outlined"
-                placeholder="Write about yourself..."
-                value={aboutMe}
-                onChange={e => setAboutMe(e.target.value)}
-              />
-            </Box>
-
-            {/* Desired Role Section */}
-            <Box sx={{ backgroundColor: 'background.paper', p: 3, borderRadius: 2, boxShadow: 1 }}>
-              <Box display="flex" alignItems="center" mb={2}>
-                <WorkIcon fontSize="large" color="secondary" sx={{ mr: 1 }} />
-                <Typography variant="h6" align="center" sx={{ flexGrow: 1 }}>
-                  Desired Role
-                </Typography>
-              </Box>
-              <Autocomplete
-                freeSolo
-                options={roles}
-                value={selectedRole}
-                onInputChange={(_, val) => setSelectedRole(val)}
-                renderInput={params => (
-                  <TextField {...params} variant="outlined" placeholder="Select or type a role" />
-                )}
-              />
-            </Box>
-
-            {/* Skills Section */}
-            <Box sx={{ backgroundColor: 'background.paper', p: 3, borderRadius: 2, boxShadow: 1 }}>
-              <Box display="flex" alignItems="center" mb={2}>
-                <BuildIcon fontSize="large" color="success" sx={{ mr: 1 }} />
-                <Typography variant="h6" align="center" sx={{ flexGrow: 1 }}>
-                  Skills
-                </Typography>
-              </Box>
-              <Divider sx={{ my: 2 }} />
-
-              {/* Show only up to the limit when collapsed */}
-              <Stack direction="row" spacing={1} sx={{ flexWrap: 'wrap', mb: 2 }}>
-                {(showAllSkills ? skills : skills.slice(0, SKILL_DISPLAY_LIMIT)).map(skill => (
-                  <Chip
-                    key={skill}
-                    label={skill}
-                    onDelete={() => handleDeleteSkill(skill)}
-                  />
-                ))}
-              </Stack>
-
-              {/* Render toggle button only if there are extra skills */}
-              {shouldShowToggle && (
-                <Button size="small" onClick={() => setShowAllSkills(prev => !prev)}>
-                  {showAllSkills ? 'Show Less' : 'Show More'}
-                </Button>
-              )}
-
-              {/* Add New Skill */}
-              <Box mt={2} display="flex" gap={2}>
-                <Autocomplete
-                  freeSolo
-                  options={skillsList}
-                  value={newSkill}
-                  onInputChange={(_, val) => setNewSkill(val)}
-                  onChange={(_, val) => val && handleAddSkill(val)}
-                  renderInput={params => (
-                    <TextField
-                      {...params}
-                      label="Add a skill"
-                      onKeyDown={e => e.key === 'Enter' && handleAddSkill(newSkill)}
-                    />
-                  )}
-                  sx={{ flexGrow: 1 }}
+          <Typography variant="h4" gutterBottom>About Me</Typography>
+          <TextField
+            fullWidth
+            multiline
+            rows={2}
+            variant="outlined"
+            placeholder="Write about yourself..."
+            value={aboutMe}
+            onChange={(e) => setAboutMe(e.target.value)}
+            sx={{ mb: 3 }}
+          />
+          <Button variant="outlined" startIcon={<UploadFile />} sx={{ mb: 3 }} onClick={() => fileInputRef.current?.click()}>
+            Upload Resume
+          </Button>
+          <input type="file" accept=".pdf,.doc,.docx,.txt" ref={fileInputRef} onChange={handleResumeUpload} style={{ display: 'none' }} />
+          <Divider sx={{ mb: 3 }} />
+          <Typography variant="h5" gutterBottom>Desired Role</Typography>
+          <Autocomplete
+            freeSolo
+            options={roles}
+            value={selectedRole}
+            onInputChange={(e, value) => setSelectedRole(value)}
+            onChange={(e, value) => setSelectedRole(value || '')}
+            renderInput={(params) => (
+              <TextField {...params} variant="outlined" placeholder="Select or write a role..." sx={{ mb: 3 }} />
+            )}
+          />
+          <Divider sx={{ mb: 3 }} />
+          <Typography variant="h5" gutterBottom>Skills</Typography>
+          <Stack direction="row" spacing={1} sx={{ flexWrap: 'wrap', mb: 2, maxHeight: '150px', overflowY: 'auto' }}>
+            {skills.map((skill, index) => (
+              <Chip key={index} label={skill} onDelete={() => handleDeleteSkill(skill)} color="secondary" variant="outlined" sx={{ mb: 1 }} />
+            ))}
+          </Stack>
+          <Stack direction="row" spacing={2} alignItems="center" sx={{ mb: 2 }}>
+            <Autocomplete
+              freeSolo
+              fullWidth
+              options={skillsList}
+              value={newSkill}
+              onInputChange={(e, value) => setNewSkill(value)}
+              onChange={(e, value) => value && handleAddSkill(value)}
+              renderInput={(params) => (
+                <TextField
+                  {...params}
+                  variant="outlined"
+                  label="Add a skill"
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      e.preventDefault();
+                      handleAddSkill(newSkill);
+                    }
+                  }}
                 />
-                <Button variant="contained" onClick={() => handleAddSkill(newSkill)}>
-                  Add
-                </Button>
-              </Box>
-            </Box>
+              )}
+            />
+            <Button variant="contained" onClick={() => handleAddSkill(newSkill)}>Add</Button>
           </Stack>
         </Grid>
 
-        {/* Right Side */}
         <Grid item xs={12} md={4}>
-          <Box sx={{ backgroundColor: 'background.paper', p: 3, borderRadius: 2, boxShadow: 1, textAlign: 'center' }}>
-            <Box display="flex" alignItems="center" justifyContent="center" mb={2}>
-              <Avatar sx={{ width: 64, height: 64, mr: 2 }} />
-              <Typography variant="h6">Connect Accounts</Typography>
-            </Box>
-
-            {showAuthOptions ? (
-              <Box>
-                <FormControl fullWidth sx={{ mb: 2 }}>
-                  <InputLabel>Method</InputLabel>
-                </FormControl>
+          <Avatar sx={{ width: 80, height: 80, mx: 'auto', mb: 2 }} />
+          <Typography variant="h5" gutterBottom align="center">Connect Accounts</Typography>
+          {showAuthOptions ? (
+            <>
+              <FormControl fullWidth sx={{ mb: 2 }}>
+                <InputLabel>GitHub Connection Method</InputLabel>
                 <Select
                   value={useOAuth ? 'oauth' : 'no-auth'}
-                  label="Method"
-                  onChange={e => setUseOAuth(e.target.value === 'oauth')}
+                  onChange={(e) => setUseOAuth(e.target.value === 'oauth')}
                 >
                   <MenuItem value="oauth">OAuth</MenuItem>
-                  <MenuItem value="no-auth">Username</MenuItem>
+                  <MenuItem value="no-auth">No Auth</MenuItem>
                 </Select>
-                <Button
-                  fullWidth
-                  variant="contained"
-                  startIcon={<GitHub />}
-                  sx={{ my: 1 }}
-                  onClick={handleGitHubConnect}
-                >
-                  Proceed with GitHub
-                </Button>
-                <Button fullWidth variant="outlined" onClick={() => setShowAuthOptions(false)}>
-                  Cancel
-                </Button>
+              </FormControl>
+              <Button variant="contained" color="secondary" startIcon={<GitHub />} fullWidth onClick={handleGitHubConnect} sx={{ mb: 2 }}>Proceed</Button>
+              <Button variant="outlined" color="primary" fullWidth onClick={handleBackToGitHubOptions}>Back</Button>
+            </>
+          ) : (
+            <>
+              <Button variant="contained" color="primary" startIcon={<LinkedIn />} fullWidth sx={{ mb: 2 }}>Connect to LinkedIn</Button>
+              <Button variant="contained" color="secondary" startIcon={<GitHub />} fullWidth onClick={() => setShowAuthOptions(true)}>Connect to GitHub</Button>
+            </>
+          )}
+          {repos.length > 0 && (
+            <Box sx={{ mt: 3 }}>
+              <Typography variant="h6">GitHub Repositories</Typography>
+              <Box sx={{ maxHeight: '150px', overflowY: 'auto', mt: 1 }}>
+                {repos.map(repo => (
+                  <Box key={repo.id} sx={{ mb: 1 }}>
+                    <a href={repo.html_url} target="_blank" rel="noopener noreferrer" style={{ textDecoration: 'none', color: '#1976d2', fontWeight: 'bold' }}>{repo.name}</a>
+                  </Box>
+                ))}
               </Box>
-            ) : (
-              <Stack spacing={2}>
-                <Button variant="contained" startIcon={<LinkedIn />} fullWidth>
-                  Connect LinkedIn
-                </Button>
-                <Button
-                  variant="contained"
-                  color="secondary"
-                  startIcon={<GitHub />}
-                  fullWidth
-                  onClick={() => setShowAuthOptions(true)}
-                >
-                  Connect GitHub
-                </Button>
-              </Stack>
-            )}
-
-            {repos.length > 0 && (
-              <Box mt={3} textAlign="left">
-                <Typography variant="subtitle1" gutterBottom>
-                  Repositories:
-                </Typography>
-                <Stack spacing={1} sx={{ maxHeight: 150, overflow: 'auto' }}>
-                  {repos.map(repo => (
-                    <Button
-                      key={repo.id}
-                      href={repo.html_url}
-                      target="_blank"
-                      variant="text"
-                      sx={{ justifyContent: 'flex-start', textTransform: 'none' }}
-                    >
-                      {repo.name}
-                    </Button>
-                  ))}
-                </Stack>
-              </Box>
-            )}
-          </Box>
+            </Box>
+          )}
         </Grid>
       </Grid>
     </Container>
