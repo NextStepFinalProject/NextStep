@@ -2,7 +2,7 @@ import { Request, Response } from 'express';
 import { config } from '../config/config';
 import fs from 'fs';
 import path from 'path';
-import { scoreResume, streamScoreResume, getResumeTemplates, generateImprovedResume } from '../services/resume_service';
+import { scoreResume, streamScoreResume, getResumeTemplates, generateImprovedResume, parseResumeFields } from '../services/resume_service';
 import multer from 'multer';
 import { CustomRequest } from "types/customRequest";
 import { handleError } from "../utils/handle_error";
@@ -93,4 +93,18 @@ const generateResume = async (req: Request, res: Response) => {
     }
 };
 
-export default { getResumeScore, getStreamResumeScore, getTemplates, generateResume };
+
+const parseResume = async (req: Request, res: Response) => {
+    try {
+      if (!req.file) {
+        return res.status(400).json({ error: 'No resume file uploaded' });
+      }
+      const parsed = await parseResumeFields(req.file.buffer, req.file.originalname);
+      return res.status(200).json(parsed);
+    } catch (err: any) {
+      console.error('Error parsing resume:', err);
+      return handleError(err, res);
+    }
+  };
+
+export default { parseResume, getResumeScore, getStreamResumeScore, getTemplates, generateResume };
