@@ -29,7 +29,7 @@ const App: React.FC = () => {
           <Route path="/post/:postId" element={<RequireAuth><TopBar /><Layout className="post-details"><PostDetails /></Layout></RequireAuth>} />
           <Route path="/chat" element={<RequireAuth><TopBar /><Layout className="chat"><Chat /></Layout></RequireAuth>} />
           <Route path="/resume" element={<RequireAuth><TopBar /><Layout className="resume"><Resume /></Layout></RequireAuth>} />
-          <Route path="/main-dashboard" element={<RequireAuth><TopBar /><Layout><MainDashboard /></Layout></RequireAuth>} />
+          <Route path="/main-dashboard" element={<RequireAuth><TopBar /><Layout className="main-dashboard"><MainDashboard /></Layout></RequireAuth>} />
           <Route path="*" element={<Navigate to="/" />} />
         </Routes>
       </Router>
