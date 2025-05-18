@@ -50,7 +50,7 @@ const NewPost: React.FC = () => {
         content: updatedContent,
       });
 
-      navigate('/dashboard'); // Redirect to dashboard after successful post creation
+      navigate('/feed'); // Redirect to feed after successful post creation
     } catch (error) {
       console.error('Error creating post:', error);
     }
@@ -119,10 +119,10 @@ const NewPost: React.FC = () => {
             fullWidth
             variant="outlined"
             color="secondary"
-            onClick={() => navigate('/dashboard')}
+            onClick={() => navigate('/feed')}
             sx={{ mt: 2 }}
           >
-            Back to Dashboard
+            Back to Feed
           </Button>
         </form>
       </Box>
