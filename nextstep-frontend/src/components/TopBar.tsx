@@ -27,14 +27,14 @@ const TopBar: React.FC = () => {
             <Home fontSize='large'/>
           </IconButton>
         </Tooltip>
+        <Tooltip title="Resume">
+          <IconButton color="inherit" onClick={() => navigate('/resume')} sx={{ mx: 1 }}>
+            <DocumentScannerTwoTone fontSize='large'/>
+          </IconButton>
+        </Tooltip>
         <Tooltip title="Feed">
           <IconButton color="inherit" onClick={() => navigate('/feed')} sx={{ mx: 1 }}>
             <Feed fontSize='large'/>
-          </IconButton>
-        </Tooltip>
-        <Tooltip title="Profile">
-          <IconButton color="inherit" onClick={() => navigate('/profile')} sx={{ mx: 1 }}>
-            <Person fontSize='large'/>
           </IconButton>
         </Tooltip>
         <Tooltip title="Chat">
@@ -42,9 +42,9 @@ const TopBar: React.FC = () => {
             <Message fontSize='large'/>
           </IconButton>
         </Tooltip>
-        <Tooltip title="Resume">
-          <IconButton color="inherit" onClick={() => navigate('/resume')} sx={{ mx: 1 }}>
-            <DocumentScannerTwoTone fontSize='large'/>
+        <Tooltip title="Profile">
+          <IconButton color="inherit" onClick={() => navigate('/profile')} sx={{ mx: 1 }}>
+            <Person fontSize='large'/>
           </IconButton>
         </Tooltip>
         <Box sx={{ flexGrow: 1 }} />
