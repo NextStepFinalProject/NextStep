@@ -22,13 +22,13 @@ import {
   Container,
 } from "@mui/material";
 import { ThumbUp, Message, Delete } from '@mui/icons-material';
-import { Post } from "../models/Post";
-import api from "../serverApi";
+import { Post } from "../models/Post.tsx";
+import api from "../serverApi.ts";
 import {getUserAuth} from "../handlers/userAuth.ts";
 import defaultProfileImage from '../../assets/defaultProfileImage.jpg'; // Import the default profile image
 
 
-const Dashboard: React.FC = () => {
+const Feed: React.FC = () => {
   const navigate = useNavigate();
   const [posts, setPosts] = useState<Post[]>([]);
   const [commentsCount, setCommentsCount] = useState<{ [key: string]: number }>({});
@@ -322,4 +322,4 @@ const Dashboard: React.FC = () => {
   );
 };
 
-export default Dashboard;
+export default Feed;
