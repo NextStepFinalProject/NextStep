@@ -6,7 +6,7 @@ import dotenvExpand from "dotenv-expand";
 import { Server } from 'socket.io';
 import { socketAuthMiddleware } from './middleware/socket_auth';
 import { initSocket } from './services/socket_service';
-import { importJobQuizzesToDb } from './services/job_quizzes_service';
+import { importJobQuizzesToDb } from './services/companies_service';
 
 // Configure environment variables, and allow expand.
 dotenvExpand.expand(dotenv.config());
