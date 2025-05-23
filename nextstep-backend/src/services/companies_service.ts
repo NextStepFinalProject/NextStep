@@ -135,3 +135,50 @@ export const initCompanies = async (): Promise<number> => {
 
   return companies.length;
 };
+
+/**
+ * Search for quizzes that best match the given tags.
+ * Matches are found in company tags, quiz tags, or quiz content.
+ * Returns quizzes sorted by number of tag matches (most relevant first).
+ */
+export const searchQuizzesByTags = async (tags: string[]): Promise<QuizData[]> => {
+  // Fetch all companies and their quizzes
+  const rawCompanies = await CompanyModel.find().lean();
+  // Filter and map to ensure correct structure
+  const companies: CompanyData[] = (rawCompanies as any[]).filter(c => c && c.company && c.company_he && c.tags && c.quizzes).map(c => ({
+    company: c.company,
+    company_he: c.company_he,
+    tags: c.tags,
+    quizzes: c.quizzes,
+    id: c._id ? c._id.toString() : undefined,
+  }));
+  const results: { quiz: QuizData; matchCount: number; company: CompanyData }[] = [];
+
+  for (const company of companies) {
+    for (const quiz of company.quizzes) {
+      let matchCount = 0;
+      const lowerTags = tags.map(t => t.toLowerCase());
+      // Check company tags
+      matchCount += (company.tags || []).filter(tag => lowerTags.includes(tag.toLowerCase())).length;
+      // Check quiz tags
+      matchCount += (quiz.tags || []).filter(tag => lowerTags.includes(tag.toLowerCase())).length;
+      // Check quiz content (count how many tags appear as substrings)
+      if (quiz.content) {
+        for (const tag of lowerTags) {
+          if (quiz.content.toLowerCase().includes(tag)) {
+            matchCount++;
+          }
+        }
+      }
+      if (matchCount > 0) {
+        results.push({ quiz, matchCount, company });
+      }
+    }
+  }
+
+  // Sort by matchCount descending
+  results.sort((a, b) => b.matchCount - a.matchCount);
+
+  // Optionally, you can return more info (e.g., company name) if needed
+  return results.map(r => r.quiz);
+};
