@@ -63,4 +63,28 @@ companySchema.set('toJSON', {
     }
 });
 
+// Add indexes to CompanySchema
+companySchema.index({ tags: 1 }); // For efficient matching on company tags
+companySchema.index({ 'quizzes.tags': 1 }); // For efficient matching on quiz tags in subdocuments
+
+// For content fields, consider a text index if you want to search for *words* within them.
+// If you create the text index, you must then change the search logic to use $text operator.
+// A regular index (like { 'quizzes.content': 1 }) will NOT accelerate $regexMatch.
+// For `$regexMatch` performance, only a collection scan or a dedicated full-text search works.
+companySchema.index(
+    {
+      'quizzes.content': 'text',
+      'quizzes.process_details': 'text',
+      'quizzes.interview_questions': 'text',
+    },
+    {
+      name: 'quiz_content_text_index',
+      weights: {
+        'quizzes.content': 10, // Give more weight to content
+        'quizzes.process_details': 5,
+        'quizzes.interview_questions': 5,
+      }
+    }
+  );
+
 export const CompanyModel = mongoose.model('Companies', companySchema); 

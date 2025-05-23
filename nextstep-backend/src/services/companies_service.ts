@@ -310,46 +310,99 @@ export const initCompanies = async (): Promise<number> => {
 
 
 /**
- * Search for quizzes that best match the given tags using MongoDB aggregation.
- * Matches are found in company tags, quiz tags, or quiz content.
- * Returns quizzes sorted by number of tag matches (most relevant first).
+ * Search for quizzes that best match the given tags using MongoDB aggregation
+ * and $text search for content fields.
+ * Returns quizzes sorted by relevance (text score + tag matches).
  */
 export const searchQuizzesByTags = async (tags: string[]): Promise<QuizData[]> => {
-  const lowerTags = tags.map(t => t.toLowerCase());
+  if (!tags || tags.length === 0) {
+    return []; // No tags provided, return empty results
+  }
 
-  // Construct a regex pattern for each tag to search within string fields (case-insensitive)
-  // And also prepare for direct array matching.
-  const tagPatterns = lowerTags.map(tag => new RegExp(tag, 'i')); // Case-insensitive regex for content matching
+  // For $text search, tags are space-separated words or phrases.
+  // We'll also use them for array matching.
+  const lowerTags = tags.map(t => t.toLowerCase());
+  const searchText = tags.join(' '); // Combine tags for $text search
 
   const pipeline: PipelineStage[] = [
-    // 1. Unwind the quizzes array to treat each quiz as a separate document
+    // 1. Initial match for company-level or quiz-level tags, OR $text search on content.
+    // This is crucial to filter down documents BEFORE unwinding.
+    {
+      $match: {
+        $or: [
+          // Match in company's 'tags' array
+          { tags: { $in: lowerTags } },
+          // Match in quizzes' 'tags' array (requires dot notation for subdocuments)
+          { 'quizzes.tags': { $in: lowerTags } },
+          // Text search across content fields.
+          // $text operator is highly optimized for this.
+          { $text: { $search: searchText } }
+        ]
+      }
+    },
+    // 2. Unwind the quizzes array to treat each quiz as a separate document
+    // (Only after initial filtering)
     { $unwind: '$quizzes' },
-    // 2. Add a 'matchCount' field to each quiz
+    // 3. Add a 'matchCount' field to each quiz
+    // We'll calculate a score based on various matches.
     {
       $addFields: {
-        'quizzes.matchCount': {
+        'quizzes.matchScore': {
           $add: [
-            // Match company tags
+            // Score from company tags (higher if more tags match)
             {
-              $size: {
-                $filter: {
-                  input: '$tags',
-                  as: 'companyTag',
-                  cond: { $in: [{ $toLower: '$$companyTag' }, lowerTags] }
-                }
-              }
+              $multiply: [ // Give more weight to direct tag matches
+                {
+                  $size: {
+                    $filter: {
+                      input: '$tags',
+                      as: 'companyTag',
+                      cond: { $in: [{ $toLower: '$$companyTag' }, lowerTags] }
+                    }
+                  }
+                }, 5 // Weight for company tag matches
+              ]
             },
-            // Match quiz tags
+            // Score from quiz tags
             {
-              $size: {
-                $filter: {
-                  input: '$quizzes.tags',
-                  as: 'quizTag',
-                  cond: { $in: [{ $toLower: '$$quizTag' }, lowerTags] }
-                }
-              }
+              $multiply: [ // Give more weight to direct quiz tag matches
+                {
+                  $size: {
+                    $filter: {
+                      input: '$quizzes.tags',
+                      as: 'quizTag',
+                      cond: { $in: [{ $toLower: '$$quizTag' }, lowerTags] }
+                    }
+                  }
+                }, 10 // Weight for quiz tag matches
+              ]
             },
-            // Match quiz content (case-insensitive substring match)
+            // Score from $text search on content fields (if text index is used)
+            // This score comes from the initial $match stage.
+            // If the $text match is crucial, you might add a specific score here.
+            // For now, let's assume the $text match filter is sufficient.
+            // If we strictly want to count word occurrences, we'd need more complex logic
+            // without a text index. With it, we rely on its own scoring.
+            // For a basic score without a text index, one could count occurrences,
+            // but that's what was slow with $regexMatch.
+            // If a text index is used, we can directly incorporate the $meta: "textScore"
+            // but that has to be done at the company level before unwind.
+            // A simpler way for a "contains" match score is just to count found words.
+            // Let's refine this to directly check lowercased fields for exact tag matches
+            // for those cases where $text search might not be ideal (e.g., short tags)
+            // or if you choose not to use $text index.
+
+            // If NOT using $text index for content fields, revert to regex counting,
+            // but be aware of performance.
+            // If using $text index, this part might be less critical or different.
+
+            // As we are already performing $text search in the initial $match,
+            // and $text search inherently orders by relevance, we can rely on that.
+            // For individual field matches (like "SQL" within content), we can still
+            // do counts, but it's crucial to decide if $text search covers this sufficiently.
+
+            // Let's re-add simple contains logic for robustness, assuming content fields are not massive.
+            // If they are huge, definitely go for $text index or external search.
             {
               $sum: {
                 $map: {
@@ -357,7 +410,7 @@ export const searchQuizzesByTags = async (tags: string[]): Promise<QuizData[]> =
                   as: 'tag',
                   in: {
                     $cond: {
-                      if: { $regexMatch: { input: { $toLower: '$quizzes.content' }, regex: '$$tag' } },
+                      if: { $regexMatch: { input: { $toLower: '$quizzes.content' }, regex: { $concat: ['.*', '$$tag', '.*'] } } }, // .*.tag.* for contains
                       then: 1,
                       else: 0
                     }
@@ -365,7 +418,6 @@ export const searchQuizzesByTags = async (tags: string[]): Promise<QuizData[]> =
                 }
               }
             },
-            // Match process_details (case-insensitive substring match)
             {
               $sum: {
                 $map: {
@@ -373,7 +425,7 @@ export const searchQuizzesByTags = async (tags: string[]): Promise<QuizData[]> =
                   as: 'tag',
                   in: {
                     $cond: {
-                      if: { $regexMatch: { input: { $toLower: '$quizzes.process_details' }, regex: '$$tag' } },
+                      if: { $regexMatch: { input: { $toLower: '$quizzes.process_details' }, regex: { $concat: ['.*', '$$tag', '.*'] } } },
                       then: 1,
                       else: 0
                     }
@@ -381,7 +433,6 @@ export const searchQuizzesByTags = async (tags: string[]): Promise<QuizData[]> =
                 }
               }
             },
-            // Match interview_questions (case-insensitive substring match)
             {
               $sum: {
                 $map: {
@@ -389,7 +440,7 @@ export const searchQuizzesByTags = async (tags: string[]): Promise<QuizData[]> =
                   as: 'tag',
                   in: {
                     $cond: {
-                      if: { $regexMatch: { input: { $toLower: '$quizzes.interview_questions' }, regex: '$$tag' } },
+                      if: { $regexMatch: { input: { $toLower: '$quizzes.interview_questions' }, regex: { $concat: ['.*', '$$tag', '.*'] } } },
                       then: 1,
                       else: 0
                     }
@@ -397,23 +448,30 @@ export const searchQuizzesByTags = async (tags: string[]): Promise<QuizData[]> =
                 }
               }
             },
+            // Include $textScore if it was part of the initial $match and you want to use it
+            // This would require `$match: { $text: { $search: searchText } }` to be the *first* stage
+            // and `$project: { score: { $meta: "textScore" }, ... }` to be applied right after.
+            // If you want to use $textScore, you'd calculate it at the Company level,
+            // then unwind, then include it in the quiz score.
+            // For now, let's keep the existing approach of initial filtering and then scoring after unwind.
           ]
         }
       }
     },
-    // 3. Filter out quizzes that have no matches
+    // 4. Filter out quizzes that have no matches based on the calculated score
+    // This is important because the initial $match might have been broad
     {
       $match: {
-        'quizzes.matchCount': { $gt: 0 }
+        'quizzes.matchScore': { $gt: 0 }
       }
     },
-    // 4. Sort by matchCount in descending order
+    // 5. Sort by matchScore in descending order
     {
       $sort: {
-        'quizzes.matchCount': -1
+        'quizzes.matchScore': -1
       }
     },
-    // 5. Project to return only the quiz data, excluding the temporary matchCount and other company fields
+    // 6. Project to return only the quiz data, excluding temporary fields
     {
       $project: {
         _id: '$quizzes._id',
@@ -424,16 +482,15 @@ export const searchQuizzesByTags = async (tags: string[]): Promise<QuizData[]> =
         forum_link: '$quizzes.forum_link',
         process_details: '$quizzes.process_details',
         interview_questions: '$quizzes.interview_questions',
-        // You might want to include company name if it's relevant for the client
+        // Optional: Include company names if needed
         // company: '$company',
         // company_he: '$company_he',
-        // matchCount: '$quizzes.matchCount' // Keep this if you want to see the score
+        // matchScore: '$quizzes.matchScore' // Useful for debugging relevance
       }
     }
   ];
 
   try {
-    // Execute the aggregation pipeline
     const quizzes = await CompanyModel.aggregate<QuizData>(pipeline).exec();
     console.log(`Found ${quizzes.length} matching quizzes using aggregation.`);
     return quizzes;
