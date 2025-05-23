@@ -30,12 +30,21 @@ const parseJobQuizzesFromJobHuntHtml = (htmlPath: string): CompanyData[] => {
   const companies: CompanyData[] = [];
 
   $('h2.faq-section-heading').each((_, section) => {
-    const sectionText = $(section).text().replace(/\s+/g, ' ').trim();
-    let [company_en, company_he] = sectionText.split('-').map(s => s.trim());
-    if (!company_he) {
-      company_he = company_en;
-    }
-    const company_tags = [company_en, company_he, "interview", "hi-tech"];
+    // Extract company_en and company_he from the correct spans
+    const company_en = $(section).find('.faq_left').text().trim();
+    const company_he = $(section).find('.faq_right').text().trim();
+    // Fallback if only one span exists
+    const company_en_final = company_en || $(section).text().trim();
+    const company_he_final = company_he || company_en_final;
+
+    // Deduplicate company tags
+    const company_tags = Array.from(new Set([
+      company_en_final,
+      company_he_final,
+      'interview',
+      'hi-tech',
+    ].filter(Boolean)));
+
     const quizzes: QuizData[] = [];
 
     // Find the next ul.question-list after this section
@@ -54,8 +63,12 @@ const parseJobQuizzesFromJobHuntHtml = (htmlPath: string): CompanyData[] => {
 
       const content = article.find('.faq-content').html() || '';
       const forum_link = article.find('.meta-faq-data-fields a[href]').attr('href') || '';
-      // Generate tags: company, job role, technology, year, etc.
-      const quiz_tags = [company_en, company_he, ...quiz_title.split(/\s+/)];
+      // Generate tags: company, job role, technology, year, etc. Deduplicate.
+      const quiz_tags = Array.from(new Set([
+        company_en_final,
+        company_he_final,
+        ...quiz_title.split(/\s+/),
+      ].filter(Boolean)));
 
       quizzes.push({
         title: quiz_title,
@@ -67,8 +80,8 @@ const parseJobQuizzesFromJobHuntHtml = (htmlPath: string): CompanyData[] => {
     });
 
     companies.push({
-      company: company_en,
-      company_he,
+      company: company_en_final,
+      company_he: company_he_final,
       tags: company_tags,
       quizzes,
     });
