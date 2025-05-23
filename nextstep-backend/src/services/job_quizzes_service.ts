@@ -5,6 +5,48 @@ import { CompanyModel } from '../models/company_model';
 import { CompanyData, ICompany, QuizData } from 'types/company_types';
 import { Document } from 'mongoose';
 
+// Predefined tags to match against quizzes
+const PREDEFINED_TAGS = [
+  // Example tags, replace/add as needed
+  'QA', 'Software Engineer', 'Backend', 'Frontend', 'DevOps', 'Data Scientist', 'Algorithm', 'Student', 'Intern', 'Manager',
+  'Automation', 'Validation', 'Verification', 'UI', 'C++', 'Java', 'Python', 'SQL', 'Security', 'Malware', 'Firmware',
+  'Embedded', 'Web', 'Mobile', 'Cloud', 'Networking', 'Support', 'Technical', 'Test', 'Interview', 'Assessment', 'Coding',
+  'Logic', 'HR', 'Personal', 'Group Dynamics', 'Exam', 'Assessment Center', 'Online Test', 'Phone Interview',
+  'Onsite Interview', 'Technical Interview', 'Behavioral Interview', 'Case Study', 'Presentation', 'Assignment', 'Project',
+  'Challenge', 'Simulation', 'Scenario', 'Task', 'Exercise', 'Problem', 'Solution', 'Tips', 'Advice', 'Preparation',
+  'Experience', 'Feedback', 'Review', 'Summary', 'Report', 'Result', 'Score', 'Grade', 'Pass', 'Fail', 'Success', 'Failure',
+  'Mistake', 'Error', 'Bug', 'Fix', 'Patch', 'Update', 'Upgrade', 'Release', 'Deployment', 'Integration', 'Testing',
+  'Debugging', 'Troubleshooting', 'Maintenance', 'Customer', 'Client', 'User', 'Stakeholder', 'Partner', 'Vendor', 'Supplier',
+  'Contractor', 'Consultant', 'Advisor', 'Mentor', 'Coach', 'Trainer', 'Teacher', 'Instructor', 'Lecturer', 'Professor',
+  'Researcher', 'Scientist', 'Engineer', 'Developer', 'Programmer', 'Coder', 'Designer', 'Architect', 'Analyst', 'Specialist',
+  'Expert', 'Professional', 'Practitioner', 'Technician', 'Operator', 'Administrator', 'Director', 'VP', 'C-level', 'CEO',
+  'CTO', 'CIO', 'COO', 'CFO', 'CMO', 'CSO', 'CHRO', 'Board', 'Committee', 'Team', 'Group', 'Department', 'Division', 'Unit',
+  'Section', 'Branch', 'Office', 'Site', 'Location', 'Region', 'Country', 'City', 'Area', 'Zone', 'District', 'Territory',
+  'Market', 'Segment', 'Industry', 'Sector', 'Field', 'Domain', 'Discipline', 'Subject', 'Topic', 'Category', 'Type', 'Class',
+  'Level', 'Grade', 'Rank', 'Position', 'Role', 'Title', 'Function', 'Responsibility', 'Duty', 'Activity', 'Operation',
+  'Process', 'Procedure', 'Method', 'Technique', 'Tool', 'Instrument', 'Device', 'Equipment', 'Machine', 'System', 'Platform',
+  'Application', 'Software', 'Hardware', 'Network', 'Database', 'Server', 'Interface', 'Protocol', 'Standard', 'Specification',
+  'Requirement', 'Constraint', 'Limitation', 'Condition', 'Assumption', 'Risk', 'Issue', 'Opportunity', 'Threat', 'Weakness',
+  'Strength', 'Advantage', 'Disadvantage', 'Benefit', 'Cost', 'Price', 'Value', 'Quality', 'Performance', 'Efficiency',
+  'Effectiveness', 'Productivity', 'Reliability', 'Availability', 'Scalability', 'Flexibility', 'Adaptability', 'Maintainability',
+  'Usability', 'Accessibility', 'Security', 'Privacy', 'Confidentiality', 'Integrity', 'Authenticity', 'Accountability',
+  'Compliance', 'Regulation', 'Law', 'Policy', 'Rule', 'Guideline', 'Best Practice', 'Lesson Learned',
+  // Add more as needed
+];
+
+// Helper to match tags in a string (case-insensitive, whole word)
+function matchTags(text: string, tags: string[]): string[] {
+  const found = new Set<string>();
+  for (const tag of tags) {
+    // Use word boundary for whole word match, case-insensitive
+    const regex = new RegExp(`\\b${tag.replace(/[-/\\^$*+?.()|[\]{}]/g, '\\$&')}\\b`, 'i');
+    if (regex.test(text)) {
+      found.add(tag);
+    }
+  }
+  return Array.from(found);
+}
+
 const companyToCompanyData = (company: Document<unknown, {}, ICompany> & ICompany): CompanyData => {
   return {
     ...company.toJSON(),
@@ -64,11 +106,18 @@ const parseJobQuizzesFromJobHuntHtml = (htmlPath: string): CompanyData[] => {
       const content = article.find('.faq-content').html() || '';
       const forum_link = article.find('.meta-faq-data-fields a[href]').attr('href') || '';
       // Generate tags: company, job role, technology, year, etc. Deduplicate.
-      const quiz_tags = Array.from(new Set([
+      let quiz_tags = Array.from(new Set([
         company_en_final,
         company_he_final,
         ...quiz_title.split(/\s+/),
       ].filter(Boolean)));
+
+      // Add matched predefined tags from title and content
+      const matched_tags = new Set([
+        ...matchTags(quiz_title, PREDEFINED_TAGS),
+        ...matchTags(content, PREDEFINED_TAGS),
+      ]);
+      quiz_tags = Array.from(new Set([...quiz_tags, ...matched_tags]));
 
       quizzes.push({
         title: quiz_title,
