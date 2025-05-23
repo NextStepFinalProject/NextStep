@@ -7,30 +7,16 @@ import { Document } from 'mongoose';
 
 // Predefined tags to match against quizzes
 const PREDEFINED_TAGS = [
-  // Example tags, replace/add as needed
-  'QA', 'Software Engineer', 'Backend', 'Frontend', 'DevOps', 'Data Scientist', 'Algorithm', 'Student', 'Intern', 'Manager',
-  'Automation', 'Validation', 'Verification', 'UI', 'C++', 'Java', 'Python', 'SQL', 'Security', 'Malware', 'Firmware',
-  'Embedded', 'Web', 'Mobile', 'Cloud', 'Networking', 'Support', 'Technical', 'Test', 'Interview', 'Assessment', 'Coding',
-  'Logic', 'HR', 'Personal', 'Group Dynamics', 'Exam', 'Assessment Center', 'Online Test', 'Phone Interview',
-  'Onsite Interview', 'Technical Interview', 'Behavioral Interview', 'Case Study', 'Presentation', 'Assignment', 'Project',
-  'Challenge', 'Simulation', 'Scenario', 'Task', 'Exercise', 'Problem', 'Solution', 'Tips', 'Advice', 'Preparation',
-  'Experience', 'Feedback', 'Review', 'Summary', 'Report', 'Result', 'Score', 'Grade', 'Pass', 'Fail', 'Success', 'Failure',
-  'Mistake', 'Error', 'Bug', 'Fix', 'Patch', 'Update', 'Upgrade', 'Release', 'Deployment', 'Integration', 'Testing',
-  'Debugging', 'Troubleshooting', 'Maintenance', 'Customer', 'Client', 'User', 'Stakeholder', 'Partner', 'Vendor', 'Supplier',
-  'Contractor', 'Consultant', 'Advisor', 'Mentor', 'Coach', 'Trainer', 'Teacher', 'Instructor', 'Lecturer', 'Professor',
-  'Researcher', 'Scientist', 'Engineer', 'Developer', 'Programmer', 'Coder', 'Designer', 'Architect', 'Analyst', 'Specialist',
-  'Expert', 'Professional', 'Practitioner', 'Technician', 'Operator', 'Administrator', 'Director', 'VP', 'C-level', 'CEO',
-  'CTO', 'CIO', 'COO', 'CFO', 'CMO', 'CSO', 'CHRO', 'Board', 'Committee', 'Team', 'Group', 'Department', 'Division', 'Unit',
-  'Section', 'Branch', 'Office', 'Site', 'Location', 'Region', 'Country', 'City', 'Area', 'Zone', 'District', 'Territory',
-  'Market', 'Segment', 'Industry', 'Sector', 'Field', 'Domain', 'Discipline', 'Subject', 'Topic', 'Category', 'Type', 'Class',
-  'Level', 'Grade', 'Rank', 'Position', 'Role', 'Title', 'Function', 'Responsibility', 'Duty', 'Activity', 'Operation',
-  'Process', 'Procedure', 'Method', 'Technique', 'Tool', 'Instrument', 'Device', 'Equipment', 'Machine', 'System', 'Platform',
-  'Application', 'Software', 'Hardware', 'Network', 'Database', 'Server', 'Interface', 'Protocol', 'Standard', 'Specification',
-  'Requirement', 'Constraint', 'Limitation', 'Condition', 'Assumption', 'Risk', 'Issue', 'Opportunity', 'Threat', 'Weakness',
-  'Strength', 'Advantage', 'Disadvantage', 'Benefit', 'Cost', 'Price', 'Value', 'Quality', 'Performance', 'Efficiency',
-  'Effectiveness', 'Productivity', 'Reliability', 'Availability', 'Scalability', 'Flexibility', 'Adaptability', 'Maintainability',
-  'Usability', 'Accessibility', 'Security', 'Privacy', 'Confidentiality', 'Integrity', 'Authenticity', 'Accountability',
-  'Compliance', 'Regulation', 'Law', 'Policy', 'Rule', 'Guideline', 'Best Practice', 'Lesson Learned',
+  // Company/Organization Tags
+  '888', 'Amdocs', 'Apple', 'Applied Materials', 'CEVA', 'Check Point', 'Dalet', 'Elbit', 'exelate', 'Final', 'fiverr', 'Fundtech', 'General Electric', 'Hola', 'HP', 'IBM', 'Innovid', 'Intel', 'Marvell', 'Mellanox', 'Microsoft', 'Optimal', 'Philips', 'Rafael', 'Sandisk', 'SAP', 'Sapiens', 'STMS', 'Trusteer', 'Verint', 'Wix', 'Yopto', 'Zerto',
+  // Hebrew Company Names
+  'אמדוקס', 'אפל', 'אפלייד מטיריאלס', 'צ\'ק פוינט', 'אלביט', 'אקסלייט', 'פנדטק', 'רפאל', 'סנדיסק', 'סאפ', 'סאפיאנס', 'טרסטיר', 'ורינט', 'וויקס', 'יופטו', 'זרטו', 'אינוביד', 'אינטל', 'מלאנוקס', 'מיקרוסופט', 'פיליפס', 'הולה', 'דלת', 'אופטימל', 'ג\'נרל אלקטריק', 'פיינל', 'פייבר', 'סטמס',
+  // Job Roles/Quiz Types
+  'QA', 'Software Engineer', 'Firmware Engineer', 'Logic Design Engineer', 'Debugger Engineer', 'Security Analyst', 'Web Developer', 'Board Design', 'Design Verification Engineer', 'Validation', 'Backend', 'Frontend', 'UI', 'Student', 'Intern', 'Automation', 'Support', 'Technical Support', 'Test Engineer', 'Developer', 'Programmer', 'Coder', 'Manager', 'Team Lead', 'Analyst', 'Architect', 'Specialist', 'Consultant', 'Advisor', 'Trainer', 'Instructor', 'Lecturer', 'Professor', 'Researcher', 'Scientist', 'Operator', 'Administrator', 'Director', 'VP', 'CEO', 'CTO', 'CIO', 'COO', 'CMO', 'CSO', 'CHRO',
+  // Technical/Topic Tags
+  'C++', 'Java', 'Python', 'SQL', 'J2EE', 'UI', 'ALM', 'Video Codec', 'Compiler', 'Multimedia', 'Assembly', 'Networking', 'Cloud', 'Mobile', 'Embedded', 'Hardware', 'Software', 'Database', 'Automation', 'Verification', 'Validation', 'Security', 'Malware', 'Firmware', 'Web', 'Testing', 'Debugging', 'Troubleshooting', 'Maintenance', 'Integration', 'Deployment', 'Release', 'Upgrade', 'Patch', 'Fix', 'Bug', 'Error', 'Solution', 'Algorithm', 'Logic', 'Assessment', 'Interview', 'Exam', 'Coding', 'Challenge', 'Simulation', 'Scenario', 'Task', 'Exercise', 'Problem', 'Tips', 'Advice', 'Preparation', 'Experience', 'Feedback', 'Review', 'Summary', 'Report', 'Result', 'Score', 'Grade', 'Pass', 'Fail', 'Success', 'Failure', 'Mistake',
+  // Process/Format Tags
+  'Assessment Center', 'Online Test', 'Phone Interview', 'Onsite Interview', 'Technical Interview', 'Behavioral Interview', 'Case Study', 'Presentation', 'Assignment', 'Project', 'Group Dynamics', 'Personal Interview', 'HR Interview', 'Home Assignment', 'Screening', 'Recruitment', 'Hiring',
   // Add more as needed
 ];
 
