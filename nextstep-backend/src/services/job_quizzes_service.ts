@@ -1,46 +1,15 @@
 import fs from 'fs';
 import * as cheerio from 'cheerio';
-import mongoose from 'mongoose';
 import { config } from '../config/config';
+import { CompanyModel } from '../models/company_model';
+import { CompanyData, QuizData } from 'types/company_types';
 
-export interface Quiz {
-  title: string;
-  quiz_id: number;
-  tags: string[];
-  content: string;
-  forum_link: string;
-}
 
-export interface CompanyQuizzes {
-  company: string;
-  company_he: string;
-  tags: string[];
-  quizzes: Quiz[];
-}
-
-// Define the schema (or use your own models)
-const quizSchema = new mongoose.Schema({
-  company: String,
-  company_he: String,
-  tags: [String],
-  quizzes: [
-    {
-      title: String,
-      quiz_id: Number,
-      tags: [String],
-      content: String,
-      forum_link: String,
-    }
-  ]
-}, { collection: 'job_quizzes' });
-
-const QuizModel = mongoose.models.JobQuiz || mongoose.model('JobQuiz', quizSchema);
-
-const parseJobQuizzesFromJobHuntHtml = (htmlPath: string): CompanyQuizzes[] => {
+const parseJobQuizzesFromJobHuntHtml = (htmlPath: string): CompanyData[] => {
   const html = fs.readFileSync(htmlPath, 'utf-8');
   const $ = cheerio.load(html);
 
-  const companies: CompanyQuizzes[] = [];
+  const companies: CompanyData[] = [];
 
   $('h2.faq-section-heading').each((_, section) => {
     const sectionText = $(section).text().replace(/\s+/g, ' ').trim();
@@ -49,7 +18,7 @@ const parseJobQuizzesFromJobHuntHtml = (htmlPath: string): CompanyQuizzes[] => {
       company_he = company_en;
     }
     const company_tags = [company_en, company_he, "interview", "hi-tech"];
-    const quizzes: Quiz[] = [];
+    const quizzes: QuizData[] = [];
 
     // Find the next ul.question-list after this section
     const ul = $(section).nextAll('ul.question-list').first();
@@ -94,8 +63,8 @@ export const importJobQuizzesToDb = async (): Promise<number> => {
   const companies = parseJobQuizzesFromJobHuntHtml(config.assets.jobQuizzesJobHuntHtmlPath());
 
   if (companies.length) {
-    await QuizModel.deleteMany({});
-    await QuizModel.insertMany(companies);
+    await CompanyModel.deleteMany({});
+    await CompanyModel.insertMany(companies);
   }
 
   return companies.length;
