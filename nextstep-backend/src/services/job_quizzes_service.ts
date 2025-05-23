@@ -2,8 +2,26 @@ import fs from 'fs';
 import * as cheerio from 'cheerio';
 import { config } from '../config/config';
 import { CompanyModel } from '../models/company_model';
-import { CompanyData, QuizData } from 'types/company_types';
+import { CompanyData, ICompany, QuizData } from 'types/company_types';
+import { Document } from 'mongoose';
 
+const companyToCompanyData = (company: Document<unknown, {}, ICompany> & ICompany): CompanyData => {
+  return {
+    ...company.toJSON(),
+    id: company._id?.toString(),
+    company: company.company,
+    company_he: company.company_he,
+    tags: company.tags,
+    quizzes: (company.quizzes || []).map((quiz: any) => ({
+      id: quiz._id?.toString(),
+      title: quiz.title,
+      quiz_id: quiz.quiz_id,
+      tags: quiz.tags,
+      content: quiz.content,
+      forum_link: quiz.forum_link,
+    })),
+  };
+};
 
 const parseJobQuizzesFromJobHuntHtml = (htmlPath: string): CompanyData[] => {
   const html = fs.readFileSync(htmlPath, 'utf-8');
