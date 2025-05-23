@@ -3,7 +3,7 @@ import * as cheerio from 'cheerio';
 import { config } from '../config/config';
 import { CompanyModel } from '../models/company_model';
 import { CompanyData, ICompany, QuizData } from 'types/company_types';
-import { Document } from 'mongoose';
+import { Document, PipelineStage } from 'mongoose';
 import path from 'path';
 
 // Predefined tags to match against quizzes
@@ -308,65 +308,137 @@ export const initCompanies = async (): Promise<number> => {
   return allCompanies.length;
 };
 
+
 /**
- * Search for quizzes that best match the given tags.
+ * Search for quizzes that best match the given tags using MongoDB aggregation.
  * Matches are found in company tags, quiz tags, or quiz content.
  * Returns quizzes sorted by number of tag matches (most relevant first).
  */
 export const searchQuizzesByTags = async (tags: string[]): Promise<QuizData[]> => {
-  // Fetch all companies and their quizzes
-  const rawCompanies = await CompanyModel.find().lean();
-  // Filter and map to ensure correct structure
-  const companies: CompanyData[] = (rawCompanies as any[]).filter(c => c && c.company && c.company_he && c.tags && c.quizzes).map(c => ({
-    company: c.company,
-    company_he: c.company_he,
-    tags: c.tags,
-    quizzes: c.quizzes,
-    id: c._id ? c._id.toString() : undefined,
-  }));
-  const results: { quiz: QuizData; matchCount: number; company: CompanyData }[] = [];
+  const lowerTags = tags.map(t => t.toLowerCase());
 
-  for (const company of companies) {
-    for (const quiz of company.quizzes) {
-      let matchCount = 0;
-      const lowerTags = tags.map(t => t.toLowerCase());
-      // Check company tags
-      matchCount += (company.tags || []).filter(tag => lowerTags.includes(tag.toLowerCase())).length;
-      // Check quiz tags
-      matchCount += (quiz.tags || []).filter(tag => lowerTags.includes(tag.toLowerCase())).length;
-      // Check quiz content (count how many tags appear as substrings)
-      if (quiz.content) {
-        for (const tag of lowerTags) {
-          if (quiz.content.toLowerCase().includes(tag)) {
-            matchCount++;
-          }
-        }
-      }
-      // Check new fields for tags
-      if (quiz.process_details) {
-        for (const tag of lowerTags) {
-          if (quiz.process_details.toLowerCase().includes(tag)) {
-            matchCount++;
-          }
-        }
-      }
-      if (quiz.interview_questions) {
-        for (const tag of lowerTags) {
-          if (quiz.interview_questions.toLowerCase().includes(tag)) {
-            matchCount++;
-          }
-        }
-      }
+  // Construct a regex pattern for each tag to search within string fields (case-insensitive)
+  // And also prepare for direct array matching.
+  const tagPatterns = lowerTags.map(tag => new RegExp(tag, 'i')); // Case-insensitive regex for content matching
 
-      if (matchCount > 0) {
-        results.push({ quiz, matchCount, company });
+  const pipeline: PipelineStage[] = [
+    // 1. Unwind the quizzes array to treat each quiz as a separate document
+    { $unwind: '$quizzes' },
+    // 2. Add a 'matchCount' field to each quiz
+    {
+      $addFields: {
+        'quizzes.matchCount': {
+          $add: [
+            // Match company tags
+            {
+              $size: {
+                $filter: {
+                  input: '$tags',
+                  as: 'companyTag',
+                  cond: { $in: [{ $toLower: '$$companyTag' }, lowerTags] }
+                }
+              }
+            },
+            // Match quiz tags
+            {
+              $size: {
+                $filter: {
+                  input: '$quizzes.tags',
+                  as: 'quizTag',
+                  cond: { $in: [{ $toLower: '$$quizTag' }, lowerTags] }
+                }
+              }
+            },
+            // Match quiz content (case-insensitive substring match)
+            {
+              $sum: {
+                $map: {
+                  input: lowerTags,
+                  as: 'tag',
+                  in: {
+                    $cond: {
+                      if: { $regexMatch: { input: { $toLower: '$quizzes.content' }, regex: '$$tag' } },
+                      then: 1,
+                      else: 0
+                    }
+                  }
+                }
+              }
+            },
+            // Match process_details (case-insensitive substring match)
+            {
+              $sum: {
+                $map: {
+                  input: lowerTags,
+                  as: 'tag',
+                  in: {
+                    $cond: {
+                      if: { $regexMatch: { input: { $toLower: '$quizzes.process_details' }, regex: '$$tag' } },
+                      then: 1,
+                      else: 0
+                    }
+                  }
+                }
+              }
+            },
+            // Match interview_questions (case-insensitive substring match)
+            {
+              $sum: {
+                $map: {
+                  input: lowerTags,
+                  as: 'tag',
+                  in: {
+                    $cond: {
+                      if: { $regexMatch: { input: { $toLower: '$quizzes.interview_questions' }, regex: '$$tag' } },
+                      then: 1,
+                      else: 0
+                    }
+                  }
+                }
+              }
+            },
+          ]
+        }
+      }
+    },
+    // 3. Filter out quizzes that have no matches
+    {
+      $match: {
+        'quizzes.matchCount': { $gt: 0 }
+      }
+    },
+    // 4. Sort by matchCount in descending order
+    {
+      $sort: {
+        'quizzes.matchCount': -1
+      }
+    },
+    // 5. Project to return only the quiz data, excluding the temporary matchCount and other company fields
+    {
+      $project: {
+        _id: '$quizzes._id',
+        title: '$quizzes.title',
+        quiz_id: '$quizzes.quiz_id',
+        tags: '$quizzes.tags',
+        content: '$quizzes.content',
+        forum_link: '$quizzes.forum_link',
+        process_details: '$quizzes.process_details',
+        interview_questions: '$quizzes.interview_questions',
+        // You might want to include company name if it's relevant for the client
+        // company: '$company',
+        // company_he: '$company_he',
+        // matchCount: '$quizzes.matchCount' // Keep this if you want to see the score
       }
     }
+  ];
+
+  try {
+    // Execute the aggregation pipeline
+    const quizzes = await CompanyModel.aggregate<QuizData>(pipeline).exec();
+    console.log(`Found ${quizzes.length} matching quizzes using aggregation.`);
+    return quizzes;
+  } catch (error) {
+    console.error('Error during quiz search aggregation:', error);
+    return [];
   }
-
-  // Sort by matchCount descending
-  results.sort((a, b) => b.matchCount - a.matchCount);
-
-  // Optionally, you can return more info (e.g., company name) if needed
-  return results.map(r => r.quiz);
 };
