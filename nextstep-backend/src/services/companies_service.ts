@@ -3,7 +3,8 @@ import * as cheerio from 'cheerio';
 import { config } from '../config/config';
 import { CompanyModel } from '../models/company_model';
 import { CompanyData, ICompany, QuizData } from 'types/company_types';
-import { Document } from 'mongoose';
+import { Document, PipelineStage } from 'mongoose';
+import path from 'path';
 
 // Predefined tags to match against quizzes
 const PREDEFINED_TAGS = [
@@ -47,6 +48,8 @@ const companyToCompanyData = (company: Document<unknown, {}, ICompany> & ICompan
       tags: quiz.tags,
       content: quiz.content,
       forum_link: quiz.forum_link,
+      process_details: quiz.process_details, // Added new field
+      interview_questions: quiz.interview_questions, // Added new field
     })),
   };
 };
@@ -125,60 +128,338 @@ const parseJobQuizzesFromJobHuntHtml = (htmlPath: string): CompanyData[] => {
   return companies;
 };
 
-export const initCompanies = async (): Promise<number> => {
-  const companies = parseJobQuizzesFromJobHuntHtml(config.assets.jobQuizzesJobHuntHtmlPath());
+// New function to parse the provided HTML structure
+const parseJobQuizzesFromCompanyTablesHtml = (htmlPath: string): CompanyData[] => {
+  const html = fs.readFileSync(htmlPath, 'utf-8');
+  const $ = cheerio.load(html);
 
-  if (companies.length) {
-    await CompanyModel.deleteMany({});
-    await CompanyModel.insertMany(companies);
-  }
+  const companies: CompanyData[] = [];
 
-  return companies.length;
-};
+  // Iterate over each "table" that contains company interview data
+  $('table.container-interview, tbody:has(tr:has(td[colspan="4"][valign="bottom"] table))').each((_, tableElement) => {
+    const $table = $(tableElement);
 
-/**
- * Search for quizzes that best match the given tags.
- * Matches are found in company tags, quiz tags, or quiz content.
- * Returns quizzes sorted by number of tag matches (most relevant first).
- */
-export const searchQuizzesByTags = async (tags: string[]): Promise<QuizData[]> => {
-  // Fetch all companies and their quizzes
-  const rawCompanies = await CompanyModel.find().lean();
-  // Filter and map to ensure correct structure
-  const companies: CompanyData[] = (rawCompanies as any[]).filter(c => c && c.company && c.company_he && c.tags && c.quizzes).map(c => ({
-    company: c.company,
-    company_he: c.company_he,
-    tags: c.tags,
-    quizzes: c.quizzes,
-    id: c._id ? c._id.toString() : undefined,
-  }));
-  const results: { quiz: QuizData; matchCount: number; company: CompanyData }[] = [];
+    // Extract company name and quiz title from the first inner table
+    const mainInfoTable = $table.find('td[colspan="4"][valign="bottom"] > table').first();
+    const companyLink = mainInfoTable.find('td[valign="top"] > a').attr('href');
+    let company_en = 'UNKNOWN';
+    let company_he = 'UNKNOWN';
 
-  for (const company of companies) {
-    for (const quiz of company.quizzes) {
-      let matchCount = 0;
-      const lowerTags = tags.map(t => t.toLowerCase());
-      // Check company tags
-      matchCount += (company.tags || []).filter(tag => lowerTags.includes(tag.toLowerCase())).length;
-      // Check quiz tags
-      matchCount += (quiz.tags || []).filter(tag => lowerTags.includes(tag.toLowerCase())).length;
-      // Check quiz content (count how many tags appear as substrings)
-      if (quiz.content) {
-        for (const tag of lowerTags) {
-          if (quiz.content.toLowerCase().includes(tag)) {
-            matchCount++;
-          }
-        }
-      }
-      if (matchCount > 0) {
-        results.push({ quiz, matchCount, company });
+    if (companyLink) {
+      // Extract company names from the URL path
+      const pathParts = companyLink.split('/');
+      if (pathParts.length >= 4) {
+        company_he = decodeURIComponent(pathParts[pathParts.length - 2]);
+        company_en = decodeURIComponent(pathParts[pathParts.length - 1]);
       }
     }
+
+    const quiz_title_full = mainInfoTable.find('td[valign="top"] div[style*="font-size:20px"]').text().trim();
+    // The quiz title usually contains "ראיון לתפקיד [job role] בחברת [company name]"
+    // We can extract the job role from here.
+    const jobRoleMatch = quiz_title_full.match(/ראיון לתפקיד\s*(.*?)\s*בחברת/);
+    const jobRole = jobRoleMatch ? jobRoleMatch[1].trim() : '';
+    const quiz_title = quiz_title_full; // Keep the full title for now
+
+    // Extract quiz_id (no explicit quiz_id in this structure, so generating a unique one or using a placeholder)
+    // For now, we'll use a simple hash of the title and company, or just a placeholder.
+    // In a real application, you might generate a UUID or use a counter.
+    const quiz_id = Math.abs(quiz_title_full.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0));
+
+
+    // Extract process details
+    const processDetailsRow = $table.find('td:contains("פרטים לגבי התהליך")').closest('tr');
+    const process_details = processDetailsRow.find('td[style*="font-size:14px;font-weight:normal;"]').text().trim();
+
+    // Extract interview questions
+    const interviewQuestionsRow = $table.find('td:contains("שאלות מתוך הראיון")').closest('tr');
+    const interview_questions = interviewQuestionsRow.find('td[style*="font-size:14px;font-weight:normal;"]').text().trim();
+
+    // Forum link is present in the `new_answer_` span's ID, but the href is dynamic via JS.
+    // We can construct it if the base URL is known, or leave it empty if not directly available.
+    const newAnswerSpanId = $table.find('span[id^="new_answer_"]').attr('id');
+    let forum_link = '';
+    if (newAnswerSpanId) {
+      const id = newAnswerSpanId.replace('new_answer_', '');
+      forum_link = `/interview/newanswer/Id/${id}`; // Example construction
+    }
+
+    // Combine company tags
+    const company_tags = Array.from(new Set([
+      company_en,
+      company_he,
+      'interview',
+      'hi-tech',
+      jobRole, // Add the extracted job role to company tags
+    ].filter(Boolean)));
+
+    // Combine quiz tags
+    let quiz_tags = Array.from(new Set([
+      company_en,
+      company_he,
+      jobRole,
+      ...quiz_title.split(/\s+/),
+    ].filter(Boolean)));
+
+    // Add matched predefined tags from title, process details, and interview questions
+    const matched_tags = new Set([
+      ...matchTags(quiz_title, PREDEFINED_TAGS),
+      ...matchTags(process_details, PREDEFINED_TAGS),
+      ...matchTags(interview_questions, PREDEFINED_TAGS),
+    ]);
+    quiz_tags = Array.from(new Set([...quiz_tags, ...matched_tags]));
+
+    // Find if company already exists to add the quiz to it
+    let existingCompany = companies.find(c => c.company === company_en && c.company_he === company_he);
+
+    if (!existingCompany) {
+      existingCompany = {
+        company: company_en,
+        company_he: company_he,
+        tags: company_tags,
+        quizzes: [],
+      };
+      companies.push(existingCompany);
+    }
+
+    existingCompany.quizzes.push({
+      title: quiz_title,
+      quiz_id,
+      tags: quiz_tags,
+      content: `${process_details}\n\n${interview_questions}`, // Combine into content
+      forum_link,
+    });
+  });
+
+  return companies;
+};
+
+export const initCompanies = async (): Promise<number> => {
+  // Check if collection is not empty:
+  const anyCompany = await CompanyModel.findOne({}).lean();
+
+  if (anyCompany != null) {
+    console.log("Companies already initialized. Skipping insertion.");
+    return 0;
   }
 
-  // Sort by matchCount descending
-  results.sort((a, b) => b.matchCount - a.matchCount);
+  let allCompanies: CompanyData[] = [];
 
-  // Optionally, you can return more info (e.g., company name) if needed
-  return results.map(r => r.quiz);
+  // Parse JobHunt.
+  const jobHuntCompanies = parseJobQuizzesFromJobHuntHtml(config.assets.jobQuizzesJobHuntHtmlPath());
+  allCompanies = allCompanies.concat(jobHuntCompanies);
+
+  // Parse TheWorker.
+  const directoryPath = config.assets.jobQuizzesTheWorkerHtmlDirectoryPath();
+  const aggregatedCompaniesMap = new Map<string, CompanyData>(); // Map to aggregate companies across files
+
+  try {
+    const files = fs.readdirSync(directoryPath);
+    for (const file of files) {
+      if (path.extname(file).toLowerCase() === '.html') {
+        const fullPath = path.join(directoryPath, file);
+        console.log(`Parsing file: ${fullPath}`);
+        const companiesFromFile = parseJobQuizzesFromCompanyTablesHtml(fullPath);
+
+        // Aggregate companies from the current file with the overall collection
+        companiesFromFile.forEach(company => {
+          const companyKey = `${company.company}_${company.company_he}`;
+          if (aggregatedCompaniesMap.has(companyKey)) {
+            // Company already exists, merge quizzes
+            const existingCompany = aggregatedCompaniesMap.get(companyKey)!;
+            // Prevent duplicate quizzes if quiz_id logic isn't perfect for this scenario
+            const existingQuizIds = new Set(existingCompany.quizzes.map(q => q.quiz_id));
+            company.quizzes.forEach(newQuiz => {
+              if (!existingQuizIds.has(newQuiz.quiz_id)) {
+                existingCompany.quizzes.push(newQuiz);
+                existingQuizIds.add(newQuiz.quiz_id); // Add to set to prevent future duplicates in this company
+              }
+            });
+            // Also merge tags if necessary, though the current parsing logic should handle this well
+            existingCompany.tags = Array.from(new Set([...existingCompany.tags, ...company.tags]));
+
+          } else {
+            // New company, add it to the map
+            aggregatedCompaniesMap.set(companyKey, company);
+          }
+        });
+      }
+    }
+
+    allCompanies = allCompanies.concat(Array.from(aggregatedCompaniesMap.values()));
+
+    if (allCompanies.length) {
+      console.log(`Found ${allCompanies.length} unique companies across all HTML files.`);
+      await CompanyModel.deleteMany({});
+      await CompanyModel.insertMany(allCompanies);
+      console.log('Successfully inserted parsed companies into MongoDB.');
+    } else {
+      console.log('No companies found to insert from the HTML files.');
+    }
+  } catch (error) {
+    console.error(`Error reading directory or parsing files from ${directoryPath}:`, error);
+    return 0;
+  }
+
+  return allCompanies.length;
+};
+
+
+/**
+ * Search for quizzes that best match the given tags using MongoDB aggregation
+ * and $text search for content fields.
+ * Returns quizzes sorted by relevance (text score + tag matches).
+ */
+export const searchQuizzesByTags = async (tags: string[]): Promise<QuizData[]> => {
+  if (!tags || tags.length === 0) {
+    return []; // No tags provided, return empty results
+  }
+
+  // For $text search, tags are space-separated words or phrases.
+  // We'll also use them for array matching.
+  const lowerTags = tags.map(t => t.toLowerCase());
+  const searchText = tags.join(' '); // Combine tags for $text search
+
+  const pipeline: PipelineStage[] = [
+    // 1. Initial match for company-level or quiz-level tags, OR $text search on content.
+    // This is crucial to filter down documents BEFORE unwinding.
+    {
+      $match: {
+        $or: [
+          // Match in company's 'tags' array
+          { tags: { $in: lowerTags } },
+          // Match in quizzes' 'tags' array (requires dot notation for subdocuments)
+          { 'quizzes.tags': { $in: lowerTags } },
+          // Text search across content fields.
+          // $text operator is highly optimized for this.
+          { $text: { $search: searchText } }
+        ]
+      }
+    },
+    // 2. Unwind the quizzes array to treat each quiz as a separate document
+    // (Only after initial filtering)
+    { $unwind: '$quizzes' },
+    // 3. Add a 'matchCount' field to each quiz
+    // We'll calculate a score based on various matches.
+    {
+      $addFields: {
+        'quizzes.matchScore': {
+          $add: [
+            // Score from company tags (higher if more tags match)
+            {
+              $multiply: [ // Give more weight to direct tag matches
+                {
+                  $size: {
+                    $filter: {
+                      input: '$tags',
+                      as: 'companyTag',
+                      cond: { $in: [{ $toLower: '$$companyTag' }, lowerTags] }
+                    }
+                  }
+                }, 5 // Weight for company tag matches
+              ]
+            },
+            // Score from quiz tags
+            {
+              $multiply: [ // Give more weight to direct quiz tag matches
+                {
+                  $size: {
+                    $filter: {
+                      input: '$quizzes.tags',
+                      as: 'quizTag',
+                      cond: { $in: [{ $toLower: '$$quizTag' }, lowerTags] }
+                    }
+                  }
+                }, 10 // Weight for quiz tag matches
+              ]
+            },
+            // Score from $text search on content fields (if text index is used)
+            // This score comes from the initial $match stage.
+            // If the $text match is crucial, you might add a specific score here.
+            // For now, let's assume the $text match filter is sufficient.
+            // If we strictly want to count word occurrences, we'd need more complex logic
+            // without a text index. With it, we rely on its own scoring.
+            // For a basic score without a text index, one could count occurrences,
+            // but that's what was slow with $regexMatch.
+            // If a text index is used, we can directly incorporate the $meta: "textScore"
+            // but that has to be done at the company level before unwind.
+            // A simpler way for a "contains" match score is just to count found words.
+            // Let's refine this to directly check lowercased fields for exact tag matches
+            // for those cases where $text search might not be ideal (e.g., short tags)
+            // or if you choose not to use $text index.
+
+            // If NOT using $text index for content fields, revert to regex counting,
+            // but be aware of performance.
+            // If using $text index, this part might be less critical or different.
+
+            // As we are already performing $text search in the initial $match,
+            // and $text search inherently orders by relevance, we can rely on that.
+            // For individual field matches (like "SQL" within content), we can still
+            // do counts, but it's crucial to decide if $text search covers this sufficiently.
+
+            // Let's re-add simple contains logic for robustness, assuming content fields are not massive.
+            // If they are huge, definitely go for $text index or external search.
+            {
+              $sum: {
+                $map: {
+                  input: lowerTags,
+                  as: 'tag',
+                  in: {
+                    $cond: {
+                      if: { $regexMatch: { input: { $toLower: '$quizzes.content' }, regex: { $concat: ['.*', '$$tag', '.*'] } } }, // .*.tag.* for contains
+                      then: 1,
+                      else: 0
+                    }
+                  }
+                }
+              }
+            },
+            // Include $textScore if it was part of the initial $match and you want to use it
+            // This would require `$match: { $text: { $search: searchText } }` to be the *first* stage
+            // and `$project: { score: { $meta: "textScore" }, ... }` to be applied right after.
+            // If you want to use $textScore, you'd calculate it at the Company level,
+            // then unwind, then include it in the quiz score.
+            // For now, let's keep the existing approach of initial filtering and then scoring after unwind.
+          ]
+        }
+      }
+    },
+    // 4. Filter out quizzes that have no matches based on the calculated score
+    // This is important because the initial $match might have been broad
+    {
+      $match: {
+        'quizzes.matchScore': { $gt: 0 }
+      }
+    },
+    // 5. Sort by matchScore in descending order
+    {
+      $sort: {
+        'quizzes.matchScore': -1
+      }
+    },
+    // 6. Project to return only the quiz data, excluding temporary fields
+    {
+      $project: {
+        _id: '$quizzes._id',
+        title: '$quizzes.title',
+        quiz_id: '$quizzes.quiz_id',
+        tags: '$quizzes.tags',
+        content: '$quizzes.content',
+        forum_link: '$quizzes.forum_link',
+        // Optional: Include company names if needed
+        // company: '$company',
+        // company_he: '$company_he',
+        // matchScore: '$quizzes.matchScore' // Useful for debugging relevance
+      }
+    }
+  ];
+
+  try {
+    const quizzes = await CompanyModel.aggregate<QuizData>(pipeline).exec();
+    console.log(`Found ${quizzes.length} matching quizzes using aggregation.`);
+    return quizzes;
+  } catch (error) {
+    console.error('Error during quiz search aggregation:', error);
+    return [];
+  }
 };
