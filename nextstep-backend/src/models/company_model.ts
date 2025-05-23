@@ -38,6 +38,14 @@ const companySchema: Schema = new mongoose.Schema({
             forum_link: {
                 type: String,
                 required: false,
+            },
+            process_details: {
+                type: String,
+                required: false,
+            },
+            interview_questions: {
+                type: String,
+                required: false,
             }
         }
     ]

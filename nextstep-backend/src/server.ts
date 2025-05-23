@@ -18,7 +18,6 @@ const listener = app.listen(port, async() => {
     const db = mongoose.connection;
     db.on('error', (error) => console.error(error));
     db.once('open', () => console.log("Connected to DataBase"));
-    await initCompanies();
     console.log(`Example app listening at http://localhost:${port}`);
 });
 
@@ -26,3 +25,5 @@ const socketListener = new Server(listener, { cors: corsOptions });
 
 socketListener.use((socket, next) => socketAuthMiddleware(socket, next));
 initSocket(socketListener).then();
+
+initCompanies().then();

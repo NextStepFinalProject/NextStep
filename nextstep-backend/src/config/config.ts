@@ -23,6 +23,7 @@ export const config = {
     assets: {
         resumeTemplatesDirectoryPath: () => 'assets/resume-templates',
         jobQuizzesJobHuntHtmlPath: () => 'assets/job-quizzes/jobhunt/מאגר שאלות מראיונות עבודה.html',
+        jobQuizzesTheWorkerHtmlDirectoryPath: () => 'assets/job-quizzes/theworker/interviews',
     },
     chatAi: {
         api_url: () => process.env.CHAT_AI_API_URL || 'https://openrouter.ai/api/v1/chat/completions',

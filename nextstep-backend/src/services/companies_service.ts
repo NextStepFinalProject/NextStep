@@ -4,6 +4,7 @@ import { config } from '../config/config';
 import { CompanyModel } from '../models/company_model';
 import { CompanyData, ICompany, QuizData } from 'types/company_types';
 import { Document } from 'mongoose';
+import path from 'path';
 
 // Predefined tags to match against quizzes
 const PREDEFINED_TAGS = [
@@ -47,6 +48,8 @@ const companyToCompanyData = (company: Document<unknown, {}, ICompany> & ICompan
       tags: quiz.tags,
       content: quiz.content,
       forum_link: quiz.forum_link,
+      process_details: quiz.process_details, // Added new field
+      interview_questions: quiz.interview_questions, // Added new field
     })),
   };
 };
@@ -111,6 +114,8 @@ const parseJobQuizzesFromJobHuntHtml = (htmlPath: string): CompanyData[] => {
         tags: quiz_tags,
         content,
         forum_link,
+        process_details: undefined, // Not available in this HTML structure
+        interview_questions: undefined, // Not available in this HTML structure
       });
     });
 
@@ -125,15 +130,174 @@ const parseJobQuizzesFromJobHuntHtml = (htmlPath: string): CompanyData[] => {
   return companies;
 };
 
-export const initCompanies = async (): Promise<number> => {
-  const companies = parseJobQuizzesFromJobHuntHtml(config.assets.jobQuizzesJobHuntHtmlPath());
+// New function to parse the provided HTML structure
+const parseJobQuizzesFromCompanyTablesHtml = (htmlPath: string): CompanyData[] => {
+  const html = fs.readFileSync(htmlPath, 'utf-8');
+  const $ = cheerio.load(html);
 
-  if (companies.length) {
-    await CompanyModel.deleteMany({});
-    await CompanyModel.insertMany(companies);
+  const companies: CompanyData[] = [];
+
+  // Iterate over each "table" that contains company interview data
+  $('table.container-interview, tbody:has(tr:has(td[colspan="4"][valign="bottom"] table))').each((_, tableElement) => {
+    const $table = $(tableElement);
+
+    // Extract company name and quiz title from the first inner table
+    const mainInfoTable = $table.find('td[colspan="4"][valign="bottom"] > table').first();
+    const companyLink = mainInfoTable.find('td[valign="top"] > a').attr('href');
+    let company_en = 'UNKNOWN';
+    let company_he = 'UNKNOWN';
+
+    if (companyLink) {
+      // Extract company names from the URL path
+      const pathParts = companyLink.split('/');
+      if (pathParts.length >= 4) {
+        company_he = decodeURIComponent(pathParts[pathParts.length - 2]);
+        company_en = decodeURIComponent(pathParts[pathParts.length - 1]);
+      }
+    }
+
+    const quiz_title_full = mainInfoTable.find('td[valign="top"] div[style*="font-size:20px"]').text().trim();
+    // The quiz title usually contains "ראיון לתפקיד [job role] בחברת [company name]"
+    // We can extract the job role from here.
+    const jobRoleMatch = quiz_title_full.match(/ראיון לתפקיד\s*(.*?)\s*בחברת/);
+    const jobRole = jobRoleMatch ? jobRoleMatch[1].trim() : '';
+    const quiz_title = quiz_title_full; // Keep the full title for now
+
+    // Extract quiz_id (no explicit quiz_id in this structure, so generating a unique one or using a placeholder)
+    // For now, we'll use a simple hash of the title and company, or just a placeholder.
+    // In a real application, you might generate a UUID or use a counter.
+    const quiz_id = Math.abs(quiz_title_full.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0));
+
+
+    // Extract process details
+    const processDetailsRow = $table.find('td:contains("פרטים לגבי התהליך")').closest('tr');
+    const process_details = processDetailsRow.find('td[style*="font-size:14px;font-weight:normal;"]').text().trim();
+
+    // Extract interview questions
+    const interviewQuestionsRow = $table.find('td:contains("שאלות מתוך הראיון")').closest('tr');
+    const interview_questions = interviewQuestionsRow.find('td[style*="font-size:14px;font-weight:normal;"]').text().trim();
+
+    // Forum link is present in the `new_answer_` span's ID, but the href is dynamic via JS.
+    // We can construct it if the base URL is known, or leave it empty if not directly available.
+    const newAnswerSpanId = $table.find('span[id^="new_answer_"]').attr('id');
+    let forum_link = '';
+    if (newAnswerSpanId) {
+      const id = newAnswerSpanId.replace('new_answer_', '');
+      forum_link = `/interview/newanswer/Id/${id}`; // Example construction
+    }
+
+    // Combine company tags
+    const company_tags = Array.from(new Set([
+      company_en,
+      company_he,
+      'interview',
+      'hi-tech',
+      jobRole, // Add the extracted job role to company tags
+    ].filter(Boolean)));
+
+    // Combine quiz tags
+    let quiz_tags = Array.from(new Set([
+      company_en,
+      company_he,
+      jobRole,
+      ...quiz_title.split(/\s+/),
+    ].filter(Boolean)));
+
+    // Add matched predefined tags from title, process details, and interview questions
+    const matched_tags = new Set([
+      ...matchTags(quiz_title, PREDEFINED_TAGS),
+      ...matchTags(process_details, PREDEFINED_TAGS),
+      ...matchTags(interview_questions, PREDEFINED_TAGS),
+    ]);
+    quiz_tags = Array.from(new Set([...quiz_tags, ...matched_tags]));
+
+    // Find if company already exists to add the quiz to it
+    let existingCompany = companies.find(c => c.company === company_en && c.company_he === company_he);
+
+    if (!existingCompany) {
+      existingCompany = {
+        company: company_en,
+        company_he: company_he,
+        tags: company_tags,
+        quizzes: [],
+      };
+      companies.push(existingCompany);
+    }
+
+    existingCompany.quizzes.push({
+      title: quiz_title,
+      quiz_id,
+      tags: quiz_tags,
+      content: `${process_details}\n\n${interview_questions}`, // Combine into content
+      forum_link,
+      process_details,
+      interview_questions,
+    });
+  });
+
+  return companies;
+};
+
+export const initCompanies = async (): Promise<number> => {
+  let allCompanies: CompanyData[] = [];
+
+  // Parse JobHunt.
+  const jobHuntCompanies = parseJobQuizzesFromJobHuntHtml(config.assets.jobQuizzesJobHuntHtmlPath());
+  allCompanies = allCompanies.concat(jobHuntCompanies);
+
+  // Parse TheWorker.
+  const directoryPath = config.assets.jobQuizzesTheWorkerHtmlDirectoryPath();
+  const aggregatedCompaniesMap = new Map<string, CompanyData>(); // Map to aggregate companies across files
+
+  try {
+    const files = fs.readdirSync(directoryPath);
+    for (const file of files) {
+      if (path.extname(file).toLowerCase() === '.html') {
+        const fullPath = path.join(directoryPath, file);
+        console.log(`Parsing file: ${fullPath}`);
+        const companiesFromFile = parseJobQuizzesFromCompanyTablesHtml(fullPath);
+
+        // Aggregate companies from the current file with the overall collection
+        companiesFromFile.forEach(company => {
+          const companyKey = `${company.company}_${company.company_he}`;
+          if (aggregatedCompaniesMap.has(companyKey)) {
+            // Company already exists, merge quizzes
+            const existingCompany = aggregatedCompaniesMap.get(companyKey)!;
+            // Prevent duplicate quizzes if quiz_id logic isn't perfect for this scenario
+            const existingQuizIds = new Set(existingCompany.quizzes.map(q => q.quiz_id));
+            company.quizzes.forEach(newQuiz => {
+              if (!existingQuizIds.has(newQuiz.quiz_id)) {
+                existingCompany.quizzes.push(newQuiz);
+                existingQuizIds.add(newQuiz.quiz_id); // Add to set to prevent future duplicates in this company
+              }
+            });
+            // Also merge tags if necessary, though the current parsing logic should handle this well
+            existingCompany.tags = Array.from(new Set([...existingCompany.tags, ...company.tags]));
+
+          } else {
+            // New company, add it to the map
+            aggregatedCompaniesMap.set(companyKey, company);
+          }
+        });
+      }
+    }
+
+    allCompanies = allCompanies.concat(Array.from(aggregatedCompaniesMap.values()));
+
+    if (allCompanies.length) {
+      console.log(`Found ${allCompanies.length} unique companies across all HTML files.`);
+      await CompanyModel.deleteMany({});
+      await CompanyModel.insertMany(allCompanies);
+      console.log('Successfully inserted parsed companies into MongoDB.');
+    } else {
+      console.log('No companies found to insert from the HTML files.');
+    }
+  } catch (error) {
+    console.error(`Error reading directory or parsing files from ${directoryPath}:`, error);
+    return 0;
   }
 
-  return companies.length;
+  return allCompanies.length;
 };
 
 /**
@@ -170,6 +334,22 @@ export const searchQuizzesByTags = async (tags: string[]): Promise<QuizData[]> =
           }
         }
       }
+      // Check new fields for tags
+      if (quiz.process_details) {
+        for (const tag of lowerTags) {
+          if (quiz.process_details.toLowerCase().includes(tag)) {
+            matchCount++;
+          }
+        }
+      }
+      if (quiz.interview_questions) {
+        for (const tag of lowerTags) {
+          if (quiz.interview_questions.toLowerCase().includes(tag)) {
+            matchCount++;
+          }
+        }
+      }
+
       if (matchCount > 0) {
         results.push({ quiz, matchCount, company });
       }
