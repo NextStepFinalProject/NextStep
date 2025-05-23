@@ -39,14 +39,6 @@ const companySchema: Schema = new mongoose.Schema({
                 type: String,
                 required: false,
             },
-            process_details: {
-                type: String,
-                required: false,
-            },
-            interview_questions: {
-                type: String,
-                required: false,
-            }
         }
     ]
 }, { timestamps: true, strict: true, versionKey: false });
@@ -74,15 +66,11 @@ companySchema.index({ 'quizzes.tags': 1 }); // For efficient matching on quiz ta
 companySchema.index(
     {
       'quizzes.content': 'text',
-      'quizzes.process_details': 'text',
-      'quizzes.interview_questions': 'text',
     },
     {
       name: 'quiz_content_text_index',
       weights: {
         'quizzes.content': 10, // Give more weight to content
-        'quizzes.process_details': 5,
-        'quizzes.interview_questions': 5,
       }
     }
   );

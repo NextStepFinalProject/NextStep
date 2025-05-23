@@ -4,8 +4,6 @@ export interface IQuiz extends Document {
   tags: string[];
   content: string;
   forum_link: string;
-  process_details?: string;
-  interview_questions?: string;
 }
 
 export interface ICompany extends Document {
@@ -30,6 +28,4 @@ export interface QuizData {
   tags: string[];
   content: string;
   forum_link: string;
-  process_details?: string;
-  interview_questions?: string;
 }

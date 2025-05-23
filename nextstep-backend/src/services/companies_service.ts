@@ -114,8 +114,6 @@ const parseJobQuizzesFromJobHuntHtml = (htmlPath: string): CompanyData[] => {
         tags: quiz_tags,
         content,
         forum_link,
-        process_details: undefined, // Not available in this HTML structure
-        interview_questions: undefined, // Not available in this HTML structure
       });
     });
 
@@ -230,8 +228,6 @@ const parseJobQuizzesFromCompanyTablesHtml = (htmlPath: string): CompanyData[] =
       tags: quiz_tags,
       content: `${process_details}\n\n${interview_questions}`, // Combine into content
       forum_link,
-      process_details,
-      interview_questions,
     });
   });
 
@@ -418,36 +414,6 @@ export const searchQuizzesByTags = async (tags: string[]): Promise<QuizData[]> =
                 }
               }
             },
-            {
-              $sum: {
-                $map: {
-                  input: lowerTags,
-                  as: 'tag',
-                  in: {
-                    $cond: {
-                      if: { $regexMatch: { input: { $toLower: '$quizzes.process_details' }, regex: { $concat: ['.*', '$$tag', '.*'] } } },
-                      then: 1,
-                      else: 0
-                    }
-                  }
-                }
-              }
-            },
-            {
-              $sum: {
-                $map: {
-                  input: lowerTags,
-                  as: 'tag',
-                  in: {
-                    $cond: {
-                      if: { $regexMatch: { input: { $toLower: '$quizzes.interview_questions' }, regex: { $concat: ['.*', '$$tag', '.*'] } } },
-                      then: 1,
-                      else: 0
-                    }
-                  }
-                }
-              }
-            },
             // Include $textScore if it was part of the initial $match and you want to use it
             // This would require `$match: { $text: { $search: searchText } }` to be the *first* stage
             // and `$project: { score: { $meta: "textScore" }, ... }` to be applied right after.
@@ -480,8 +446,6 @@ export const searchQuizzesByTags = async (tags: string[]): Promise<QuizData[]> =
         tags: '$quizzes.tags',
         content: '$quizzes.content',
         forum_link: '$quizzes.forum_link',
-        process_details: '$quizzes.process_details',
-        interview_questions: '$quizzes.interview_questions',
         // Optional: Include company names if needed
         // company: '$company',
         // company_he: '$company_he',
