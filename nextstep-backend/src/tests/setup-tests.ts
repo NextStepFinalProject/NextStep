@@ -2,6 +2,7 @@ import dotenv from "dotenv";
 import dotenvExpand from "dotenv-expand";
 import mongoose, {ConnectOptions} from 'mongoose';
 import { MongoMemoryServer } from 'mongodb-memory-server';
+import { initCompanies } from "../services/companies_service";
 
 
 
@@ -40,6 +41,8 @@ global.beforeAll(async () => {
         useNewUrlParser: true,
         useUnifiedTopology: true,
     } as ConnectOptions);
+
+    await initCompanies();
 });
 
 /**
