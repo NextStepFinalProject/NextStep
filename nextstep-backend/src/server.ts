@@ -6,7 +6,7 @@ import dotenvExpand from "dotenv-expand";
 import { Server } from 'socket.io';
 import { socketAuthMiddleware } from './middleware/socket_auth';
 import { initSocket } from './services/socket_service';
-import { importJobQuizzesToDb } from './services/companies_service';
+import { initCompanies } from './services/companies_service';
 
 // Configure environment variables, and allow expand.
 dotenvExpand.expand(dotenv.config());
@@ -18,7 +18,7 @@ const listener = app.listen(port, async() => {
     const db = mongoose.connection;
     db.on('error', (error) => console.error(error));
     db.once('open', () => console.log("Connected to DataBase"));
-    await importJobQuizzesToDb();
+    await initCompanies();
     console.log(`Example app listening at http://localhost:${port}`);
 });
 

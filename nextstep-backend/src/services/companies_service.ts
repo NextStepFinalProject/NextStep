@@ -125,7 +125,7 @@ const parseJobQuizzesFromJobHuntHtml = (htmlPath: string): CompanyData[] => {
   return companies;
 };
 
-export const importJobQuizzesToDb = async (): Promise<number> => {
+export const initCompanies = async (): Promise<number> => {
   const companies = parseJobQuizzesFromJobHuntHtml(config.assets.jobQuizzesJobHuntHtmlPath());
 
   if (companies.length) {
