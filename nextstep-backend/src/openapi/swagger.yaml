@@ -19,6 +19,8 @@ tags:
     description: Operations related to chat rooms
   - name: Resume
     description: Operations related to resume ATS scoring
+  - name: Quizzes
+    description: Operations related to job quizzes
 
 paths:
   /post:
@@ -1114,6 +1116,35 @@ paths:
         '400':
           description: Bad Request
 
+  /quiz:
+    get:
+      tags:
+        - Quizzes
+      summary: Search for quizzes based on the given parameters.
+      description: Search for quizzes that best match the given tags. Matches are found in company tags, quiz tags, or quiz content. Returns quizzes sorted by number of tag matches (most relevant first).
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: tags
+          in: query
+          required: false
+          schema:
+            type: string
+          description: A string which contains comma separated tags.
+      responses:
+        '200':
+          description: List of quizzes sorted by relevance (most relevant first).
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Quiz'
+        '401':
+          description: Unauthorized
+        '500':
+          description: Internal server error
+
 components:
   schemas:
     Post:
@@ -1313,6 +1344,32 @@ components:
       properties:
         refreshToken:
           type: string
+
+    Quiz:
+      type: object
+      properties:
+        _id:
+          type: string
+          example: "68307dc341829a3ba715b8b6"
+        title:
+          type: string
+          example: "NOC Team Member"
+        quiz_id:
+          type: integer
+          example: 2785
+        tags:
+          type: array
+          items:
+            type: string
+          example: ["888", "רנדום לוג'יק", "NOC", "Team", "Member", "Support", "Maintenance"]
+        content:
+          type: string
+          format: html
+          description: "HTML content of the quiz, may include formatting, links, and structured interview info."
+        forum_link:
+          type: string
+          format: uri
+          example: "http://www.forum.com/f/..."
 
   securitySchemes:
     BearerAuth:
