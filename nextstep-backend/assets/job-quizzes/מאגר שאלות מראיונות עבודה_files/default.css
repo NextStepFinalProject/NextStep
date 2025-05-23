@@ -1,0 +1,28 @@
+
+/* =============================================================================
+   Deafault Template
+   ========================================================================== */
+
+/* faq table of content */
+ul.faq-category-list, ul.question-list, ul.faq-single-list {list-style: none; padding-left: 0; margin-left: 0; padding-right: 0;}
+ul.question-list{padding-right:0;}
+ul.question-list li{width:30%;float: right;margin: 0 0 10px 36px;}
+ul.question-list li:nth-child(3n){margin-left:0;}
+.faq-category-list {margin-bottom: 70px;}
+.faq-category-list > li {margin-bottom: 40px;width: 100%;}
+.faq-single-list {margin-bottom: 80px;}
+.faq-single-list li {margin: 0 0 22px 0;}
+.faq-single-list h4 {margin: 0;}
+.faq-category-list .faq-section-heading {width:98%;}
+.question-list a , .question-list a:hover {line-height: 1.5em;}
+/* faq posts */
+.question-detail-list .faq-section-heading {margin-top: 60px;}
+article.faq {margin-top: 40px;}
+article.faq h3 {margin-bottom: 20px;}
+.faq-category-list h4 {margin:0;}
+.faq-category-list h2 {clear:both;}
+.faq-category-list h2:after{margin-top:0;}
+.faq-category-list h2 a {color:#87AF3E;font-size:33px;text-shadow:0 0 0.1px #87AF3E;}
+.question-detail-list{clear:both}
+.question-list .entry-title{text-align:center;font-size:18px;padding:12px;background-color:#F6F6F6;}
+.question-list a{color:black;}

@@ -1,0 +1,482 @@
+/**
+ * Custom Job Board Shortcode Stylesheets
+ *
+ * @package WordPress
+ * @subpackage Job_Board
+ * @since Job Board 1.0
+ */
+ 
+ /*----------------------------------------------------*/
+/*	GREEN DYNAMIC UPLOAD BUTTON CSS */
+/*----------------------------------------------------*/
+.showFormPost{
+	height: 50px;
+    background: #87AF3F;
+    border-radius: 4px;
+    color: white;
+    padding-right: 20px;
+    padding-left: 20px;
+    box-shadow: 2px 2px 5px #aaaaaa;
+    display: inline-block;
+    line-height: 24px;
+    font-size: 18px;
+}
+
+.showFormPost:hover{
+	background-color: #97BF4F;
+	color: white;
+}
+
+ /*----------------------------------------------------*/
+/*	SIDBAR WHITE DYNAMIC UPLOAD BUTTON CSS */
+/*----------------------------------------------------*/
+.showFormSidebar{
+	height: 75px;
+    border-radius: 4px;
+    padding-right: 20px;
+    padding-left: 20px;
+    display: inline-block;
+    line-height: 24px;
+    font-size: 18px;
+	/* RON'S FIX CSS */
+	border-width: 0px;
+	background-color: white;
+	color: #272727;
+	box-shadow: 2px 2px 5px #353535;
+}
+	
+.showFormSidebar:hover{
+	background-color: #2D2D2D;
+    color: white;
+    border-width: 0px;
+}
+
+.sidebarUploadBoxBottomLink{
+	position: relative;
+    background-color: white;
+    top: 132px;
+    text-align: center;
+	right: 7px;
+	color: black;
+	width: 240px;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.sidebarUploadBoxBottomLink:hover{
+	background-color: #EFEFEF;
+	color: black;
+}
+
+/*----------------------------------------------------*/
+/*	Title Shortcode	*/
+/*----------------------------------------------------*/
+.sc-title{
+	text-transform:uppercase;
+}
+.sc-title.normal{
+	font-size:18px;
+	margin:15px 0;
+}
+.sc-title.large{
+	font-size:30px;
+}
+
+/*----------------------------------------------------*/
+/*	Preloader	*/
+/*----------------------------------------------------*/
+.preloader {
+	position: fixed;
+	top: 0;
+	left: 0;
+	right: 0;
+	bottom: 0;
+	/*background-color: #008cba;*/
+	background-color: #fff;
+	z-index: 9999;
+}
+
+.logo-jobswipe {
+	position: absolute;
+	top: 0;
+	bottom: 0;
+	left: 0;
+	right: 0;
+}
+
+.logo-jobswipe {
+	position: absolute;
+	top: 0;
+	bottom: 85px;
+	left: 0;
+	right: 0;
+	width: 100px;
+	height: 30px;
+	margin: auto;
+	text-align: center;
+	background-image: url('./assets/img/logo.png');
+	background-size: 100%;
+	background-repeat: no-repeat;
+}
+
+.spinner {
+	font-weight: 300;
+	color: #fff;
+	position: absolute;
+	top: 50% !important;
+	left: 50% !important;
+	right: 0;
+	width: 70px;
+	-webkit-transform: translate(-50%, -50%);
+	-moz-transform: translate(-50%, -50%);
+	transform: translate(-50%, -50%);	
+}
+
+.spinner > div {
+	width: 18px;
+	height: 18px;
+	background-color: #8DB15A;
+	border-radius: 100%;
+	display: inline-block;
+	-webkit-animation: bouncedelay 1.4s infinite ease-in-out;
+	animation: bouncedelay 1.4s infinite ease-in-out;
+	-webkit-animation-fill-mode: both;
+	animation-fill-mode: both;
+}
+
+.spinner .bounce1 {
+	-webkit-animation-delay: -0.32s;
+	  animation-delay: -0.32s;
+}
+.spinner .bounce2 {
+	-webkit-animation-delay: -0.16s;
+	  animation-delay: -0.16s;
+	  background-color: rgb(41, 55, 93);
+}
+
+@-webkit-keyframes bouncedelay {
+  0%, 80%, 100% { -webkit-transform: scale(0.0) }
+	40% { -webkit-transform: scale(1.0) }
+}
+	
+@keyframes bouncedelay {
+  0%, 80%, 100% { 
+	transform: scale(0.0);
+	-webkit-transform: scale(0.0);
+  } 40% { 
+	transform: scale(1.0);
+	-webkit-transform: scale(1.0);
+  }
+}
+
+/*----------------------------------------------------*/
+/*	MAIN PAGE UPLOAD	*/
+/*----------------------------------------------------*/
+#ghost_upload {
+  position: absolute;
+  width: 100%;
+  left: 0;
+  top: 0;
+  height: 100%;
+ /* cursor: pointer; */
+}
+
+
+#dz-message {
+ border-radius: 100%;
+ cursor: pointer;
+ z-index: 2;
+ position: relative;
+ width: 250px;
+ height: 250px;
+ padding-top: 55px;
+}
+
+#dz-message:before {
+ background-color: #87AF3F;
+ content: "";
+ position: absolute;
+ top: 0;
+ left: 0;
+ width: 250px;
+ height: 250px;
+ border-radius: 100%;
+ z-index: -1;
+ -webkit-transition: all 0.15s ease-out;
+ transition: all 0.15s ease-out;
+}
+
+#dz-message:hover:before {
+ background-color: #97BF4F;
+}
+
+#dz-message:after {
+ content: "";
+ background-color: rgba(255, 255, 255, 0.6);
+ border-radius: 100%;
+ position: absolute;
+ top: -20px;
+ left: -20px;
+ width: 290px;
+ height: 290px;
+ z-index: -2;
+}
+
+#homeResumeUpload {
+	position: relative;
+}
+.relative {
+  position: relative;
+}
+#upload_error {
+	display: none;
+	/* color: rgb(147, 12, 12); */
+	font-size: 18px;
+	font-weight: bold;
+	color: #A90605;
+	margin-top: 20px;
+}
+/*
+#uploading {
+  position: absolute;
+  bottom: -10px;
+  height: 50px;
+  width: 100%;
+  display: none;
+}
+*/
+#uploading
+{
+	position: absolute;
+	bottom: -45px;
+    height: 30px;
+    width: 50%;
+    display: none;
+    left: 200px;
+}
+
+#uploading .spinner .bounce1, #uploading .spinner .bounce3 {
+	background-color: rgb(84, 93, 116);
+}
+#uploading .spinner .bounce2 {
+	background-color: #688440;
+}
+.wpResumeUpload .spinner {
+  font-weight: 300;
+  color: #fff;
+  position: absolute;
+  top: 0;
+  left: 4px !important;
+  width: 100%;
+  height: 100%;
+  text-align: center;
+  padding: 10px;
+  transform: none;
+  top: 0 !important;
+  -moz-transform: none;
+  -webkit-transform: none;	
+}
+.wpResumeUpload #uploading {
+  bottom: 0;
+  background: rgba(236, 240, 241, 0.8);
+  height: 35px;
+}
+
+/*----------------------------------------------------*/
+/*	REST SITE UPLOAD	*/
+/*----------------------------------------------------*/
+.ghost_upload {
+  position: absolute;
+  width: 100%;
+  left: 0;
+  top: 0;
+  height: 100%;
+  cursor: pointer;
+}
+.wpResumeUpload {
+	position: absolute;
+	height: 160px;
+	width: 100%;
+	margin-top: 55px;
+}
+
+article .wpResumeUpload {
+	position: relative!important;
+}
+/*----------------------------------------------------*/
+/*	Unordered List Shortcode	*/
+/*----------------------------------------------------*/
+.sc-ul{
+	list-style:none;
+	padding:0;
+	margin:0;
+	padding-top:6px;
+	padding-bottom:20px;
+}
+
+.sc-ul li{
+	position:relative;
+	margin-left:18px;
+	line-height:22px;
+	padding:4px 0;
+}
+.sc-ul .fa{
+	position:absolute;
+	left:-20px;
+	line-height:22px;
+}
+
+/*----------------------------------------------------*/
+/*	Drop Cap Shortcode	*/
+/*----------------------------------------------------*/
+.sc-dropcap{
+	font-size:70px;
+	float:left;
+	line-height:65px;
+	padding:0 10px;
+	margin-right:10px;
+}
+.sc-dropcap.boxed{
+	color:#FFFFFF;
+	border-radius:5px;
+	-moz-border-radius:5px;
+	-webkit-border-radius:5px;
+}
+
+/*----------------------------------------------------*/
+/*	Button Shortcode	*/
+/*----------------------------------------------------*/
+.sc-button{
+	text-transform:uppercase;
+	font-size:16px;
+	text-decoration:none;
+	margin-right:15px;
+	font-weight:300;
+	background:#DDDDDD;
+	color:#FFFFFF;
+	margin-bottom:15px;
+	
+	border-radius:5px;
+	-webkit-border-radius:5px;
+	-moz-border-radius:5px;
+	
+	transition:all .3s ease;
+	-webkit-transition:all .3s ease;
+	-moz-transition:all .3s ease;
+}
+.sc-button:hover{ color:#FFFFFF; }
+.sc-button.medium{ padding:10px 29px; }
+.sc-button.large{ padding:12px 34px; font-size:20px; }
+
+.sc-button.green{ background:#4ec6ab; }
+.sc-button.purple{ background:#2980b9; }
+.sc-button.red{ background:#ff8888; }
+.sc-button.grey{ background:#d1d1d1; color:inherit; }
+.sc-button.darkgrey{  background:#0a6064; }
+
+.sc-button.purple:hover{ background:#236fa1; }
+.sc-button.red:hover{ background:#d66666; }
+.sc-button.grey:hover{ background:#b5afaf; }
+.sc-button.green:hover{ background:#44b098; }
+.sc-button.darkgrey:hover{ background:#085053; }
+
+/*----------------------------------------------------*/
+/*	Alert Shortcode	*/
+/*----------------------------------------------------*/
+.jb-alert{
+	background:#d1d1d1;
+	color:#FFFFFF;
+	font-size:16px;
+	padding:10px 20px 11px;
+	margin-top:10px;
+	margin-bottom:25px;
+}
+.jb-alert .close{
+	right:-2px;
+	color:#FFFFFF;
+	opacity:.8;
+	top:1px;
+}
+.jb-alert .close:hover{
+	 opacity:1;
+}
+
+.jb-alert.danger{ background:#ff8888; }
+.jb-alert.warning{ background:#ffd988; }
+.jb-alert.info{ background:#9ac9e6; }
+.jb-alert.success{ background:#c5e69a; }
+.jb-alert.nopost{ background:#1abc9c; }
+
+
+/*----------------------------------------------------*/
+/*	Accordion Shortcode	*/
+/*----------------------------------------------------*/
+.jb-accordion-wrapper{
+	background:#FFFFFF;
+	border:1px solid #dbdbdb;
+	margin-bottom:25px;
+	
+	border-radius:6px;
+	-webkit-border-radius:6px;
+	-moz-border-radius:6px;
+}
+.jb-accordion-title{
+	position:relative;
+	background:#d1d1d1;
+	color:#FFFFFF;
+	border-radius:5px;
+	-webkit-border-radius:5px;
+	-moz-border-radius:5px;
+	padding:11px 20px 11px;
+	font-size:16px;
+}
+.jb-accordion-title button{
+	position:absolute;
+	right:15px;
+	border:none;
+	background:none;
+	color:#d1d1d1;
+	font-size:12px;
+	padding:0;
+	text-align:center;
+}
+.jb-accordion-title .fa{
+	background:#7d7d7d;
+	text-align:center;
+	width:22px;
+	height:22px;
+	line-height:22px;
+	
+	border-radius:5px;
+	-webkit-border-radius:5px;
+	-moz-border-radius:5px;
+}
+.jb-accordion-title .fa:before{
+	content: "\f078";
+}
+
+.jb-accordion-title .collapsed .fa:before{
+	content: "\f054";
+}
+
+.jb-accordion-content{
+	color:#4f4f4f;
+	padding:20px;
+}
+
+/*----------------------------------------------------*/
+/*	Blockquote Shortcode	*/
+/*----------------------------------------------------*/
+.sc-blockqoute{
+	background:#d1d1d1;
+	border:none;
+	color:#7d7d7d;
+	font-size:18px;
+	line-height:26px;
+	
+	padding:37px 20px 36px;
+	
+	border-radius:5px;
+	-webkit-border-radius:5px;
+	-moz-border-radius:5px;
+}
