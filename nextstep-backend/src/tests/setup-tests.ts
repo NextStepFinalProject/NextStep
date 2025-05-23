@@ -42,7 +42,7 @@ global.beforeAll(async () => {
         useUnifiedTopology: true,
     } as ConnectOptions);
 
-    await initCompanies();
+    // await initCompanies();
 });
 
 /**
