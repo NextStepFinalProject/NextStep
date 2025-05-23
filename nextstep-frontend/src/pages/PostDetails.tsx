@@ -171,7 +171,7 @@ const PostDetails: React.FC = () => {
   const handleDeletePost = async () => {
     try {
       await api.delete(`/post/${postId}`);
-      navigate('/dashboard');
+      navigate('/feed');
     } catch (err) {
       console.error('Failed to delete post:', err);
     }
@@ -197,7 +197,7 @@ const PostDetails: React.FC = () => {
     <Container component="main" maxWidth="md" sx={{ height: '80vh', display: 'flex', flexDirection: 'column' }}>
       <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', flexGrow: 1 }}>
         <Box sx={{ display: 'flex', alignItems: 'center', width: '100%', mb: 2 }}>
-          <IconButton color="primary" onClick={() => navigate('/dashboard')}>
+          <IconButton color="primary" onClick={() => navigate('/feed')}>
             <ArrowBack />
           </IconButton>
           <Typography variant="h4" gutterBottom sx={{ flexGrow: 1 }}>

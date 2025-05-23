@@ -32,7 +32,7 @@ const Login: React.FC = () => {
 
       setUserAuth(res.data);
 
-      navigate("/dashboard");
+      navigate("/main-dashboard");
     } catch (error) {
       console.error("Google login failed:", error);
       setError("Google login failed.");
@@ -51,7 +51,7 @@ const Login: React.FC = () => {
       // Handle successful login, e.g., save tokens, redirect, etc.
       setUserAuth(response.data)
 
-      navigate('/dashboard'); // Redirect to dashboard or another page after login
+      navigate('/main-dashboard'); // Redirect to dashboard or another page after login
 
     } catch (error) {
       // Handle login error

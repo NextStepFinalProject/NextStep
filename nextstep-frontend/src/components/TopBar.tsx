@@ -1,7 +1,7 @@
 import React, { useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { AppBar, Toolbar, IconButton, Tooltip, Box } from '@mui/material';
-import { Home, Person, Message, Logout, DocumentScannerTwoTone } from '@mui/icons-material';
+import { Home, Person, Message, Logout, DocumentScannerTwoTone, Feed } from '@mui/icons-material';
 import {getUserAuth, removeUserAuth} from "../handlers/userAuth.ts";
 import api from "../serverApi.ts";
 
@@ -20,16 +20,21 @@ const TopBar: React.FC = () => {
   };
 
   return (
-    <AppBar position="relative" sx={{ width: '100vw', left: 0 }} className='top-bar'>
+    <AppBar position="relative" sx={{ width: '100vw', left: 0, backgroundColor: '#233752' }} className='top-bar'>
       <Toolbar>
         <Tooltip title="Home">
-          <IconButton color="inherit" onClick={() => navigate('/dashboard')} sx={{ mx: 1 }}>
+          <IconButton color="inherit" onClick={() => navigate('/main-dashboard')} sx={{ mx: 1 }}>
             <Home fontSize='large'/>
           </IconButton>
         </Tooltip>
-        <Tooltip title="Profile">
-          <IconButton color="inherit" onClick={() => navigate('/profile')} sx={{ mx: 1 }}>
-            <Person fontSize='large'/>
+        <Tooltip title="Resume">
+          <IconButton color="inherit" onClick={() => navigate('/resume')} sx={{ mx: 1 }}>
+            <DocumentScannerTwoTone fontSize='large'/>
+          </IconButton>
+        </Tooltip>
+        <Tooltip title="Feed">
+          <IconButton color="inherit" onClick={() => navigate('/feed')} sx={{ mx: 1 }}>
+            <Feed fontSize='large'/>
           </IconButton>
         </Tooltip>
         <Tooltip title="Chat">
@@ -37,9 +42,9 @@ const TopBar: React.FC = () => {
             <Message fontSize='large'/>
           </IconButton>
         </Tooltip>
-        <Tooltip title="Resume">
-          <IconButton color="inherit" onClick={() => navigate('/resume')} sx={{ mx: 1 }}>
-            <DocumentScannerTwoTone fontSize='large'/>
+        <Tooltip title="Profile">
+          <IconButton color="inherit" onClick={() => navigate('/profile')} sx={{ mx: 1 }}>
+            <Person fontSize='large'/>
           </IconButton>
         </Tooltip>
         <Box sx={{ flexGrow: 1 }} />

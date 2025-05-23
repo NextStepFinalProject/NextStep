@@ -8,6 +8,14 @@ import pdfParse from 'pdf-parse';
 import AdmZip from 'adm-zip';
 import { DOMParser, XMLSerializer } from 'xmldom';
 
+export interface ParsedResume {
+    aboutMe: string;
+    skills:    string[];
+    roleMatch: string;
+    experience:string[];
+    education?: string[];
+}
+
 const SYSTEM_TEMPLATE = `You are a very experienced ATS (Application Tracking System) bot with a deep understanding named Bob the Resume builder.
 You will review resumes with or without job descriptions.
 You are an expert in resume evaluation and provide constructive feedback with dynamic evaluation.
@@ -478,4 +486,51 @@ Rules:
     }
 };
 
-export { scoreResume, streamScoreResume, getResumeTemplates, generateImprovedResume };
+
+/**
+ * Extracts raw text from the uploaded resume buffer,
+ * prompts the AI to return { aboutMe, skills[], roleMatch, experience[] } as JSON.
+ */
+const parseResumeFields = async (
+    fileBuffer: Buffer,
+    originalName: string
+  ): Promise<ParsedResume> => {
+    // 1) Extract text
+    const ext = path.extname(originalName).toLowerCase();
+    let text: string;
+    if (ext === '.pdf') {
+      const data = await pdfParse(fileBuffer);
+      text = data.text;
+    } else {
+      // mammoth supports buffer input
+      const { value } = await mammoth.extractRawText({ buffer: fileBuffer });
+      text = value;
+    }
+  
+    // 2) Build the extraction prompt
+    const prompt = `
+  Extract from this resume the following fields as JSON:
+    • "aboutMe": a 1–2 sentence self-summary.
+    • "skills": an array of technical skills.
+    • "roleMatch": one-sentence best-fit role suggestion.
+    • "experience": an array of 3–5 bullet points of key achievements.
+  
+  Resume text:
+  ---
+  ${text}
+  ---
+    Respond with a single JSON object and nothing else. The json object should begin directly with parentheses and have the following structure: {"a": "value", "b": "value", ...}
+  `;
+  
+    // 3) Call your Chat AI
+    const aiResponse = await chatWithAI(
+      SYSTEM_TEMPLATE,     // you can reuse your existing SYSTEM_TEMPLATE or define a new one
+      [prompt]
+    );
+  
+    // 4) Parse & return
+    const parsed = JSON.parse(aiResponse.trim().replace("```json", "").replace("```", "")) as ParsedResume;
+    return parsed;
+  };
+
+export { scoreResume, streamScoreResume, getResumeTemplates, generateImprovedResume, parseResumeFields };
