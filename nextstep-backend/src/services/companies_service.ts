@@ -239,6 +239,14 @@ const parseJobQuizzesFromCompanyTablesHtml = (htmlPath: string): CompanyData[] =
 };
 
 export const initCompanies = async (): Promise<number> => {
+  // Check if collection is not empty:
+  const anyCompany = await CompanyModel.findOne({}).lean();
+
+  if (anyCompany != null) {
+    console.log("Companies already initialized. Skipping insertion.");
+    return 0;
+  }
+
   let allCompanies: CompanyData[] = [];
 
   // Parse JobHunt.
