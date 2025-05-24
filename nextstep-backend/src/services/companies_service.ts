@@ -493,10 +493,8 @@ Structure: Format the output as a single JSON object adhering strictly to the Qu
 Content Details:
   _id: Generate a unique string, e.g., "generated_[TIMESTAMP]".
   title: A concise and relevant title for the generated quiz.
-  quiz_id: Generate a unique numerical ID (e.g., a random 5-digit number or a hash).
   tags: Include highly relevant technical and role-based tags, both English and Hebrew if appropriate, derived from the query and the provided data.
   content: A comprehensive narrative combining the interview process and specific questions, similar in style to the provided examples.
-  forum_link: A placeholder link, e.g., "/generated/quiz/[GENERATED_ID]".
   job_role: Infer the most appropriate job role from the user query and real data.
   company_name_en, company_name_he: You can use a generic "Leading Tech Company" / "חברת טכנולוגיה מובילה" or "Startup in [relevant field]" / "סטארטאפ בתחום ה[רלוונטי]".
   process_details: A concise summary of a typical interview process for this role/company type, extracted or synthesized from the provided data.
@@ -510,10 +508,8 @@ Content Details:
 {
   "_id": "string",
   "title": "string",
-  "quiz_id": number,
   "tags": ["string", "string", ...],
   "content": "string",
-  "forum_link": "string",
   "job_role": "string",
   "company_name_en": "string",
   "company_name_he": "string",
