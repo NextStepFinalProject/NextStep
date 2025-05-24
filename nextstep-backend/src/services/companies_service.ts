@@ -529,3 +529,63 @@ Return ONLY the JSON, without any other text, so I could easily retrieve it.
 
   return parsed;
 }
+
+/**
+ * @param answeredQuiz The quiz answered by the user.
+ * @returns Graded quiz with tips.
+ */
+export const gradeQuiz = async (answeredQuiz: any): Promise<any> => {
+  const GRADE_QUIZ_SYSTEM_PROMPT = "You are an AI Interview Coach, an expert in real-world interviews, and skilled in providing constructive feedback and grading. Your task is to evaluate a user's answers to an interview quiz based on the original questions, your pre-generated ideal answers, and general professional knowledge. You should grade each answer from 0-100, considering that multiple correct or valid approaches may exist (or may not). Your feedback should be actionable and focused on improvement. Base yourself only on the user's answered quiz that will be given to you.";
+
+  const prompt = `
+**Original Quiz Data with User's Answers (JSON Object):**
+${JSON.stringify(answeredQuiz)}
+
+**Instructions:**
+  Base yourself on the the user_answer_list and question_list fields.
+  Also, base yourself on the answer_list and the interviewer_mindset fields.
+  Grade and tip to user's answers one by one, by the following rules:
+
+  Grade (0-100): Assign a numerical score from 0 to 100 to the user_answer_list based on:
+    Accuracy: Is the answer technically correct?
+    Completeness: Does it cover the key aspects of the question?
+    Clarity and Conciseness: Is it well-articulated and to the point?
+    Depth: Does it demonstrate a solid understanding beyond surface-level knowledge?
+    Professional Knowledge: Use your general professional knowledge to evaluate, not just keywords. Be open to multiple valid answers.
+    Context: Consider the complexity implied by the question and the job_role.
+  Generate "Tip": Provide a small, concise, and actionable tip for the user to improve that specific answer for future interviews. This tip should be professional and forward-looking. Consider:
+    Suggesting deeper dives into specific technologies or concepts (e.g., "Explore idempotent operations in distributed systems").
+    Improving explanation clarity or structure (e.g., "Next time, start with a clear definition before diving into examples").
+    Relating the answer to the interviewer_mindset (e.g., "Highlighting the trade-offs involved would demonstrate critical thinking and problem-solving skills, which are valued by interviewers.").
+    Suggesting a real-world example or scenario.
+
+Summarize Results:
+
+  final_quiz_grade: Calculate the average of all individual grade scores to get a final overall quiz grade (0-100).
+  final_summary_tip: Provide one overarching, professional tip for the user to improve their overall interview performance, drawing insights from their collective answers and directly referencing the interviewer_mindset field for behavioral/soft skill advice.
+
+**Desired Output Format (JSON)**:
+\`\`\`json
+{
+  "graded_answers": [
+    {
+      "question": "string",
+      "user_answer": "string",
+      "grade": "number (0-100)",
+      "tip": "string"
+    },
+    // ... one object for each question answered
+  ],
+  "final_quiz_grade": "number (0-100)",
+  "final_summary_tip": "string"
+}
+\`\`\`
+
+Return ONLY the JSON, without any other text, so I could easily retrieve it.
+`;
+
+  const aiResponse = await chatWithAI(GRADE_QUIZ_SYSTEM_PROMPT, [prompt]);
+  const parsed = JSON.parse(aiResponse.trim().replace("```json", "").replace("```", "")) as any;
+
+  return parsed;
+}
