@@ -16,25 +16,22 @@ import {
   Chip,
   Divider,
   Grid,
+  Avatar, // <--- Ensure Avatar is imported
 } from '@mui/material';
 import {
   Visibility,
   VisibilityOff,
   LightbulbOutlined as LightbulbOutlinedIcon,
-  WorkOutline as WorkOutlineIcon, // For Job Role
-  InfoOutlined as InfoOutlinedIcon, // For Content/Process Details
-  ForumOutlined as ForumOutlinedIcon, // For Interviewer Mindset
-  BusinessOutlined as BusinessOutlinedIcon, // For Company Name
-  LocalOfferOutlined as LocalOfferOutlinedIcon, // For Tags/Keywords
+  WorkOutline as WorkOutlineIcon,
+  InfoOutlined as InfoOutlinedIcon,
+  ForumOutlined as ForumOutlinedIcon,
+  BusinessOutlined as BusinessOutlinedIcon,
+  LocalOfferOutlined as LocalOfferOutlinedIcon,
 } from '@mui/icons-material';
 import api from '../serverApi'; // Assuming you have a configured axios instance
 import { config } from '../config';
 
 // Define interfaces for the API response schemas
-interface GeneratedQuestion {
-  question: string;
-}
-
 interface QuizGenerationResponse {
   _id: string;
   title: string;
@@ -42,7 +39,7 @@ interface QuizGenerationResponse {
   content: string;
   job_role: string;
   company_name_en: string;
-  company_name_he: string; // Not used in display, but included for completeness
+  company_name_he: string;
   process_details: string;
   question_list: string[];
   answer_list: string[];
@@ -61,7 +58,7 @@ interface UserAnsweredQuiz {
   process_details: string;
   question_list: string[];
   answer_list: string[];
-  user_answer_list: string[]; // New field for user answers
+  user_answer_list: string[];
   keywords: string[];
   interviewer_mindset: string;
 }
@@ -83,9 +80,9 @@ interface QuizGradingResponse {
 interface QuizStateQuestion {
   originalQuestion: string;
   userAnswer: string;
-  correctAnswer?: string; // Will be populated after grading
-  grade?: number; // Will be populated after grading
-  tip?: string; // Will be populated after grading
+  correctAnswer?: string;
+  grade?: number;
+  tip?: string;
 }
 
 interface QuizState {
@@ -110,27 +107,27 @@ const Quiz: React.FC = () => {
   const [subject, setSubject] = useState<string>('');
   const [quiz, setQuiz] = useState<QuizState | null>(null);
   const [loading, setLoading] = useState<boolean>(false);
-  const [showAnswer, setShowAnswer] = useState<{ [key: number]: boolean }>({}); // To toggle answer visibility
-  const [quizSubmitted, setQuizSubmitted] = useState<boolean>(false); // To control UI after submission
+  const [showAnswer, setShowAnswer] = useState<{ [key: number]: boolean }>({});
+  const [quizSubmitted, setQuizSubmitted] = useState<boolean>(false);
 
   const handleGenerateQuiz = async () => {
-    if (!subject.trim()) return; // Ensure subject is not empty or just whitespace
+    if (!subject.trim()) return;
     setLoading(true);
-    setQuiz(null); // Clear previous quiz
-    setQuizSubmitted(false); // Reset submission status
-    setShowAnswer({}); // Reset answer visibility
+    setQuiz(null);
+    setQuizSubmitted(false);
+    setShowAnswer({});
     try {
       const response = await api.post<QuizGenerationResponse>(`${config.app.backend_url()}/quiz/generate`, { subject });
 
       const generatedQuestions: QuizStateQuestion[] = response.data.question_list.map((q: string, idx: number) => ({
         originalQuestion: q,
-        userAnswer: '', // Initialize empty user answer
+        userAnswer: '',
         correctAnswer: response.data.answer_list[idx], // Populate correct answer immediately
       }));
 
       setQuiz({
         _id: response.data._id,
-        subject: subject, // Use the input subject for consistency
+        subject: subject,
         questions: generatedQuestions,
         title: response.data.title,
         tags: response.data.tags,
@@ -140,16 +137,8 @@ const Quiz: React.FC = () => {
         processDetails: response.data.process_details,
         keywords: response.data.keywords,
         interviewerMindset: response.data.interviewer_mindset,
-        answer_list: response.data.answer_list, // Store for later use if needed, but questions now have it
+        answer_list: response.data.answer_list,
       });
-
-      // Do NOT automatically show answers here. User should toggle.
-      // const initialShowAnswer: { [key: number]: boolean } = {};
-      // generatedQuestions.forEach((_, index) => {
-      //   initialShowAnswer[index] = true;
-      // });
-      // setShowAnswer(initialShowAnswer);
-
 
     } catch (error) {
       console.error('Error generating quiz:', error);
@@ -175,10 +164,9 @@ const Quiz: React.FC = () => {
   };
 
   const handleSubmitQuiz = async () => {
-    if (!quiz || quizSubmitted) return; // Prevent multiple submissions
+    if (!quiz || quizSubmitted) return;
     setLoading(true);
 
-    // Construct the request body as per the UserAnsweredQuiz schema
     const answeredQuizData: UserAnsweredQuiz = {
       _id: quiz._id,
       title: quiz.title || '',
@@ -186,10 +174,10 @@ const Quiz: React.FC = () => {
       content: quiz.content || '',
       job_role: quiz.jobRole || '',
       company_name_en: quiz.companyNameEn || '',
-      company_name_he: '', // Assuming this isn't strictly required for grading or can be empty
+      company_name_he: '',
       process_details: quiz.processDetails || '',
       question_list: quiz.questions.map(q => q.originalQuestion),
-      answer_list: quiz.answer_list || [], // Send the original correct answers if available
+      answer_list: quiz.answer_list || [],
       user_answer_list: quiz.questions.map(q => q.userAnswer),
       keywords: quiz.keywords || [],
       interviewer_mindset: quiz.interviewerMindset || '',
@@ -200,13 +188,12 @@ const Quiz: React.FC = () => {
 
       const gradedQuizData = response.data;
       const updatedQuestions = quiz.questions.map((q, index) => {
-        // Find the corresponding graded answer by matching the question string
         const gradedAnswer = gradedQuizData.graded_answers.find(ga => ga.question === q.originalQuestion);
         return {
           ...q,
           grade: gradedAnswer?.grade,
           tip: gradedAnswer?.tip,
-          // correctAnswer is already present from generation, no need to set again here
+          // correctAnswer is already present from generation
         };
       });
 
@@ -216,9 +203,9 @@ const Quiz: React.FC = () => {
         finalGrade: gradedQuizData.final_quiz_grade,
         finalTip: gradedQuizData.final_summary_tip,
       });
-      setQuizSubmitted(true); // Mark quiz as submitted
+      setQuizSubmitted(true);
 
-      // After submission, it's generally good UX to show all correct answers and grades
+      // After submission, automatically show all correct answers and grades
       const initialShowAnswer: { [key: number]: boolean } = {};
       updatedQuestions.forEach((_, index) => {
         initialShowAnswer[index] = true;
@@ -375,14 +362,30 @@ const Quiz: React.FC = () => {
           </Typography>
           {quiz.questions.map((q, index) => (
             <Paper key={index} sx={{ p: 2, mb: 3, border: '1px solid #e0e0e0' }}>
-              <Box display="flex" justifyContent="space-between" alignItems="center" mb={1}>
+              <Box display="flex" justifyContent="space-between" alignItems="flex-start" mb={1}>
+                {/* Circled Numbering (Option 2) */}
+                <Avatar
+                  sx={{
+                    bgcolor: 'primary.main',
+                    width: 32,
+                    height: 32,
+                    fontSize: '0.9rem',
+                    fontWeight: 'bold',
+                    mr: 1.5,
+                    boxShadow: 2,
+                    flexShrink: 0, // Prevent shrinking on small screens
+                  }}
+                >
+                  {index + 1}
+                </Avatar>
+                {/* Question Text */}
                 <Typography variant="h6" sx={{ flexGrow: 1 }}>
-                  Question {index + 1}: {q.originalQuestion}
+                  {q.originalQuestion}
                 </Typography>
-                {/* REMOVED: quizSubmitted condition here */}
-                {q.correctAnswer && ( // Only show if a correct answer exists
+                {/* Blinking Eye Icon (now always visible if answer exists) */}
+                {q.correctAnswer && (
                   <Tooltip title={showAnswer[index] ? 'Hide Answer' : 'Show Answer'} arrow>
-                    <IconButton onClick={() => handleToggleAnswerVisibility(index)} size="small">
+                    <IconButton onClick={() => handleToggleAnswerVisibility(index)} size="small" sx={{ flexShrink: 0, ml: 1 }}>
                       {showAnswer[index] ? <VisibilityOff /> : <Visibility />}
                     </IconButton>
                   </Tooltip>
@@ -397,7 +400,7 @@ const Quiz: React.FC = () => {
                 value={q.userAnswer}
                 onChange={e => handleUserAnswerChange(index, e.target.value)}
                 sx={{ mb: 2 }}
-                disabled={quizSubmitted} // Disable input after submission
+                disabled={quizSubmitted}
               />
 
               {/* Grade and Tip are still shown only after submission */}
@@ -414,7 +417,7 @@ const Quiz: React.FC = () => {
                       min={0}
                       max={100}
                       sx={{ width: '90%', mx: 'auto' }}
-                      disabled // Make it non-interactive
+                      disabled
                     />
                   </Box>
                   <Box sx={{ mt: 2 }}>
