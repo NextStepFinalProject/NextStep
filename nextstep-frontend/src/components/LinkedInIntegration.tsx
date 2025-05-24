@@ -6,7 +6,7 @@ interface Job {
   position: string;
   company: string;
   location: string;
-  jobUrl: string;
+  jobUrl?: string;
   companyLogo?: string;
   date?: string; 
   salary?: string;

@@ -67,7 +67,7 @@ const MainDashboard: React.FC = () => {
   const shouldShowToggle = skills.length > SKILL_DISPLAY_LIMIT;
 
   // LinkedIn jobs state
-  const [jobs, setJobs] = useState<{ position: string; company: string; location: string; url: string, companyLogo?: string }[]>([]);
+  const [jobs, setJobs] = useState<{ position: string; company: string; location: string; url: string, companyLogo?: string, jobUrl?: string }[]>([]);
   const [loadingJobs, setLoadingJobs] = useState(false); // New state for loading jobs
 
   // Job Recommendations toggle
