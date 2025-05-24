@@ -9,21 +9,21 @@
             "name": "Backend: Run Script: dev",
             "request": "launch",
             "command": "npm run dev",
-            "cwd": "${workspaceFolder}\\nextstep-backend"
+            "cwd": "${workspaceFolder}/nextstep-backend"
         },
         {
             "type": "node-terminal",
             "name": "Backend: Run Script: test",
             "request": "launch",
             "command": "npm run test",
-            "cwd": "${workspaceFolder}\\nextstep-backend"
+            "cwd": "${workspaceFolder}/nextstep-backend"
         },
         {
             "type": "node-terminal",
             "name": "Frontend: Run Script: dev",
             "request": "launch",
             "command": "npm run dev",
-            "cwd": "${workspaceFolder}\\nextstep-frontend"
+            "cwd": "${workspaceFolder}/nextstep-frontend"
         }
     ]
 }

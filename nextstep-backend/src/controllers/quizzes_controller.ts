@@ -14,4 +14,20 @@ const getQuizzesByTags = async (req: Request, res: Response): Promise<void> => {
     }
 };
 
-export default { getQuizzesByTags };
+const getGeneratedQuizBySubject = async (req: Request, res: Response): Promise<void> => {
+    try {
+        const { subject } = req.body;
+
+        if (!subject) {
+            res.status(400).json({ error: 'Missing required fields' });
+            return;
+        }
+
+        const generatedQuiz = await companiesService.generateQuiz(subject);
+        res.json(generatedQuiz);
+    } catch (err) {
+        handleError(err, res);
+    }
+};
+
+export default { getQuizzesByTags, getGeneratedQuizBySubject };

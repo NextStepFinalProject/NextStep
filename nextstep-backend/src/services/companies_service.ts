@@ -5,6 +5,7 @@ import { CompanyModel } from '../models/company_model';
 import { CompanyData, ICompany, QuizData } from 'types/company_types';
 import { Document, PipelineStage } from 'mongoose';
 import path from 'path';
+import { chatWithAI } from './chat_api_service';
 
 // Predefined tags to match against quizzes
 const PREDEFINED_TAGS = [
@@ -304,16 +305,15 @@ export const initCompanies = async (): Promise<number> => {
   return allCompanies.length;
 };
 
-
 /**
  * Search for quizzes that best match the given tags using MongoDB aggregation
  * and $text search for content fields.
  * Returns quizzes sorted by relevance (text score + tag matches).
  */
 export const searchQuizzesByTags = async (tags: string[]): Promise<QuizData[]> => {
-  if (!tags || tags.length === 0) {
-    return []; // No tags provided, return empty results
-  }
+  // if (!tags || tags.length === 0) {
+  //   return []; // No tags provided, return empty results
+  // }
 
   // For $text search, tags are space-separated words or phrases.
   // We'll also use them for array matching.
@@ -463,3 +463,69 @@ export const searchQuizzesByTags = async (tags: string[]): Promise<QuizData[]> =
     return [];
   }
 };
+
+/**
+ * Generate a custom-tailored quiz on any subject, based on our real quiz database.
+ * @param quizSubject The subject you want to generate a quiz for.
+ *                    Example: "Java Spring Boot Microservices Interview Questions" or "QA Automation Python"
+ */
+export const generateQuiz = async (quizSubject: string): Promise<any> => {
+  // Take the first 10 best matching quizzes.
+  const tags = quizSubject.split(' ');
+  const quizzes = (await searchQuizzesByTags(tags)).slice(0, 10);
+
+  const GEN_QUIZ_SYSTEM_PROMPT = "You are an AI assistant specialized in generating personalized interview quiz content based on real-world interview data. Your goal is to create a new, well-structured interview quiz tailored to a user's specific search query, drawing insights and patterns from a provided set of actual interview quizzes.";
+
+  const prompt = `
+**User Search Query:**
+${quizSubject}
+
+**Relevant Real Quiz Data (JSON Array):**
+\`\`\`json
+${quizzes}
+\`\`\`
+
+**Instructions:**
+Analyze: Review the User Search Query and the provided Relevant Real Quiz Data.
+Synthesize: Combine common themes, technologies, question types, process details, and implied soft skill requirements found across the relevant real quizzes, prioritizing relevance to the user's query.
+Generate One Quiz: Create one (1) brand new, highly relevant, and unique interview quiz specifically tailored to the User Search Query. Do NOT simply copy-paste existing quizzes.
+Structure: Format the output as a single JSON object adhering strictly to the QuizData interface below.
+Content Details:
+  _id: Generate a unique string, e.g., "generated_[TIMESTAMP]".
+  title: A concise and relevant title for the generated quiz.
+  tags: Include highly relevant technical and role-based tags, both English and Hebrew if appropriate, derived from the query and the provided data.
+  content: A comprehensive narrative combining the interview process and specific questions, similar in style to the provided examples.
+  job_role: Infer the most appropriate job role from the user query and real data.
+  company_name_en, company_name_he: You can use a generic "Leading Tech Company" / "חברת טכנולוגיה מובילה" or "Startup in [relevant field]" / "סטארטאפ בתחום ה[רלוונטי]".
+  process_details: A concise summary of a typical interview process for this role/company type, extracted or synthesized from the provided data.
+  question_list: Crucially, all generated specific interview questions. An array of individual questions. Each element should be a distinct question.
+  answer_list: Crucially, parse the question_list string into an array of individual answers. Each element should be a distinct answer, corresponding to the questions.
+  keywords: Extract 5-10 additional relevant technical or conceptual keywords that the user might find useful for preparation.
+  interviewer_mindset: Describe the soft skills, characteristics, temperament, and professional attributes that an interviewer for this specific job role (based on the user's query and the context from real quizzes) would likely be looking for. Focus on traits that would give the applicant "extra points," such as straightforwardness, curiosity, social skills, professionalism, collaboration, communication (with colleagues, 3rd parties, customers), problem-solving approach, adaptability, initiative, attention to detail, etc. Aim for a paragraph or two.
+
+**Desired Output Format (JSON)**:
+\`\`\`json
+{
+  "_id": "string",
+  "title": "string",
+  "tags": ["string", "string", ...],
+  "content": "string",
+  "job_role": "string",
+  "company_name_en": "string",
+  "company_name_he": "string",
+  "process_details": "string",
+  "question_list": ["string", "string", ...],
+  "answer_list": ["string", "string", ...],
+  "keywords": ["string", "string", ...],
+  "interviewer_mindset": "string"
+}
+\`\`\`
+
+Return ONLY the JSON, without any other text, so I could easily retrieve it.
+`;
+
+  const aiResponse = await chatWithAI(GEN_QUIZ_SYSTEM_PROMPT, [prompt]);
+  const parsed = JSON.parse(aiResponse.trim().replace("```json", "").replace("```", "")) as any;
+
+  return parsed;
+}
