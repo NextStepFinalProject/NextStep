@@ -7,4 +7,6 @@ router.get('/raw', Quiz.getQuizzesByTags);
 
 router.post('/generate', Quiz.getGeneratedQuizBySubject);
 
+router.post('/grade', Quiz.getGradedQuizByAnsweredQuiz);
+
 export default router;
