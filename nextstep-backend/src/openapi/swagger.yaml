@@ -19,8 +19,6 @@ tags:
     description: Operations related to chat rooms
   - name: Resume
     description: Operations related to resume ATS scoring
-  - name: LinkedIn
-    description: Operations related to LinkedIn jobs
 
 paths:
   /post:
@@ -1115,102 +1113,6 @@ paths:
                     example: []
         '400':
           description: Bad Request
-
-  /linkedin/jobs:
-    get:
-      tags:
-        - LinkedIn
-      summary: Retrieve jobs from LinkedIn based on skills and role
-      parameters:
-        - name: skills
-          in: query
-          required: true
-          schema:
-            type: string
-          description: Comma-separated list of skills
-        - name: role
-          in: query
-          required: true
-          schema:
-            type: string
-          description: Desired role
-      responses:
-        '200':
-          description: List of jobs retrieved successfully
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  type: object
-                  properties:
-                    title:
-                      type: string
-                      description: Job title
-                    company:
-                      type: string
-                      description: Company name
-                    location:
-                      type: string
-                      description: Job location
-                    url:
-                      type: string
-                      description: Job posting URL
-        '400':
-          description: Bad request - Missing skills or role
-        '500':
-          description: Internal server error
-
-  /google-jobs/jobs:
-    get:
-      tags:
-        - Google Jobs
-      summary: Retrieve jobs from Google Jobs based on skills and role
-      parameters:
-        - name: skills
-          in: query
-          required: true
-          schema:
-            type: string
-          description: Comma-separated list of skills
-        - name: role
-          in: query
-          required: true
-          schema:
-            type: string
-          description: Desired role
-        - name: location
-          in: query
-          required: false
-          schema:
-            type: string
-          description: Job location (default: remote)
-      responses:
-        '200':
-          description: List of jobs retrieved successfully
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  type: object
-                  properties:
-                    title:
-                      type: string
-                      description: Job title
-                    company:
-                      type: string
-                      description: Company name
-                    location:
-                      type: string
-                      description: Job location
-                    url:
-                      type: string
-                      description: Job posting URL
-        '400':
-          description: Bad request - Missing skills or role
-        '500':
-          description: Internal server error
 
 components:
   schemas:
