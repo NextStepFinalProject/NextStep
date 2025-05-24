@@ -498,8 +498,7 @@ Content Details:
   job_role: Infer the most appropriate job role from the user query and real data.
   company_name_en, company_name_he: You can use a generic "Leading Tech Company" / "חברת טכנולוגיה מובילה" or "Startup in [relevant field]" / "סטארטאפ בתחום ה[רלוונטי]".
   process_details: A concise summary of a typical interview process for this role/company type, extracted or synthesized from the provided data.
-  interview_questions: A combined string of all generated specific interview questions.
-  question_list: Crucially, parse the interview_questions string into an array of individual questions. Each element should be a distinct question.
+  question_list: Crucially, all generated specific interview questions. An array of individual questions. Each element should be a distinct question.
   answer_list: Crucially, parse the question_list string into an array of individual answers. Each element should be a distinct answer, corresponding to the questions.
   keywords: Extract 5-10 additional relevant technical or conceptual keywords that the user might find useful for preparation.
   interviewer_mindset: Describe the soft skills, characteristics, temperament, and professional attributes that an interviewer for this specific job role (based on the user's query and the context from real quizzes) would likely be looking for. Focus on traits that would give the applicant "extra points," such as straightforwardness, curiosity, social skills, professionalism, collaboration, communication (with colleagues, 3rd parties, customers), problem-solving approach, adaptability, initiative, attention to detail, etc. Aim for a paragraph or two.
@@ -515,7 +514,6 @@ Content Details:
   "company_name_en": "string",
   "company_name_he": "string",
   "process_details": "string",
-  "interview_questions": "string",
   "question_list": ["string", "string", ...],
   "answer_list": ["string", "string", ...],
   "keywords": ["string", "string", ...],
