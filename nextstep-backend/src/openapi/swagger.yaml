@@ -1146,20 +1146,25 @@ paths:
           description: Internal server error
 
   /quiz/generate:
-    get:
+    post:
       tags:
         - Quizzes
       summary: Generate a quiz for a certain subject.
       description: Generate a quiz for a certain subject. The quiz is generated based on our real-world quizzes database.
       security:
         - BearerAuth: []
-      parameters:
-        - name: subject
-          in: path
-          required: true
-          schema:
-            type: string
-          description: The subject of the quiz to be generated
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - subject
+              properties:
+                subject:
+                  type: string
+                  description: The subject of the quiz to be generated
       responses:
         '200':
           description: A generated quiz custom-tailored for the targeted subject.
@@ -1167,6 +1172,16 @@ paths:
             application/json:
               schema:
                 type: object # TODO:
+        '400':
+          description: Bad request - Missing required fields
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    description: Error message indicating missing fields
         '401':
           description: Unauthorized
         '500':

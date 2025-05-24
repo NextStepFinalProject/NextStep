@@ -16,7 +16,14 @@ const getQuizzesByTags = async (req: Request, res: Response): Promise<void> => {
 
 const getGeneratedQuizBySubject = async (req: Request, res: Response): Promise<void> => {
     try {
-        const generatedQuiz = await companiesService.generateQuiz(req.params.subject);        
+        const { subject } = req.body;
+
+        if (!subject) {
+            res.status(400).json({ error: 'Missing required fields' });
+            return;
+        }
+
+        const generatedQuiz = await companiesService.generateQuiz(subject);
         res.json(generatedQuiz);
     } catch (err) {
         handleError(err, res);

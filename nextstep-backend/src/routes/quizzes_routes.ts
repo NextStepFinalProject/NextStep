@@ -5,6 +5,6 @@ const router = express.Router();
 
 router.get('/raw', Quiz.getQuizzesByTags);
 
-router.get('/generate/:subject', Quiz.getGeneratedQuizBySubject);
+router.post('/generate', Quiz.getGeneratedQuizBySubject);
 
 export default router;
