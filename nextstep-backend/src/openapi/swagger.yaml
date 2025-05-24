@@ -19,6 +19,8 @@ tags:
     description: Operations related to chat rooms
   - name: Resume
     description: Operations related to resume ATS scoring
+  - name: LinkedIn Jobs
+    description: Operations related to LinkedIn job postings
 
 paths:
   /post:
@@ -1113,6 +1115,135 @@ paths:
                     example: []
         '400':
           description: Bad Request
+
+  /linkedin-jobs/jobs:
+    get:
+      tags:
+        - LinkedIn Jobs
+      summary: Retrieve jobs from LinkedIn based on skills and role
+      parameters:
+        - name: skills
+          in: query
+          required: true
+          schema:
+            type: string
+          description: Comma-separated list of skills (maximum 3)
+        - name: role
+          in: query
+          required: true
+          schema:
+            type: string
+          description: Desired role
+        - name: location
+          in: query
+          required: false
+          schema:
+            type: string
+          description: Job location
+        - name: dateSincePosted
+          in: query
+          required: false
+          schema:
+            type: string
+          description: Date range for job postings (e.g., "past day", "past week", "past month")
+        - name: jobType
+          in: query
+          required: false
+          schema:
+            type: string
+          description: Type of job (e.g., "full time", "part time", "contract")
+        - name: experienceLevel
+          in: query
+          required: false
+          schema:
+            type: string
+          description: Experience level (e.g., "entry level", "mid level", "senior level", "all")
+      responses:
+        '200':
+          description: List of jobs retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    position:
+                      type: string
+                      description: Job position
+                    company:
+                      type: string
+                      description: Company name
+                    location:
+                      type: string
+                      description: Job location
+                    jobUrl:
+                      type: string
+                      description: Job posting URL
+                    companyLogo:
+                      type: string
+                      description: URL of the company logo
+                    date:
+                      type: string
+                      description: Date the job was posted
+                    salary:
+                      type: string
+                      description: Salary information
+        '400':
+          description: Bad request - Missing skills or role
+        '500':
+          description: Internal server error
+
+  /linkedin-jobs/jobs/{id}:
+    get:
+      tags:
+        - LinkedIn Jobs
+      summary: Retrieve details of a specific job by ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Job ID
+      responses:
+        '200':
+          description: Job details retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  position:
+                    type: string
+                    description: Job position
+                  company:
+                    type: string
+                    description: Company name
+                  location:
+                    type: string
+                    description: Job location
+                  description:
+                    type: string
+                    description: Detailed job description
+                  jobUrl:
+                    type: string
+                    description: Job posting URL
+                  companyLogo:
+                    type: string
+                    description: URL of the company logo
+                  date:
+                    type: string
+                    description: Date the job was posted
+                  salary:
+                    type: string
+                    description: Salary information
+        '400':
+          description: Bad request - Missing job ID
+        '404':
+          description: Job not found
+        '500':
+          description: Internal server error
 
 components:
   schemas:
