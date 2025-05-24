@@ -71,7 +71,7 @@ const MainDashboard: React.FC = () => {
   const [loadingJobs, setLoadingJobs] = useState(false); // New state for loading jobs
 
   // Job Recommendations toggle
-  const [showJobRecommendations, setShowJobRecommendations] = useState(true); // New state for toggle
+  const [showJobRecommendations, setShowJobRecommendations] = useState(false); // New state for toggle
 
   const toggleJobRecommendations = () => {
     setShowJobRecommendations(!showJobRecommendations);
