@@ -39,7 +39,7 @@ const LinkedInIntegration: React.FC<LinkedInIntegrationProps> = ({
 }) => {
   const [settings, setSettings] = useState<LinkedInSettings>({
     location: 'Israel',
-    dateSincePosted: 'past week',
+    dateSincePosted: 'past month',
     jobType: 'full time',
     experienceLevel: 'all',
     skills: skills.slice(0, 3), // Limit to first 3 skills
