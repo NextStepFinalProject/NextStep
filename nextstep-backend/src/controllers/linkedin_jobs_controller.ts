@@ -7,6 +7,9 @@ export const getJobsBySkillsAndRole = async (req: Request, res: Response) => {
         const skillsParam = String(req.query.skills || '').trim();
         const role = String(req.query.role || '').trim();
         const location = String(req.query.location || 'Israel').trim();
+        const dateSincePosted = String(req.query.dateSincePosted || 'past week').trim();
+        const jobType = String(req.query.jobType || 'full time').trim();
+        const experienceLevel = String(req.query.experienceLevel || 'entry level').trim();
 
         if (!skillsParam || !role) {
             return res.status(400).json({ error: 'Skills and role are required' });
@@ -19,14 +22,14 @@ export const getJobsBySkillsAndRole = async (req: Request, res: Response) => {
             .filter(Boolean);
 
         // Construct keyword by combining role and skills
-        const keyword = `${role} backend developer`.trim();
+        const keyword = `${role} ${skillsArray.join(' ')}`.trim();
 
         const queryOptions = {
             keyword,
             location,
-            dateSincePosted: 'past week',
-            jobType: 'full time',
-            experienceLevel: 'entry level',
+            dateSincePosted,
+            jobType,
+            experienceLevel,
             limit: '10',
             page: '0',
         };

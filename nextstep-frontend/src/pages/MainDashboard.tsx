@@ -163,14 +163,17 @@ const MainDashboard: React.FC = () => {
   };
 
   // Fetch Linkedin Jobs
-  const fetchJobs = async () => {
+  const fetchJobs = async (settings: { location: string; dateSincePosted: string; jobType: string; experienceLevel: string; skills?: string[] }) => {
     setLoadingJobs(true);
     try {
       const response = await api.get('/linkedin-jobs/jobs', {
         params: {
-          skills: skills.join(','),
+          skills: (settings.skills || skills.slice(0, 3)).join(','), // Use updated skills or default to first three
           role: selectedRole,
-          location: 'Israel', // Optional: Add location if needed
+          location: settings.location,
+          dateSincePosted: settings.dateSincePosted,
+          jobType: settings.jobType,
+          experienceLevel: settings.experienceLevel,
         },
       });
       setJobs(response.data);
