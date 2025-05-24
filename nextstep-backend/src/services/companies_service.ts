@@ -487,7 +487,7 @@ ${quizzes}
 
 **Instructions:**
 Analyze: Review the User Search Query and the provided Relevant Real Quiz Data.
-Synthesize: Combine common themes, technologies, question types, and process details found across the relevant real quizzes, prioritizing relevance to the user's query.
+Synthesize: Combine common themes, technologies, question types, process details, and implied soft skill requirements found across the relevant real quizzes, prioritizing relevance to the user's query.
 Generate One Quiz: Create one (1) brand new, highly relevant, and unique interview quiz specifically tailored to the User Search Query. Do NOT simply copy-paste existing quizzes.
 Structure: Format the output as a single JSON object adhering strictly to the QuizData interface below.
 Content Details:
@@ -502,6 +502,7 @@ Content Details:
   question_list: Crucially, parse the interview_questions string into an array of individual questions. Each element should be a distinct question.
   answer_list: Crucially, parse the question_list string into an array of individual answers. Each element should be a distinct answer, corresponding to the questions.
   keywords: Extract 5-10 additional relevant technical or conceptual keywords that the user might find useful for preparation.
+  interviewer_mindset: Describe the soft skills, characteristics, temperament, and professional attributes that an interviewer for this specific job role (based on the user's query and the context from real quizzes) would likely be looking for. Focus on traits that would give the applicant "extra points," such as straightforwardness, curiosity, social skills, professionalism, collaboration, communication (with colleagues, 3rd parties, customers), problem-solving approach, adaptability, initiative, attention to detail, etc. Aim for a paragraph or two.
 
 **Desired Output Format (JSON)**:
 \`\`\`json
@@ -517,7 +518,8 @@ Content Details:
   "interview_questions": "string",
   "question_list": ["string", "string", ...],
   "answer_list": ["string", "string", ...],
-  "keywords": ["string", "string", ...]
+  "keywords": ["string", "string", ...],
+  "interviewer_mindset": "string"
 }
 \`\`\`
 
