@@ -28,6 +28,7 @@ import {
   LocalOfferOutlined as LocalOfferOutlinedIcon, // For Tags/Keywords
 } from '@mui/icons-material';
 import api from '../serverApi'; // Assuming you have a configured axios instance
+import { config } from '../config';
 
 // Define interfaces for the API response schemas
 interface GeneratedQuestion {
@@ -119,7 +120,7 @@ const Quiz: React.FC = () => {
     setQuizSubmitted(false); // Reset submission status
     setShowAnswer({}); // Reset answer visibility
     try {
-      const response = await api.post<QuizGenerationResponse>('http://localhost:3000/quiz/generate', { subject });
+      const response = await api.post<QuizGenerationResponse>(`${config.app.backend_url()}/quiz/generate`, { subject });
 
       const generatedQuestions: QuizStateQuestion[] = response.data.question_list.map((q: string, idx: number) => ({
         originalQuestion: q,
@@ -195,7 +196,7 @@ const Quiz: React.FC = () => {
     };
 
     try {
-      const response = await api.post<QuizGradingResponse>('http://localhost:3000/quiz/grade', answeredQuizData);
+      const response = await api.post<QuizGradingResponse>(`${config.app.backend_url()}/quiz/grade`, answeredQuizData);
 
       const gradedQuizData = response.data;
       const updatedQuestions = quiz.questions.map((q, index) => {
