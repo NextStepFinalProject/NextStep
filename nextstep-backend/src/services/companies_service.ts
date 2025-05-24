@@ -502,6 +502,7 @@ Content Details:
   process_details: A concise summary of a typical interview process for this role/company type, extracted or synthesized from the provided data.
   interview_questions: A combined string of all generated specific interview questions.
   question_list: Crucially, parse the interview_questions string into an array of individual questions. Each element should be a distinct question.
+  answer_list: Crucially, parse the question_list string into an array of individual answers. Each element should be a distinct answer, corresponding to the questions.
   keywords: Extract 5-10 additional relevant technical or conceptual keywords that the user might find useful for preparation.
 
 **Desired Output Format (JSON)**:
@@ -519,6 +520,7 @@ Content Details:
   "process_details": "string",
   "interview_questions": "string",
   "question_list": ["string", "string", ...],
+  "answer_list": ["string", "string", ...],
   "keywords": ["string", "string", ...]
 }
 \`\`\`
