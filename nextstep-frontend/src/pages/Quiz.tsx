@@ -187,7 +187,7 @@ const Quiz: React.FC = () => {
       const response = await api.post<QuizGradingResponse>(`${config.app.backend_url()}/quiz/grade`, answeredQuizData);
 
       const gradedQuizData = response.data;
-      const updatedQuestions = quiz.questions.map((q, index) => {
+      const updatedQuestions = quiz.questions.map((q, _) => {
         const gradedAnswer = gradedQuizData.graded_answers.find(ga => ga.question === q.originalQuestion);
         return {
           ...q,
