@@ -1,3 +1,5 @@
+// src/pages/Quiz.tsx
+
 import React, { useState } from 'react';
 import {
   Container,
@@ -11,12 +13,19 @@ import {
   Paper,
   Slider,
   Stack,
+  Chip,
   Divider,
+  Grid,
 } from '@mui/material';
 import {
   Visibility,
   VisibilityOff,
   LightbulbOutlined as LightbulbOutlinedIcon,
+  WorkOutline as WorkOutlineIcon, // For Job Role
+  InfoOutlined as InfoOutlinedIcon, // For Content/Process Details
+  ForumOutlined as ForumOutlinedIcon, // For Interviewer Mindset
+  BusinessOutlined as BusinessOutlinedIcon, // For Company Name
+  LocalOfferOutlined as LocalOfferOutlinedIcon, // For Tags/Keywords
 } from '@mui/icons-material';
 import api from '../serverApi'; // Assuming you have a configured axios instance
 
@@ -32,7 +41,7 @@ interface QuizGenerationResponse {
   content: string;
   job_role: string;
   company_name_en: string;
-  company_name_he: string;
+  company_name_he: string; // Not used in display, but included for completeness
   process_details: string;
   question_list: string[];
   answer_list: string[];
@@ -84,11 +93,16 @@ interface QuizState {
   questions: QuizStateQuestion[];
   finalGrade?: number;
   finalTip?: string;
-  // Potentially store other fields from the initial generation response if needed for display
+  // --- Additional fields from QuizGenerationResponse for display ---
   title?: string;
   tags?: string[];
   content?: string;
   jobRole?: string;
+  companyNameEn?: string;
+  processDetails?: string;
+  keywords?: string[];
+  interviewerMindset?: string;
+  answer_list?: string[]; // Store the original answer list for display after grading
 }
 
 const Quiz: React.FC = () => {
@@ -99,7 +113,7 @@ const Quiz: React.FC = () => {
   const [quizSubmitted, setQuizSubmitted] = useState<boolean>(false); // To control UI after submission
 
   const handleGenerateQuiz = async () => {
-    if (!subject) return;
+    if (!subject.trim()) return; // Ensure subject is not empty or just whitespace
     setLoading(true);
     setQuiz(null); // Clear previous quiz
     setQuizSubmitted(false); // Reset submission status
@@ -120,7 +134,11 @@ const Quiz: React.FC = () => {
         tags: response.data.tags,
         content: response.data.content,
         jobRole: response.data.job_role,
-        // ... include other fields from response.data if you want to display them
+        companyNameEn: response.data.company_name_en,
+        processDetails: response.data.process_details,
+        keywords: response.data.keywords,
+        interviewerMindset: response.data.interviewer_mindset,
+        answer_list: response.data.answer_list, // Store for later use as correct answers
       });
     } catch (error) {
       console.error('Error generating quiz:', error);
@@ -149,24 +167,24 @@ const Quiz: React.FC = () => {
     if (!quiz || quizSubmitted) return; // Prevent multiple submissions
     setLoading(true);
 
+    // Construct the request body as per the UserAnsweredQuiz schema
     const answeredQuizData: UserAnsweredQuiz = {
       _id: quiz._id,
       title: quiz.title || '',
       tags: quiz.tags || [],
       content: quiz.content || '',
       job_role: quiz.jobRole || '',
-      company_name_en: '', // These are not directly from the quiz state, you might need to fetch/store them
-      company_name_he: '', // Or adjust your backend to not require them for grading
-      process_details: '', // Or adjust your backend to not require them for grading
+      company_name_en: quiz.companyNameEn || '',
+      company_name_he: '', // Assuming this isn't strictly required for grading or can be empty
+      process_details: quiz.processDetails || '',
       question_list: quiz.questions.map(q => q.originalQuestion),
-      answer_list: quiz.questions.map(q => q.correctAnswer || ''), // Send known correct answers if available, otherwise empty
+      answer_list: quiz.answer_list || [], // Send the original correct answers if available
       user_answer_list: quiz.questions.map(q => q.userAnswer),
-      keywords: [], // These are not directly from the quiz state, you might need to fetch/store them
-      interviewer_mindset: '', // These are not directly from the quiz state, you might need to fetch/store them
+      keywords: quiz.keywords || [],
+      interviewer_mindset: quiz.interviewerMindset || '',
     };
 
     try {
-      // Send the entire schema with user_answer_list
       const response = await api.post<QuizGradingResponse>('http://localhost:3000/quiz/grade', answeredQuizData);
 
       const gradedQuizData = response.data;
@@ -176,10 +194,7 @@ const Quiz: React.FC = () => {
           ...q,
           grade: gradedAnswer?.grade,
           tip: gradedAnswer?.tip,
-          // The correct answer from the initial generation might not be sent back
-          // with 'graded_answers'. If your backend sends it, update this line.
-          // For now, we'll assume the original 'answer_list' from generation is the correct answer
-          correctAnswer: quiz.answer_list?.[index], // Assuming answer_list was stored from generation
+          correctAnswer: quiz.answer_list?.[index], // Use the stored answer_list from generation
         };
       });
 
@@ -230,7 +245,7 @@ const Quiz: React.FC = () => {
           <Button
             variant="contained"
             onClick={handleGenerateQuiz}
-            disabled={loading || !subject.trim()} // Disable if subject is empty or only whitespace
+            disabled={loading || !subject.trim()}
             fullWidth
           >
             {loading ? <CircularProgress size={24} /> : 'Generate Quiz'}
@@ -244,11 +259,104 @@ const Quiz: React.FC = () => {
           <Typography variant="h5" gutterBottom align="center" sx={{ mb: 3 }}>
             Quiz on: {quiz.subject}
           </Typography>
-          {quiz.title && (
-            <Typography variant="subtitle1" align="center" color="text.secondary" sx={{ mb: 2 }}>
-              Topic: {quiz.title}
-            </Typography>
-          )}
+
+          {/* --- Enhanced Display of Quiz Metadata --- */}
+          <Paper elevation={2} sx={{ p: 3, mb: 4, bgcolor: '#f5f5f5', borderRadius: 2 }}>
+            <Grid container spacing={2}>
+              {quiz.title && (
+                <Grid item xs={12}>
+                  <Typography variant="h6" color="primary" sx={{ mb: 1 }}>
+                    <InfoOutlinedIcon sx={{ verticalAlign: 'middle', mr: 1 }} />
+                    Quiz Title: {quiz.title}
+                  </Typography>
+                </Grid>
+              )}
+
+              {quiz.jobRole && (
+                <Grid item xs={12} sm={6}>
+                  <Typography variant="body1" color="text.secondary">
+                    <WorkOutlineIcon sx={{ verticalAlign: 'middle', mr: 0.5 }} />
+                    Job Role: <strong>{quiz.jobRole}</strong>
+                  </Typography>
+                </Grid>
+              )}
+
+              {quiz.companyNameEn && (
+                <Grid item xs={12} sm={6}>
+                  <Typography variant="body1" color="text.secondary">
+                    <BusinessOutlinedIcon sx={{ verticalAlign: 'middle', mr: 0.5 }} />
+                    Company: <strong>{quiz.companyNameEn}</strong>
+                  </Typography>
+                </Grid>
+              )}
+
+              {quiz.tags && quiz.tags.length > 0 && (
+                <Grid item xs={12}>
+                  <Typography variant="body2" sx={{ mb: 1 }}>
+                    <LocalOfferOutlinedIcon sx={{ verticalAlign: 'middle', mr: 0.5 }} />
+                    Tags:
+                  </Typography>
+                  <Stack direction="row" flexWrap="wrap" spacing={1}>
+                    {quiz.tags.map((tag, i) => (
+                      <Chip key={i} label={tag} size="small" variant="outlined" color="primary" />
+                    ))}
+                  </Stack>
+                </Grid>
+              )}
+
+              {quiz.keywords && quiz.keywords.length > 0 && (
+                <Grid item xs={12}>
+                  <Typography variant="body2" sx={{ mb: 1 }}>
+                    <LocalOfferOutlinedIcon sx={{ verticalAlign: 'middle', mr: 0.5 }} />
+                    Keywords:
+                  </Typography>
+                  <Stack direction="row" flexWrap="wrap" spacing={1}>
+                    {quiz.keywords.map((keyword, i) => (
+                      <Chip key={i} label={keyword} size="small" variant="outlined" color="secondary" />
+                    ))}
+                  </Stack>
+                </Grid>
+              )}
+
+              {quiz.processDetails && (
+                <Grid item xs={12}>
+                  <Typography variant="body1" sx={{ mt: 1 }}>
+                    <InfoOutlinedIcon sx={{ verticalAlign: 'middle', mr: 0.5 }} />
+                    Process Details:
+                  </Typography>
+                  <Typography variant="body2" color="text.secondary" sx={{ ml: 3 }}>
+                    {quiz.processDetails}
+                  </Typography>
+                </Grid>
+              )}
+
+              {quiz.content && (
+                <Grid item xs={12}>
+                  <Typography variant="body1" sx={{ mt: 1 }}>
+                    <InfoOutlinedIcon sx={{ verticalAlign: 'middle', mr: 0.5 }} />
+                    Context/Content:
+                  </Typography>
+                  <Typography variant="body2" color="text.secondary" sx={{ ml: 3 }}>
+                    {quiz.content}
+                  </Typography>
+                </Grid>
+              )}
+
+              {quiz.interviewerMindset && (
+                <Grid item xs={12}>
+                  <Typography variant="body1" sx={{ mt: 1 }}>
+                    <ForumOutlinedIcon sx={{ verticalAlign: 'middle', mr: 0.5 }} />
+                    Interviewer Mindset:
+                  </Typography>
+                  <Typography variant="body2" color="text.secondary" sx={{ fontStyle: 'italic', ml: 3 }}>
+                    "{quiz.interviewerMindset}"
+                  </Typography>
+                </Grid>
+              )}
+            </Grid>
+          </Paper>
+          <Divider sx={{ my: 4 }} />
+          {/* --- End Enhanced Display of Quiz Metadata --- */}
 
           <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
             Your answers may get better grades for broad, in-depth explanations. You can answer in any language you want!
@@ -285,7 +393,6 @@ const Quiz: React.FC = () => {
                     <Typography variant="subtitle2" sx={{ mb: 0.5 }}>
                       Your Grade:
                     </Typography>
-                    {/* Optional: Gauge for grade */}
                     <Slider
                       value={q.grade || 0}
                       aria-label="Question grade"
@@ -323,7 +430,6 @@ const Quiz: React.FC = () => {
               variant="contained"
               color="primary"
               onClick={handleSubmitQuiz}
-              // Disable if no answers are provided (or only whitespace)
               disabled={loading || !quiz.questions.some(q => q.userAnswer.trim() !== '')}
               fullWidth
               sx={{ mt: 3 }}
@@ -337,7 +443,6 @@ const Quiz: React.FC = () => {
               <Typography variant="h5" gutterBottom>
                 Final Quiz Grade:
               </Typography>
-              {/* Optional: Gauge for final grade */}
               <Slider
                 value={quiz.finalGrade || 0}
                 aria-label="Final quiz grade"
