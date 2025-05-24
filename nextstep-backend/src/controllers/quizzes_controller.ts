@@ -14,4 +14,13 @@ const getQuizzesByTags = async (req: Request, res: Response): Promise<void> => {
     }
 };
 
-export default { getQuizzesByTags };
+const getGeneratedQuizBySubject = async (req: Request, res: Response): Promise<void> => {
+    try {
+        const generatedQuiz = await companiesService.generateQuiz(req.params.subject);        
+        res.json(generatedQuiz);
+    } catch (err) {
+        handleError(err, res);
+    }
+};
+
+export default { getQuizzesByTags, getGeneratedQuizBySubject };

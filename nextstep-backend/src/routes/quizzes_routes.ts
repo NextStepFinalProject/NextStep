@@ -3,6 +3,8 @@ import Quiz from '../controllers/quizzes_controller';
 
 const router = express.Router();
 
-router.get('/', Quiz.getQuizzesByTags);
+router.get('/raw', Quiz.getQuizzesByTags);
+
+router.get('/generate/:subject', Quiz.getGeneratedQuizBySubject);
 
 export default router;
