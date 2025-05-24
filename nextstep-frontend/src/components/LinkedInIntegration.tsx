@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Box, Typography, Button, Grid, CircularProgress, IconButton, TextField, MenuItem, Select, FormControl, InputLabel, Dialog, DialogTitle, DialogContent, DialogActions } from '@mui/material';
+import { Box, Typography, Button, Grid, CircularProgress, IconButton, TextField, MenuItem, Select, FormControl, InputLabel, Dialog, DialogTitle, DialogContent, DialogActions, Chip, Stack } from '@mui/material';
 import { ExpandLess, LinkedIn, Settings } from '@mui/icons-material';
 
 interface Job {
@@ -52,12 +52,6 @@ const LinkedInIntegration: React.FC<LinkedInIntegrationProps> = ({
 
   const handleSettingChange = (key: keyof LinkedInSettings, value: string) => {
     setSettings((prev) => ({ ...prev, [key]: value }));
-  };
-
-  const handleSkillChange = (index: number, value: string) => {
-    const updatedSkills = [...settings.skills];
-    updatedSkills[index] = value;
-    setSettings((prev) => ({ ...prev, skills: updatedSkills }));
   };
 
   const handleFetchJobs = () => {
@@ -147,19 +141,44 @@ const LinkedInIntegration: React.FC<LinkedInIntegrationProps> = ({
             </Grid>
           </Box>
           <Grid item xs={12}>
-            <Typography variant="body2" color="text.secondary">
-              <strong>Skills Sent:</strong>
+            <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
+              <strong>Skills Filter:</strong>
             </Typography>
-            {settings.skills.map((skill, index) => (
-              <TextField
-                key={index}
-                label={`Skill ${index + 1}`}
-                value={skill}
-                onChange={(e) => handleSkillChange(index, e.target.value)}
-                fullWidth
-                sx={{ mt: 1 }}
-              />
-            ))}
+            <Stack direction="row" spacing={1} sx={{ flexWrap: 'wrap', mb: 2 }}>
+              {settings.skills.map((skill, index) => (
+                <Chip
+                  key={index}
+                  label={skill}
+                  onDelete={() => {
+                    const updatedSkills = [...settings.skills];
+                    updatedSkills.splice(index, 1);
+                    setSettings((prev) => ({ ...prev, skills: updatedSkills }));
+                  }}
+                  sx={{ backgroundColor: '#e3f2fd', color: '#0d47a1' }}
+                />
+              ))}
+            </Stack>
+            <TextField
+              label="Add Skill"
+              variant="outlined"
+              fullWidth
+              onKeyDown={(e) => {
+                const input = e.target as HTMLInputElement;
+                if (e.key === 'Enter' && input.value.trim()) {
+                  const newSkill = input.value.trim();
+                  if (!settings.skills.includes(newSkill) && settings.skills.length < 3) {
+                    setSettings((prev) => ({
+                      ...prev,
+                      skills: [...prev.skills, newSkill],
+                    }));
+                  }
+                  input.value = '';
+                }
+              }}
+              placeholder={settings.skills.length >= 3 ? "Reached max of 3 skills" : "Type a skill and press Enter"}
+              disabled={settings.skills.length >= 3} // Disable input if 3 skills are already added
+              sx={{ mt: 1 }}
+            />
           </Grid>
           <br />
           <Box sx={{ textAlign: 'center', mb: 3 }}>
