@@ -1,0 +1,486 @@
+/*-----------------------------------------------*/
+/*	Company Profile Page	*/
+/*-----------------------------------------------*/
+.no-border {
+  border: none !important; }
+
+.no-margin-bottom {
+  margin-bottom: 0 !important; }
+
+.company_page_section {
+  padding-top: 80px;
+  padding-bottom: 100px; }
+
+.company_page_odd_section {
+  background: #ecf0f1; }
+
+#company-header {
+  text-align: center; }
+
+#company-head-menu {
+  text-align: left; }
+
+#company-main-logo {
+  margin-bottom: 40px; }
+
+#company-head-menu {
+  display: table;
+  margin-left: auto;
+  margin-right: auto;
+  margin-bottom: 80px; }
+  #company-head-menu:after {
+    display: block;
+    clear: both;
+    content: ''; }
+  #company-head-menu ul {
+    list-style: none;
+    display: inline-block;
+    float: left;
+    padding-left: 0; }
+    #company-head-menu ul li {
+      display: inline;
+      float: left; }
+    #company-head-menu ul i {
+      margin-right: 18px; }
+    #company-head-menu ul.second-menu, #company-head-menu ul.third-menu {
+      padding-left: 18px;
+      position: relative; }
+      #company-head-menu ul.second-menu:before, #company-head-menu ul.third-menu:before {
+        content: '';
+        position: absolute;
+        height: 10px;
+        left: 0;
+        top: 5px; }
+    #company-head-menu ul.first-menu {
+      border-right: 1px solid #565656; }
+  #company-head-menu a {
+    color: #565656;
+    padding-right: 18px; }
+  #company-head-menu a:hover {
+    text-decoration: none; }
+
+.abount-company-content {
+  padding-bottom: 77px; }
+
+.sub-section-title {
+  font-size: 18px; }
+
+.jobboard-section-title, .section-subtitle {
+  text-align: center; }
+
+.section-subtitle {
+  margin-bottom: 70px; }
+
+.company-service-item {
+  text-align: center; }
+  .company-service-item h2 {
+    color: #1abc9c;
+    font-size: 20px;
+    font-weight: bold; }
+
+.section-icon {
+  display: inline-block;
+  padding: 10px 20px;
+  color: #1abc9c;
+  border: 1px solid #1abc9c;
+  border-radius: 3px;
+  -moz-border-radius: 3px;
+  -webkit-border-radius: 3px;
+  font-size: 36px; }
+
+#company_experience {
+  padding-top: 80px;
+  padding-bottom: 105px; }
+
+ul.company_experience_group {
+  padding-left: 0;
+  list-style: none;
+  display: table;
+  margin-left: auto;
+  margin-right: auto; }
+  ul.company_experience_group:after {
+    display: block;
+    clear: both;
+    content: ''; }
+  ul.company_experience_group li {
+    display: inline-block;
+    float: left;
+    background: #2980b9;
+    padding-left: 20px;
+    padding-right: 20px;
+    border-radius: 15px;
+    color: #fff;
+    padding-top: 7px;
+    padding-bottom: 7px;
+    margin-right: 30px; }
+    ul.company_experience_group li:last-child {
+      margin-right: 0; }
+
+h2.clinet-name {
+  color: #1ABC9C;
+  font-size: 18px;
+  margin-bottom: 5px; }
+
+.client-date {
+  font-weight: bold; }
+
+.client-web a {
+  color: #b1b1b1; }
+
+.client-content {
+  margin-top: 20px;
+  position: relative; }
+  .client-content:before {
+    content: '';
+    display: block;
+    width: 173px;
+    border-top: 1px solid #c6c6c6; }
+  .client-content > p {
+    margin-top: 20px; }
+
+#company_testimonials {
+  text-align: center; }
+  #company_testimonials blockquote {
+    padding: 0;
+    margin: 0;
+    border: none;
+    font-weight: normal; }
+  #company_testimonials .testimonial-content {
+    background: url(".././images/fa-blockquote.png") center top no-repeat;
+    padding-top: 10px;
+    max-width: 900px;
+    margin-left: auto;
+    margin-right: auto; }
+    #company_testimonials .testimonial-content blockquote {
+      font-size: 24px;
+      line-height: 42px; }
+  #company_testimonials .testimonial-author {
+    padding-top: 31px; }
+    #company_testimonials .testimonial-author a {
+      text-decoration: none; }
+    #company_testimonials .testimonial-author h2.testimonial-author-name {
+      font-size: 24px;
+      color: #1abc9c; }
+    #company_testimonials .testimonial-author span {
+      color: #565656; }
+
+#company_portfolio ul.company_portfolio_items {
+  list-style: none;
+  padding-left: 0;
+  margin-left: 20px; }
+  #company_portfolio ul.company_portfolio_items:after {
+    display: block;
+    clear: both;
+    content: ''; }
+  #company_portfolio ul.company_portfolio_items li {
+    float: left;
+    margin-right: 20px; }
+#company_portfolio .owl-controls {
+  position: relative; }
+  #company_portfolio .owl-controls .owl-prev, #company_portfolio .owl-controls .owl-next {
+    position: absolute;
+    background: transparent;
+    color: transparent;
+    top: -140px; }
+    #company_portfolio .owl-controls .owl-prev:hover, #company_portfolio .owl-controls .owl-next:hover {
+      background: transparent; }
+  #company_portfolio .owl-controls .owl-prev {
+    left: -50px; }
+    #company_portfolio .owl-controls .owl-prev:before {
+      font-family: fontAwesome;
+      content: "\f104";
+      width: 90px;
+      height: 40px;
+      color: #1abc9c;
+      font-size: 28px; }
+  #company_portfolio .owl-controls .owl-next {
+    right: -50px; }
+    #company_portfolio .owl-controls .owl-next:before {
+      font-family: fontAwesome;
+      content: "\f105";
+      width: 90px;
+      height: 40px;
+      color: #1abc9c;
+      font-size: 28px; }
+
+#jobboard_company_address_contact {
+  background: #f0ede5;
+  position: relative; }
+  #jobboard_company_address_contact .container-outer {
+    padding-top: 110px;
+    position: absolute;
+    top: 0;
+    width: 100%; }
+
+.btn-post-content.yellow-bg {
+  background-color: #fbdb59; }
+
+.jobboard_company_contactform {
+  border-radius: 5px;
+  -webkit-border-radius: 5px;
+  -moz-border-radius: 5px;
+  background: #1abc9c;
+  padding: 25px;
+  margin-bottom: 95px; }
+  .jobboard_company_contactform .frontend-form {
+    margin-bottom: 0; }
+  .jobboard_company_contactform h3.form-title {
+    color: #ffffff;
+    font-size: 22px;
+    padding-left: 10px;
+    margin-bottom: 22px;
+    margin-top: 0; }
+  .jobboard_company_contactform input.your_name {
+    margin-right: 30px; }
+  .jobboard_company_contactform input.your_name,
+  .jobboard_company_contactform input.your_email {
+    width: 242px;
+    padding-left: 12px;
+    padding-right: 12px;
+    color: #b3b3b3;
+    border-radius: 5px;
+    -webkit-border-radius: 5px;
+    -moz-border-radius: 5px; }
+  .jobboard_company_contactform textarea.form-control {
+    font-size: 18px;
+    color: #b3b3b3;
+    border-radius: 5px;
+    -webkit-border-radius: 5px;
+    -moz-border-radius: 5px;
+    background: #fff !important;
+    height: 186px !important; }
+    .jobboard_company_contactform textarea.form-control::-webkit-input-placeholder {
+      /* WebKit browsers */
+      color: #b3b3b3; }
+    .jobboard_company_contactform textarea.form-control:-moz-placeholder {
+      /* Mozilla Firefox 4 to 18 */
+      color: #b3b3b3;
+      opacity: 1; }
+    .jobboard_company_contactform textarea.form-control::-moz-placeholder {
+      /* Mozilla Firefox 19+ */
+      color: #b3b3b3;
+      opacity: 1; }
+    .jobboard_company_contactform textarea.form-control:-ms-input-placeholder {
+      /* Internet Explorer 10+ */
+      color: #b3b3b3; }
+  .jobboard_company_contactform button.send_message {
+    padding-left: 40px;
+    padding-right: 40px;
+    color: #1abc9c; }
+
+.jobboard_company_map_locator {
+  background: #ffffff;
+  margin-bottom: 30px;
+  width: 236px;
+  border-radius: 5px;
+  -webkit-border-radius: 5px;
+  -moz-border-radius: 5px;
+  color: #878787; }
+  .jobboard_company_map_locator .inner {
+    padding: 23px; }
+  .jobboard_company_map_locator h3.jb_map_location_name {
+    margin-top: 0; }
+  .jobboard_company_map_locator ul {
+    list-style: none;
+    padding-left: 0; }
+    .jobboard_company_map_locator ul i {
+      color: #1abc9c;
+      width: 20px;
+      text-align: center;
+      display: inline-block; }
+  .jobboard_company_map_locator .jb_map_phone a {
+    color: #878787;
+    text-decoration: none; }
+
+#jobboard_map_container {
+  background: #ccc;
+  height: 600px; }
+
+@media only screen and (min-width: 1200px) {
+  .jobboard_company_contactform {
+    width: 570px; } }
+@media only screen and (min-width: 992px) and (max-width: 1199px) {
+  .jobboard_company_contactform input.your_name {
+    margin-bottom: 23px; }
+  .jobboard_company_contactform input.your_name,
+  .jobboard_company_contactform input.your_email {
+    width: 100%; } }
+@media only screen and (max-width: 628px) {
+  .jobboard_company_contactform input.your_name {
+    margin-bottom: 23px; }
+  .jobboard_company_contactform input.your_name,
+  .jobboard_company_contactform input.your_email {
+    width: 100%; }
+
+  #jobboard_map_container {
+    height: 860px; } }
+@media only screen and (max-width: 1199px) {
+  #jobboard_map_container {
+    height: 800px; } }
+/** Add Company Form **/
+textarea.form-control.textarea-detail {
+  height: 100px; }
+
+.company_part_data {
+  border: 1px solid #DEE4E5;
+  padding: 10px 20px;
+  margin-bottom: 15px; }
+
+.company_part_data .repeated-form {
+  padding-bottom: 20px; }
+
+.upload-image-field-container {
+  margin-left: 15px;
+  margin-bottom: 15px; }
+
+.front-end-img.testimonial-avatar {
+  margin-bottom: 15px; }
+
+.rounded-100 {
+  border-radius: 100px;
+  -moz-border-radius: 100px;
+  -webkit-border-radius: 100px;
+  -o-border-radius: 100px;
+  -ms-border-radius: 100px; }
+
+#company_portfolio ul.company_portfolio_items img {
+  border-radius: 5px;
+  -moz-border-radius: 5px;
+  -webkit-border-radius: 5px;
+  -o-border-radius: 5px;
+  -ms-border-radius: 5px; }
+
+/** Refine resume listing **/
+form#resume-search-form {
+  background: #1abc9c;
+  padding: 30px 50px;
+  margin-top: 50px;
+  border-radius: 3px;
+  -moz-border-radius: 3px;
+  -webkit-border-radius: 3px;
+  margin-left: 50px;
+  margin-right: 50px; }
+
+form#resume-search-form label {
+  display: none;
+  visibility: hidden; }
+
+form#resume-search-form .form-control {
+  border: medium none;
+  height: 40px;
+  box-shadow: 0px 1px 2px 0px rgba(205, 211, 213, 0.9); }
+
+.field-title {
+  color: #fff;
+  font-size: 14px; }
+
+button.btn-search-resume {
+  background: #ffdf6f;
+  padding-left: 58px;
+  padding-right: 58px;
+  height: 40px;
+  padding-top: 10px; }
+
+/** Resume */
+.page-template-page-templatestemplate-resume_listing-php .jobs-listing-title {
+  border-bottom: 1px solid #E3E3E3; }
+
+.item-listing-table {
+  width: 100%; }
+  .item-listing-table .resume-listing-name {
+    border: none;
+    margin-left: 0;
+    max-width: auto !important;
+    width: auto; }
+  .item-listing-table .resume-experience {
+    padding-left: 0; }
+  .item-listing-table .resume-listing-region {
+    padding-left: 0;
+    width: auto !important; }
+  .item-listing-table .resume-rate {
+    padding-left: 0; }
+  .item-listing-table .resume-rate,
+  .item-listing-table .resume-listing-region {
+    border: none; }
+  .item-listing-table .tr-space {
+    height: 20px; }
+    .item-listing-table .tr-space.has-border-bottom {
+      border-bottom: 1px solid #E3E3E3; }
+  .item-listing-table .an-item-listing-row {
+    border-bottom: none; }
+  .item-listing-table td.padding-left-right-20 {
+    padding-left: 20px;
+    padding-right: 20px; }
+  .item-listing-table .an-item-col.job-listing-view {
+    line-height: 40px !important; }
+  .item-listing-table .resume-rate,
+  .item-listing-table .resume-experience,
+  .item-listing-table .resume-listing-region {
+    line-height: 24px; }
+
+.has-left-border {
+  border-left: 1px solid #E3E3E3; }
+
+.padding-left-25 {
+  padding-left: 25px; }
+
+.col-salary-range-to {
+  position: relative; }
+  .col-salary-range-to:before {
+    position: absolute;
+    left: -8px;
+    top: 21px;
+    content: '';
+    display: block;
+    width: 15px;
+    height: 2px;
+    background: rgba(255, 255, 255, 0.5); }
+
+#resume_search_experience {
+  width: 40px;
+  float: left; }
+
+.form-group .slider {
+  width: 176px;
+  margin-top: 27px;
+  margin-left: 50px !important; }
+
+#resume-search-form .slider > .track, #resume-search-form .slider > .highlight-track {
+  background: rgba(255, 255, 255, 0.5);
+  border: none;
+  height: 2px;
+  border-radius: none; }
+#resume-search-form .slider > .dragger {
+  background: #ffdf6f;
+  border: none;
+  width: 10px;
+  height: 10px;
+  border-radius: 10px;
+  -moz-border-radius: 10px;
+  -webkit-border-radius: 10px;
+  -o-border-radius: 10px; }
+
+#uniform-resume_category,
+#uniform-resume_search_career_level {
+  position: relative;
+  width: 100% !important;
+  background: white url(".././images/arrow-down.png") right center no-repeat !important;
+  border-radius: 4px;
+  -webkit-border-radius: 4px;
+  -moz-border-radius: 4px;
+  -o-border-radius: 4px;
+  height: 40px;
+  box-shadow: 0px 1px 2px 0px rgba(205, 211, 213, 0.9); }
+  #uniform-resume_category > span,
+  #uniform-resume_search_career_level > span {
+    width: 100% !important;
+    background-image: none !important;
+    height: 40px !important;
+    line-height: 40px !important;
+    font-size: 14px !important;
+    color: #666666 !important; }
+  #uniform-resume_category select,
+  #uniform-resume_search_career_level select {
+    font-size: 14px !important;
+    height: 40px !important;
+    line-height: 40px !important; }

@@ -21,6 +21,8 @@ tags:
     description: Operations related to resume ATS scoring
   - name: LinkedIn Jobs
     description: Operations related to LinkedIn job postings
+  - name: Quizzes
+    description: Operations related to job quizzes
 
 paths:
   /post:
@@ -1245,6 +1247,113 @@ paths:
         '500':
           description: Internal server error
 
+  /quiz/raw:
+    get:
+      tags:
+        - Quizzes
+      summary: Search for quizzes based on the given parameters.
+      description: Search for quizzes that best match the given tags. Matches are found in company tags, quiz tags, or quiz content. Returns quizzes sorted by number of tag matches (most relevant first).
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: tags
+          in: query
+          required: false
+          schema:
+            type: string
+          description: A string which contains comma separated tags.
+      responses:
+        '200':
+          description: List of quizzes sorted by relevance (most relevant first).
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Quiz'
+        '401':
+          description: Unauthorized
+        '500':
+          description: Internal server error
+
+  /quiz/generate:
+    post:
+      tags:
+        - Quizzes
+      summary: Generate a quiz for a certain subject.
+      description: Generate a quiz for a certain subject. The quiz is generated based on our real-world quizzes database.
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - subject
+              properties:
+                subject:
+                  type: string
+                  description: The subject of the quiz to be generated (e.g., "Java Spring Boot Microservices")
+                  example: "Java Spring Boot Microservices"
+      responses:
+        '200':
+          description: A generated quiz custom-tailored for the targeted subject.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GeneratedQuiz'
+        '400':
+          description: Bad request - Missing required fields
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    description: Error message indicating missing fields
+        '401':
+          description: Unauthorized
+        '500':
+          description: Internal server error
+
+  /quiz/grade:
+    post:
+      tags:
+        - Quizzes
+      summary: Grade a quiz answered by the user.
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AnsweredQuiz'           
+      responses:
+        '200':
+          description: A graded quiz with tips.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GradedQuiz'
+        '400':
+          description: Bad request - Missing required fields
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    description: Error message indicating missing fields
+        '401':
+          description: Unauthorized
+        '500':
+          description: Internal server error
+
 components:
   schemas:
     Post:
@@ -1444,6 +1553,233 @@ components:
       properties:
         refreshToken:
           type: string
+
+    Quiz:
+      type: object
+      properties:
+        _id:
+          type: string
+          example: "68307dc341829a3ba715b8b6"
+        title:
+          type: string
+          example: "NOC Team Member"
+        quiz_id:
+          type: integer
+          example: 2785
+        tags:
+          type: array
+          items:
+            type: string
+          example: ["888", "רנדום לוג'יק", "NOC", "Team", "Member", "Support", "Maintenance"]
+        content:
+          type: string
+          format: html
+          description: "HTML content of the quiz, may include formatting, links, and structured interview info."
+        forum_link:
+          type: string
+          format: uri
+          example: "http://www.forum.com/f/..."
+
+    GeneratedQuiz:
+      type: object
+      required:
+        - _id
+        - title
+        - tags
+        - content
+        - job_role
+        - company_name_en
+        - company_name_he
+        - process_details
+        - question_list
+        - answer_list
+        - keywords
+        - interviewer_mindset
+      properties:
+        _id:
+          type: string
+          description: Unique identifier for the generated quiz (e.g., "generated_[TIMESTAMP]").
+          example: "generated_1701234567890"
+        title:
+          type: string
+          description: A concise and relevant title for the generated quiz.
+          example: "ראיון לתפקיד מפתח Java Fullstack בחברת טכנולוגיה מובילה"
+        tags:
+          type: array
+          description: Highly relevant technical and role-based tags.
+          items:
+            type: string
+          example: ["Java", "Spring Boot", "Microservices", "Developer", "ראיון"]
+        content:
+          type: string
+          description: A comprehensive narrative combining the interview process and specific questions.
+          example: "תהליך ראיון למפתח Java Fullstack בחברת טכנולוגיה גדולה. הראיון כלל מספר שלבים: ראיון טלפוני קצר... (full content of the generated quiz)"
+        job_role:
+          type: string
+          description: The inferred job role for the quiz.
+          example: "מפתח Java Fullstack"
+        company_name_en:
+          type: string
+          description: English name of the company for the quiz.
+          example: "Leading Tech Company"
+        company_name_he:
+          type: string
+          description: Hebrew name of the company for the quiz.
+          example: "חברת טכנולוגיה מובילה"
+        process_details:
+          type: string
+          description: A concise summary of a typical interview process for this role/company type.
+          example: "ראיון טלפוני קצר לבדיקת התאמה כללית וציפיות שכר. משימת בית קצרה..."
+        question_list:
+          type: array
+          description: A parsed list of individual interview questions.
+          items:
+            type: string
+          example: ["איך היית מתכנן מערכת מיקרו-שירותים?", "הסבר את הקשר בין Spring Boot ל-Spring Framework."]
+        answer_list:
+          type: array
+          description: A corresponding list of ideal or reference answers for each question.
+          items:
+            type: string
+          example: ["בתכנון מערכת מיקרו-שירותים גדולה, הייתי מתחיל בהגדרת גבולות הקונטקסט...", "Spring Boot הוא פרויקט מעל Spring Framework שמטרתו לפשט את תהליך הפיתוח..."]
+        keywords:
+          type: array
+          description: Additional relevant technical or conceptual keywords for preparation.
+          items:
+            type: string
+          example: ["REST API", "Scalability", "Design Patterns", "Concurrency"]
+        interviewer_mindset:
+          type: string
+          description: A description of the soft skills, characteristics, and professional attributes an interviewer looks for.
+          example: "מחפשים מועמד עם סקרנות טכנולוגית גבוהה, יכולת פתרון בעיות יצירתית, תקשורת ברורה ותמציתית, וגישה פרואקטיבית לשיתוף פעולה בצוות."
+
+    AnsweredQuiz:
+      type: object
+      required:
+        - _id
+        - title
+        - tags
+        - content
+        - job_role
+        - company_name_en
+        - company_name_he
+        - process_details
+        - question_list
+        - answer_list
+        - keywords
+        - interviewer_mindset
+      properties:
+        _id:
+          type: string
+          description: Unique identifier for the generated quiz (e.g., "generated_[TIMESTAMP]").
+          example: "generated_1701234567890"
+        title:
+          type: string
+          description: A concise and relevant title for the generated quiz.
+          example: "ראיון לתפקיד מפתח Java Fullstack בחברת טכנולוגיה מובילה"
+        tags:
+          type: array
+          description: Highly relevant technical and role-based tags.
+          items:
+            type: string
+          example: ["Java", "Spring Boot", "Microservices", "Developer", "ראיון"]
+        content:
+          type: string
+          description: A comprehensive narrative combining the interview process and specific questions.
+          example: "תהליך ראיון למפתח Java Fullstack בחברת טכנולוגיה גדולה. הראיון כלל מספר שלבים: ראיון טלפוני קצר... (full content of the generated quiz)"
+        job_role:
+          type: string
+          description: The inferred job role for the quiz.
+          example: "מפתח Java Fullstack"
+        company_name_en:
+          type: string
+          description: English name of the company for the quiz.
+          example: "Leading Tech Company"
+        company_name_he:
+          type: string
+          description: Hebrew name of the company for the quiz.
+          example: "חברת טכנולוגיה מובילה"
+        process_details:
+          type: string
+          description: A concise summary of a typical interview process for this role/company type.
+          example: "ראיון טלפוני קצר לבדיקת התאמה כללית וציפיות שכר. משימת בית קצרה..."
+        question_list:
+          type: array
+          description: A parsed list of individual interview questions.
+          items:
+            type: string
+          example: ["איך היית מתכנן מערכת מיקרו-שירותים?", "הסבר את הקשר בין Spring Boot ל-Spring Framework."]
+        answer_list:
+          type: array
+          description: A corresponding list of ideal or reference answers for each question.
+          items:
+            type: string
+          example: ["בתכנון מערכת מיקרו-שירותים גדולה, הייתי מתחיל בהגדרת גבולות הקונטקסט...", "Spring Boot הוא פרויקט מעל Spring Framework שמטרתו לפשט את תהליך הפיתוח..."]
+        user_answer_list:
+          type: array
+          description: A corresponding list of user answers for each question.
+          items:
+            type: string
+          example: ["בתכנון מערכת מיקרו-שירותים גדולה, הייתי מתחיל בהגדרת גבולות הקונטקסט...", "Spring Boot הוא פרויקט מעל Spring Framework שמטרתו לפשט את תהליך הפיתוח..."]
+        keywords:
+          type: array
+          description: Additional relevant technical or conceptual keywords for preparation.
+          items:
+            type: string
+          example: ["REST API", "Scalability", "Design Patterns", "Concurrency"]
+        interviewer_mindset:
+          type: string
+          description: A description of the soft skills, characteristics, and professional attributes an interviewer looks for.
+          example: "מחפשים מועמד עם סקרנות טכנולוגית גבוהה, יכולת פתרון בעיות יצירתית, תקשורת ברורה ותמציתית, וגישה פרואקטיבית לשיתוף פעולה בצוות."
+
+    GradedQuiz:
+      type: object
+      required:
+        - graded_answers
+        - final_quiz_grade
+        - final_summary_tip
+      properties:
+        graded_answers:
+          type: array
+          description: A list of individual questions with the user's answer, grade, and a tip for improvement.
+          items:
+            type: object
+            required:
+              - question
+              - user_answer
+              - grade
+              - tip
+            properties:
+              question:
+                type: string
+                description: The original question from the quiz.
+                example: "איך היית מתכנן מערכת מיקרו-שירותים (Microservices) גדולה שמטפלת במיליוני בקשות ביום?"
+              user_answer:
+                type: string
+                description: The user's provided answer to the question.
+                example: "אני חושב שהייתי משתמש בקאפקה וסרביס דיסקברי. זה עוזר עם סקאלינג."
+              grade:
+                type: number
+                format: int32
+                minimum: 0
+                maximum: 100
+                description: The grade for the user's answer (0-100).
+                example: 85
+              tip:
+                type: string
+                description: A professional tip for the user to improve their answer.
+                example: "Consider elaborating on the specific design patterns (e.g., API Gateway, Service Discovery) and communication protocols (e.g., REST, gRPC) you would use."
+        final_quiz_grade:
+          type: number
+          format: int32
+          minimum: 0
+          maximum: 100
+          description: The overall average grade for all answered questions in the quiz (0-100).
+          example: 78
+        final_summary_tip:
+          type: string
+          description: A comprehensive tip for the user to improve their overall interview performance.
+          example: "Overall, your technical understanding is solid. For future interviews, focus on articulating your thoughts more structured, perhaps using the STAR method for behavioral questions, and always relate your technical solutions back to business value or team collaboration, demonstrating the 'interviewer mindset' we discussed."
 
   securitySchemes:
     BearerAuth:
