@@ -121,9 +121,10 @@ const Quiz: React.FC = () => {
     try {
       const response = await api.post<QuizGenerationResponse>('http://localhost:3000/quiz/generate', { subject });
 
-      const generatedQuestions: QuizStateQuestion[] = response.data.question_list.map((q: string) => ({
+      const generatedQuestions: QuizStateQuestion[] = response.data.question_list.map((q: string, idx: number) => ({
         originalQuestion: q,
         userAnswer: '', // Initialize empty user answer
+        correctAnswer: response.data.answer_list[idx], // Populate correct answer immediately
       }));
 
       setQuiz({
@@ -138,8 +139,17 @@ const Quiz: React.FC = () => {
         processDetails: response.data.process_details,
         keywords: response.data.keywords,
         interviewerMindset: response.data.interviewer_mindset,
-        answer_list: response.data.answer_list, // Store for later use as correct answers
+        answer_list: response.data.answer_list, // Store for later use if needed, but questions now have it
       });
+
+      // Do NOT automatically show answers here. User should toggle.
+      // const initialShowAnswer: { [key: number]: boolean } = {};
+      // generatedQuestions.forEach((_, index) => {
+      //   initialShowAnswer[index] = true;
+      // });
+      // setShowAnswer(initialShowAnswer);
+
+
     } catch (error) {
       console.error('Error generating quiz:', error);
       alert('Failed to generate quiz. Please try again.');
@@ -189,12 +199,13 @@ const Quiz: React.FC = () => {
 
       const gradedQuizData = response.data;
       const updatedQuestions = quiz.questions.map((q, index) => {
+        // Find the corresponding graded answer by matching the question string
         const gradedAnswer = gradedQuizData.graded_answers.find(ga => ga.question === q.originalQuestion);
         return {
           ...q,
           grade: gradedAnswer?.grade,
           tip: gradedAnswer?.tip,
-          correctAnswer: quiz.answer_list?.[index], // Use the stored answer_list from generation
+          // correctAnswer is already present from generation, no need to set again here
         };
       });
 
@@ -206,7 +217,7 @@ const Quiz: React.FC = () => {
       });
       setQuizSubmitted(true); // Mark quiz as submitted
 
-      // Automatically show all answers after grading
+      // After submission, it's generally good UX to show all correct answers and grades
       const initialShowAnswer: { [key: number]: boolean } = {};
       updatedQuestions.forEach((_, index) => {
         initialShowAnswer[index] = true;
@@ -367,7 +378,8 @@ const Quiz: React.FC = () => {
                 <Typography variant="h6" sx={{ flexGrow: 1 }}>
                   Question {index + 1}: {q.originalQuestion}
                 </Typography>
-                {quizSubmitted && ( // Only show the eye icon after submission
+                {/* REMOVED: quizSubmitted condition here */}
+                {q.correctAnswer && ( // Only show if a correct answer exists
                   <Tooltip title={showAnswer[index] ? 'Hide Answer' : 'Show Answer'} arrow>
                     <IconButton onClick={() => handleToggleAnswerVisibility(index)} size="small">
                       {showAnswer[index] ? <VisibilityOff /> : <Visibility />}
@@ -387,6 +399,7 @@ const Quiz: React.FC = () => {
                 disabled={quizSubmitted} // Disable input after submission
               />
 
+              {/* Grade and Tip are still shown only after submission */}
               {quizSubmitted && (
                 <>
                   <Box sx={{ mt: 2 }}>
@@ -414,13 +427,14 @@ const Quiz: React.FC = () => {
                       </Typography>
                     </Stack>
                   </Box>
-                  {showAnswer[index] && q.correctAnswer && (
-                    <Box sx={{ mt: 2, p: 1.5, bgcolor: '#f0f0f0', borderRadius: 1 }}>
-                      <Typography variant="subtitle2">Correct Answer:</Typography>
-                      <Typography variant="body2">{q.correctAnswer}</Typography>
-                    </Box>
-                  )}
                 </>
+              )}
+              {/* Correct answer display is now independent of quizSubmitted for showing */}
+              {showAnswer[index] && q.correctAnswer && (
+                <Box sx={{ mt: 2, p: 1.5, bgcolor: '#f0f0f0', borderRadius: 1 }}>
+                  <Typography variant="subtitle2">Correct Answer:</Typography>
+                  <Typography variant="body2">{q.correctAnswer}</Typography>
+                </Box>
               )}
             </Paper>
           ))}
