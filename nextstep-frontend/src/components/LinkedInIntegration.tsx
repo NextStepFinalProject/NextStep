@@ -41,7 +41,7 @@ const LinkedInIntegration: React.FC<LinkedInIntegrationProps> = ({
     location: 'Israel',
     dateSincePosted: 'past week',
     jobType: 'full time',
-    experienceLevel: 'entry level',
+    experienceLevel: 'all',
     skills: skills.slice(0, 3), // Limit to first 3 skills
   });
 
