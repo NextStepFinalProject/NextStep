@@ -1,13 +1,15 @@
 import React, { useState } from 'react';
-import { Box, Typography, Button, Grid, CircularProgress, IconButton, TextField, MenuItem, Select, FormControl, InputLabel } from '@mui/material';
-import { ExpandLess, ExpandMore, LinkedIn, Settings } from '@mui/icons-material';
+import { Box, Typography, Button, Grid, CircularProgress, IconButton, TextField, MenuItem, Select, FormControl, InputLabel, Dialog, DialogTitle, DialogContent, DialogActions } from '@mui/material';
+import { ExpandLess, LinkedIn, Settings } from '@mui/icons-material';
 
 interface Job {
   position: string;
   company: string;
   location: string;
-  url: string;
+  jobUrl: string;
   companyLogo?: string;
+  date?: string; 
+  salary?: string;
 }
 
 interface LinkedInIntegrationProps {
@@ -45,6 +47,9 @@ const LinkedInIntegration: React.FC<LinkedInIntegrationProps> = ({
     skills: skills.slice(0, 3), // Limit to first 3 skills
   });
 
+  const [selectedJob, setSelectedJob] = useState<Job | null>(null);
+  const [jobDetails, setJobDetails] = useState<any>(null);
+
   const handleSettingChange = (key: keyof LinkedInSettings, value: string) => {
     setSettings((prev) => ({ ...prev, [key]: value }));
   };
@@ -57,6 +62,16 @@ const LinkedInIntegration: React.FC<LinkedInIntegrationProps> = ({
 
   const handleFetchJobs = () => {
     fetchJobs(settings);
+  };
+
+  const handleViewJob = (job: Job) => {
+    setSelectedJob(job);
+    setJobDetails(job); 
+  };
+
+  const handleCloseDialog = () => {
+    setSelectedJob(null);
+    setJobDetails(null);
   };
 
   return (
@@ -132,21 +147,21 @@ const LinkedInIntegration: React.FC<LinkedInIntegrationProps> = ({
             </Grid>
           </Box>
           <Grid item xs={12}>
-                <Typography variant="body2" color="text.secondary">
-                  <strong>Skills Sent:</strong>
-                </Typography>
-                {settings.skills.map((skill, index) => (
-                  <TextField
-                    key={index}
-                    label={`Skill ${index + 1}`}
-                    value={skill}
-                    onChange={(e) => handleSkillChange(index, e.target.value)}
-                    fullWidth
-                    sx={{ mt: 1 }}
-                  />
-                ))}
-              </Grid>
-              <br/>
+            <Typography variant="body2" color="text.secondary">
+              <strong>Skills Sent:</strong>
+            </Typography>
+            {settings.skills.map((skill, index) => (
+              <TextField
+                key={index}
+                label={`Skill ${index + 1}`}
+                value={skill}
+                onChange={(e) => handleSkillChange(index, e.target.value)}
+                fullWidth
+                sx={{ mt: 1 }}
+              />
+            ))}
+          </Grid>
+          <br />
           <Box sx={{ textAlign: 'center', mb: 3 }}>
             <Button
               variant="outlined"
@@ -199,9 +214,7 @@ const LinkedInIntegration: React.FC<LinkedInIntegrationProps> = ({
                       </Typography>
                     </Box>
                     <Button
-                      href={job.url}
-                      target="_blank"
-                      rel="noopener noreferrer"
+                      onClick={() => handleViewJob(job)}
                       variant="contained"
                       size="small"
                       sx={{ mt: 1 }}
@@ -217,6 +230,49 @@ const LinkedInIntegration: React.FC<LinkedInIntegrationProps> = ({
               No job recommendations found. Try adjusting your search settings.
             </Typography>
           )}
+
+          {/* Job Details Dialog */}
+          <Dialog open={!!selectedJob} onClose={handleCloseDialog} maxWidth="sm" fullWidth>
+            <DialogTitle>
+              {selectedJob?.position}
+            </DialogTitle>
+            <DialogContent>
+              {jobDetails ? (
+                <>
+                  <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+                    {jobDetails.companyLogo && (
+                      <img
+                        src={jobDetails.companyLogo}
+                        alt={`${jobDetails.company} logo`}
+                        style={{ width: '40px', height: '40px', marginRight: '8px', borderRadius: '4px' }}
+                      />
+                    )}
+                    <Typography variant="subtitle1">{jobDetails.company}</Typography>
+                  </Box>
+                  <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+                    {jobDetails.location}
+                  </Typography>
+                </>
+              ) : (
+                <Typography color="error">Failed to load job details.</Typography>
+              )}
+            </DialogContent>
+            <DialogActions>
+              <Button onClick={handleCloseDialog} color="primary">
+                Close
+              </Button>
+              {selectedJob?.jobUrl && (
+                <Button
+                  href={selectedJob.jobUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  color="primary"
+                >
+                  Open in LinkedIn
+                </Button>
+              )}
+            </DialogActions>
+          </Dialog>
         </>
       )}
     </Box>
