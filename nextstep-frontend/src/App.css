@@ -54,3 +54,30 @@
 .read-the-docs {
   color: #888;
 }
+
+.job-card {
+    padding: 16px;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    height: 200px; /* Fixed height for all cards */
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between; /* Align content and button */
+    overflow-y: auto; /* Enable vertical scrolling for overflow */
+}
+
+.job-card img {
+    display: inline-block;
+    margin: 0;
+    max-width: 20px;
+    height: 20px;
+}
+
+.job-card .company-name {
+    font-weight: bold; /* Make company name bold */
+}
+
+.job-card .location {
+    margin-top: 8px; /* Add separation between company name and location */
+    display: block; /* Ensure it appears on a new line */
+}

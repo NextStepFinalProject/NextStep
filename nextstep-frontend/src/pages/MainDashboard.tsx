@@ -34,6 +34,7 @@ import {
   handleGitHubOAuth
 } from '../handlers/githubAuth';
 import api from '../serverApi';
+import LinkedInIntegration from '../components/LinkedInIntegration';
 
 const roles = [
   'Software Engineer', 'Frontend Developer', 'Backend Developer',
@@ -64,6 +65,17 @@ const MainDashboard: React.FC = () => {
   const [showAllSkills, setShowAllSkills] = useState(false);
   const SKILL_DISPLAY_LIMIT = 6;
   const shouldShowToggle = skills.length > SKILL_DISPLAY_LIMIT;
+
+  // LinkedIn jobs state
+  const [jobs, setJobs] = useState<{ position: string; company: string; location: string; url: string, companyLogo?: string, jobUrl?: string }[]>([]);
+  const [loadingJobs, setLoadingJobs] = useState(false); // New state for loading jobs
+
+  // Job Recommendations toggle
+  const [showJobRecommendations, setShowJobRecommendations] = useState(false); // New state for toggle
+
+  const toggleJobRecommendations = () => {
+    setShowJobRecommendations(!showJobRecommendations);
+  };
 
   // Persist to localStorage
   useEffect(() => { localStorage.setItem('aboutMe', aboutMe); }, [aboutMe]);
@@ -150,11 +162,33 @@ const MainDashboard: React.FC = () => {
     }
   };
 
+  // Fetch Linkedin Jobs
+  const fetchJobs = async (settings: { location: string; dateSincePosted: string; jobType: string; experienceLevel: string; skills?: string[] }) => {
+    setLoadingJobs(true);
+    try {
+      const response = await api.get('/linkedin-jobs/jobs', {
+        params: {
+          skills: (settings.skills || skills.slice(0, 3)).join(','), // Use updated skills or default to first three
+          role: selectedRole,
+          location: settings.location,
+          dateSincePosted: settings.dateSincePosted,
+          jobType: settings.jobType,
+          experienceLevel: settings.experienceLevel,
+        },
+      });
+      setJobs(response.data);
+    } catch (error) {
+      console.error('Error fetching jobs:', error);
+    } finally {
+      setLoadingJobs(false);
+    }
+  };
+
   return (
     <Container maxWidth="lg" sx={{ py: 4 }}>
       <Grid container spacing={4}>
         {/* Left Column */}
-        <Grid item xs={12} md={8}>
+        <Grid item xs={12} md={7}> {/* Adjusted width */}
           <Stack spacing={4}>
             {/* About Me Section */}
             <Box sx={{ bgcolor: 'background.paper', p: 3, borderRadius: 2, boxShadow: 1 }}>
@@ -301,12 +335,11 @@ const MainDashboard: React.FC = () => {
                 </Stack>
               </Box>
             )}
-
           </Stack>
         </Grid>
 
         {/* Right Column */}
-        <Grid item xs={12} md={4}>
+        <Grid item xs={12} md={5}>
           <Box sx={{ bgcolor: 'background.paper', p: 3, borderRadius: 2, boxShadow: 1, textAlign: 'center' }}>
             <Box display="flex" alignItems="center" justifyContent="center" mb={2}>
               <Avatar sx={{ width: 64, height: 64, mr: 2 }} />
@@ -377,6 +410,17 @@ const MainDashboard: React.FC = () => {
               </Box>
             )}
           </Box>
+
+          {/* Jobs Section */}
+          <LinkedInIntegration
+            jobs={jobs}
+            loadingJobs={loadingJobs}
+            fetchJobs={fetchJobs}
+            showJobRecommendations={showJobRecommendations}
+            toggleJobRecommendations={toggleJobRecommendations}
+            skills={skills}
+            selectedRole={selectedRole}
+          />
         </Grid>
       </Grid>
     </Container>
