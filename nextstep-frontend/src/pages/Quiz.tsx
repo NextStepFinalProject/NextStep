@@ -1,5 +1,3 @@
-// src/pages/Quiz.tsx
-
 import React, { useState } from 'react';
 import {
   Container,
@@ -28,7 +26,7 @@ import {
   BusinessOutlined as BusinessOutlinedIcon,
   LocalOfferOutlined as LocalOfferOutlinedIcon,
 } from '@mui/icons-material';
-import api from '../serverApi'; // Assuming you have a configured axios instance
+import api from '../serverApi';
 import { config } from '../config';
 
 // Define interfaces for the API response schemas
