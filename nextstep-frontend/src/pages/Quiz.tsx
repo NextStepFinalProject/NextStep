@@ -16,7 +16,7 @@ import {
   Chip,
   Divider,
   Grid,
-  Avatar, // <--- Ensure Avatar is imported
+  Avatar,
 } from '@mui/material';
 import {
   Visibility,
@@ -230,11 +230,11 @@ const Quiz: React.FC = () => {
       {!quiz && (
         <Box sx={{ mb: 4, p: 3, bgcolor: 'background.paper', borderRadius: 2, boxShadow: 1 }}>
           <Typography variant="h6" gutterBottom>
-            Enter a Quiz Subject
           </Typography>
           <TextField
             fullWidth
-            label="e.g., Java Spring Boot Microservices, React Hooks, Quantum Physics"
+            label="Quiz Subject"
+            placeholder="e.g., Java Spring Boot Microservices, React Hooks, Quantum Physics"
             variant="outlined"
             value={subject}
             onChange={e => setSubject(e.target.value)}
