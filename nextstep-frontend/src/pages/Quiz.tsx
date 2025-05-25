@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import {
   Container,
   Box,
@@ -102,7 +103,8 @@ interface QuizState {
 }
 
 const Quiz: React.FC = () => {
-  const [subject, setSubject] = useState<string>('');
+  const [searchParams] = useSearchParams();
+  const [subject, setSubject] = useState<string>(searchParams.get('subject') || '');
   const [quiz, setQuiz] = useState<QuizState | null>(null);
   const [loading, setLoading] = useState<boolean>(false);
   const [showAnswer, setShowAnswer] = useState<{ [key: number]: boolean }>({});
@@ -218,6 +220,11 @@ const Quiz: React.FC = () => {
     }
   };
 
+  const handleEditSubject = (newSubject: string) => {
+    setSubject(newSubject);
+    setQuiz(null); // Reset the quiz to allow generating a new one with the updated subject
+  };
+
   return (
     <Container maxWidth="md" sx={{ py: 4 }}>
       <Typography variant="h4" component="h1" gutterBottom align="center">
@@ -254,7 +261,14 @@ const Quiz: React.FC = () => {
       {quiz && (
         <Box sx={{ p: 3, bgcolor: 'background.paper', borderRadius: 2, boxShadow: 1 }}>
           <Typography variant="h5" gutterBottom align="center" sx={{ mb: 3 }}>
-            Quiz on: {quiz.subject}
+            Quiz on: 
+            <TextField
+              value={subject}
+              onChange={(e) => handleEditSubject(e.target.value)}
+              variant="outlined"
+              size="small"
+              sx={{ ml: 2, width: '50%' }}
+            />
           </Typography>
 
           {/* --- Enhanced Display of Quiz Metadata --- */}

@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Box, Typography, Button, Grid, CircularProgress, IconButton, TextField, MenuItem, Select, FormControl, InputLabel, Dialog, DialogTitle, DialogContent, DialogActions, Chip, Stack } from '@mui/material';
 import { ExpandLess, LinkedIn, Settings } from '@mui/icons-material';
+import { useNavigate } from 'react-router-dom';
 
 interface Job {
   position: string;
@@ -66,6 +67,12 @@ const LinkedInIntegration: React.FC<LinkedInIntegrationProps> = ({
   const handleCloseDialog = () => {
     setSelectedJob(null);
     setJobDetails(null);
+  };
+
+  const handleGenerateQuiz = (job: Job) => {
+    const subject = `${job.position} at ${job.company}`;
+    const quizUrl = `/quiz?subject=${encodeURIComponent(subject)}`;
+    window.open(quizUrl, '_blank');
   };
 
   return (
@@ -281,14 +288,22 @@ const LinkedInIntegration: React.FC<LinkedInIntegrationProps> = ({
                 Close
               </Button>
               {selectedJob?.jobUrl && (
-                <Button
-                  href={selectedJob.jobUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  color="primary"
-                >
-                  Open in LinkedIn
-                </Button>
+                <div>
+                  <Button
+                    onClick={() => handleGenerateQuiz(selectedJob)}
+                    color="primary"
+                  >
+                    Generate a quiz
+                  </Button>
+                  <Button
+                    href={selectedJob.jobUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    color="primary"
+                  >
+                    Open in LinkedIn
+                  </Button>
+                </div>
               )}
             </DialogActions>
           </Dialog>
