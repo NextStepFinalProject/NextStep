@@ -68,6 +68,12 @@ const LinkedInIntegration: React.FC<LinkedInIntegrationProps> = ({
     setJobDetails(null);
   };
 
+  const handleGenerateQuiz = (job: Job) => {
+    const subject = `${job.position} at ${job.company}`;
+    const quizUrl = `/quiz?subject=${encodeURIComponent(subject)}`;
+    window.open(quizUrl, '_blank');
+  };
+
   return (
     <Box sx={{ bgcolor: 'background.paper', p: 3, borderRadius: 2, boxShadow: 1, mt: 4 }}>
       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
@@ -281,14 +287,22 @@ const LinkedInIntegration: React.FC<LinkedInIntegrationProps> = ({
                 Close
               </Button>
               {selectedJob?.jobUrl && (
-                <Button
-                  href={selectedJob.jobUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  color="primary"
-                >
-                  Open in LinkedIn
-                </Button>
+                <div>
+                  <Button
+                    onClick={() => handleGenerateQuiz(selectedJob)}
+                    color="primary"
+                  >
+                    Generate a quiz
+                  </Button>
+                  <Button
+                    href={selectedJob.jobUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    color="primary"
+                  >
+                    Open in LinkedIn
+                  </Button>
+                </div>
               )}
             </DialogActions>
           </Dialog>

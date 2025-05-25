@@ -14,6 +14,7 @@ import Resume from './pages/Resume';
 import TopBar from './components/TopBar';
 import Layout from './components/Layout';
 import MainDashboard from './pages/MainDashboard';
+import Quiz from './pages/Quiz';
 
 const App: React.FC = () => {
   return (
@@ -30,6 +31,7 @@ const App: React.FC = () => {
           <Route path="/chat" element={<RequireAuth><TopBar /><Layout className="chat"><Chat /></Layout></RequireAuth>} />
           <Route path="/resume" element={<RequireAuth><TopBar /><Layout className="resume"><Resume /></Layout></RequireAuth>} />
           <Route path="/main-dashboard" element={<RequireAuth><TopBar /><Layout className="main-dashboard"><MainDashboard /></Layout></RequireAuth>} />
+          <Route path="/quiz" element={<RequireAuth><TopBar /><Layout className="quiz"><Quiz /></Layout></RequireAuth>} />
           <Route path="*" element={<Navigate to="/" />} />
         </Routes>
       </Router>
