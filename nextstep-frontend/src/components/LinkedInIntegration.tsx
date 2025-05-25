@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { Box, Typography, Button, Grid, CircularProgress, IconButton, TextField, MenuItem, Select, FormControl, InputLabel, Dialog, DialogTitle, DialogContent, DialogActions, Chip, Stack } from '@mui/material';
 import { ExpandLess, LinkedIn, Settings } from '@mui/icons-material';
-import { useNavigate } from 'react-router-dom';
 
 interface Job {
   position: string;
