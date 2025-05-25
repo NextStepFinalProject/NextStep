@@ -4,6 +4,7 @@ import { AppBar, Toolbar, IconButton, Tooltip, Box } from '@mui/material';
 import { Home, Person, Message, Logout, DocumentScannerTwoTone, Feed, Quiz } from '@mui/icons-material';
 import {getUserAuth, removeUserAuth} from "../handlers/userAuth.ts";
 import api from "../serverApi.ts";
+import logo from '../../assets/NextStepLogo.png';
 
 const TopBar: React.FC = () => {
   const userAuthRef = useRef(getUserAuth());
@@ -24,7 +25,12 @@ const TopBar: React.FC = () => {
       <Toolbar>
         <Tooltip title="Home">
           <IconButton color="inherit" onClick={() => navigate('/main-dashboard')} sx={{ mx: 1 }}>
-            <Home fontSize='large'/>
+          <Box
+            component="img"
+            src={logo}
+            alt="Logo"
+            sx={{ height: 50, width: 50 }}
+          />          
           </IconButton>
         </Tooltip>
         <Tooltip title="Resume">

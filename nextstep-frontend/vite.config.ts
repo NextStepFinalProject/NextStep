@@ -11,5 +11,12 @@ export default defineConfig({
   server: {
     port: parseInt(process.env.VITE_PORT || '5000')
   },
-  preview: { port: parseInt(process.env.VITE_PORT || '5000') }
+  preview: { port: parseInt(process.env.VITE_PORT || '5000') },
+  build: {
+    rollupOptions: {
+      input: {
+        main: './index.html',
+      },
+    },
+  },
 })
