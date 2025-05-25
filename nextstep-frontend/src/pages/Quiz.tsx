@@ -27,6 +27,7 @@ import {
   BusinessOutlined as BusinessOutlinedIcon,
   LocalOfferOutlined as LocalOfferOutlinedIcon,
 } from '@mui/icons-material';
+import SchoolIcon from '@mui/icons-material/School'; // Import graduation hat icon
 import api from '../serverApi';
 import { config } from '../config';
 
@@ -227,8 +228,22 @@ const Quiz: React.FC = () => {
 
   return (
     <Container maxWidth="md" sx={{ py: 4 }}>
-      <Typography variant="h4" component="h1" gutterBottom align="center">
-        Quiz Generator & Grader
+      <Typography variant="h4" component="h1" gutterBottom align="center" sx={{ position: 'relative' }}>
+        Quiz Generator &{' '}
+        <Box sx={{ display: 'inline-block', position: 'relative' }}>
+          <SchoolIcon
+            sx={{
+              position: 'absolute',
+              top: '-10px',
+              left: '110%',
+              size: 'large',
+              transform: 'translateX(-50%) rotate(30deg)',
+              fontSize: 30,
+              color: 'primary.main',
+            }}
+          />
+          Grader
+        </Box>
       </Typography>
 
       {/* Subject Input */}
