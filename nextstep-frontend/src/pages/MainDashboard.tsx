@@ -25,7 +25,9 @@ import {
   Person as PersonIcon,
   Work as WorkIcon,
   Build as BuildIcon,
-  DocumentScannerTwoTone
+  DocumentScannerTwoTone,
+  LightbulbSharp,
+  Grading
 } from '@mui/icons-material';
 import {
   connectToGitHub,
@@ -34,7 +36,7 @@ import {
   handleGitHubOAuth
 } from '../handlers/githubAuth';
 import api from '../serverApi';
-import LinkedInIntegration from '../components/LinkedInIntegration';
+import LinkedinJobs from '../components/LinkedinJobs';
 
 const roles = [
   'Software Engineer', 'Frontend Developer', 'Backend Developer',
@@ -310,7 +312,7 @@ const MainDashboard: React.FC = () => {
             {roleMatch && (
               <Box sx={{ bgcolor: 'background.paper', p: 3, borderRadius: 2, boxShadow: 1 }}>
                 <Box display="flex" alignItems="center" mb={2}>
-                  <WorkIcon fontSize="large" color="secondary" sx={{ mr: 1 }} />
+                  <LightbulbSharp fontSize="large" sx={{ mr: 1, color: 'orange' }} />
                   <Typography variant="h6" sx={{ flexGrow: 1 }} align="center">
                     Suggested Role Match
                   </Typography>
@@ -323,7 +325,7 @@ const MainDashboard: React.FC = () => {
             {resumeExperience.length > 0 && (
               <Box sx={{ bgcolor: 'background.paper', p: 3, borderRadius: 2, boxShadow: 1 }}>
                 <Box display="flex" alignItems="center" mb={2}>
-                  <BuildIcon fontSize="large" color="info" sx={{ mr: 1 }} />
+                  <Grading fontSize="large" sx={{ mr: 1, color: 'darkred' }} />
                   <Typography variant="h6" sx={{ flexGrow: 1 }} align="center">
                     Experience
                   </Typography>
@@ -413,7 +415,7 @@ const MainDashboard: React.FC = () => {
           </Box>
 
           {/* Jobs Section */}
-          <LinkedInIntegration
+          <LinkedinJobs
             jobs={jobs}
             loadingJobs={loadingJobs}
             fetchJobs={fetchJobs}

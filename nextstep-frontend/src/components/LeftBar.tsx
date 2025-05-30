@@ -36,10 +36,10 @@ const LeftBar: React.FC = () => {
     <Drawer
       variant="permanent"
       sx={{
-        width: collapsed ? 60 : 220,
+        width: collapsed ? 60 : 180,
         flexShrink: 0,
         [`& .MuiDrawer-paper`]: {
-          width: collapsed ? 60 : 220,
+          width: collapsed ? 60 : 180,
           boxSizing: 'border-box',
           backgroundColor: '#233752',
           color: 'white',
