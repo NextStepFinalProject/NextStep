@@ -6,6 +6,7 @@
   --color-5: #165dbb;
   --color-6: #052652;
   --color-shadow-1: rgba(0, 0, 0, 0.1);
+  background-color: #f0f2f5;
 }
 
 #root {

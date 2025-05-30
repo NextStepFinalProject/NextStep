@@ -25,7 +25,7 @@ import {
   Person as PersonIcon,
   Work as WorkIcon,
   Build as BuildIcon,
-  UploadFile as UploadFileIcon
+  DocumentScannerTwoTone
 } from '@mui/icons-material';
 import {
   connectToGitHub,
@@ -204,7 +204,7 @@ const MainDashboard: React.FC = () => {
                 <Tooltip title="Upload CV" arrow placement="left">
                 <label htmlFor="upload-resume">
                   <IconButton component="span" sx={{ p: 0 }}>
-                    <UploadFileIcon />
+                    <DocumentScannerTwoTone />
                   </IconButton>
                 </label>
                 </Tooltip>
@@ -228,7 +228,7 @@ const MainDashboard: React.FC = () => {
 
               {/* Header */}
               <Box display="flex" alignItems="center" mb={2}>
-                <PersonIcon fontSize="large" color="primary" sx={{ mr: 1 }} />
+                <PersonIcon fontSize="large" color="primary" sx={{ mr: 1, fillOpacity: '80%' }} />
                 <Typography variant="h6" sx={{ flexGrow: 1 }} align="center">
                   About Me
                 </Typography>
@@ -249,7 +249,7 @@ const MainDashboard: React.FC = () => {
             {/* Desired Role */}
             <Box sx={{ bgcolor: 'background.paper', p: 3, borderRadius: 2, boxShadow: 1 }}>
               <Box display="flex" alignItems="center" mb={2}>
-                <WorkIcon fontSize="large" color="secondary" sx={{ mr: 1 }} />
+                <WorkIcon fontSize="large" color="inherit" sx={{ mr: 1, color: 'darkslategrey' }} />
                 <Typography variant="h6" sx={{ flexGrow: 1 }} align="center">
                   Desired Role
                 </Typography>
@@ -268,7 +268,7 @@ const MainDashboard: React.FC = () => {
             {/* Skills */}
             <Box sx={{ bgcolor: 'background.paper', p: 3, borderRadius: 2, boxShadow: 1 }}>
               <Box display="flex" alignItems="center" mb={2}>
-                <BuildIcon fontSize="large" color="success" sx={{ mr: 1 }} />
+                <BuildIcon fontSize="large" sx={{ mr: 1, color:"grey" }} />
                 <Typography variant="h6" sx={{ flexGrow: 1 }} align="center">
                   Skills
                 </Typography>
@@ -362,7 +362,7 @@ const MainDashboard: React.FC = () => {
                 <Button
                   fullWidth
                   variant="contained"
-                  startIcon={<GitHub />}
+                  startIcon={<GitHub sx={{color:'black'}}/>}
                   sx={{ my: 1 }}
                   onClick={handleGitHubConnect}
                 >
@@ -383,6 +383,7 @@ const MainDashboard: React.FC = () => {
                   startIcon={<GitHub />}
                   fullWidth
                   onClick={() => setShowAuthOptions(true)}
+                  sx={{backgroundColor: 'darkslategrey'}}
                 >
                   Connect GitHub
                 </Button>
