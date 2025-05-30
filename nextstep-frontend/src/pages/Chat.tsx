@@ -3,10 +3,22 @@ import './Chat.css';
 import { config } from '../config';
 import { io, Socket } from "socket.io-client";
 import { LoginResponse } from '../models/LoginResponse';
-import DividedList from '../components/DividedList';
 import { Room } from '../models/Room';
 import axios from 'axios';
-import { Box, CircularProgress, Alert, Snackbar } from '@mui/material';
+import { 
+  Box, 
+  CircularProgress, 
+  Alert, 
+  Snackbar, 
+  TextField, 
+  Button, 
+  Typography,
+  useTheme,
+  Paper,
+  Divider
+} from '@mui/material';
+import { Send as SendIcon } from '@mui/icons-material';
+import DividedList from '../components/DividedList';
 
 const Chat: React.FC = () => {
   const [messageContent, setMessageContent] = useState('');
@@ -15,6 +27,7 @@ const Chat: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isConnected, setIsConnected] = useState(false);
+  const theme = useTheme();
 
   const usersMetadataCacheRef = useRef(new Set<LoginResponse>());
   const socketRef = useRef<Socket | null>(null);
@@ -44,12 +57,10 @@ const Chat: React.FC = () => {
     }
 
     try {
-      // Cleanup existing socket if any
       if (socketRef.current) {
         socketRef.current.disconnect();
       }
 
-      // Create new socket connection
       socketRef.current = io(config.app.backend_url(), {
         extraHeaders: {
           authorization: `Bearer ${userAuthRef.current.accessToken}`
@@ -60,7 +71,6 @@ const Chat: React.FC = () => {
         timeout: 10000,
       });
 
-      // Connection event handlers
       socketRef.current.on('connect', () => {
         setIsConnected(true);
         setError(null);
@@ -78,7 +88,6 @@ const Chat: React.FC = () => {
         setError('Disconnected from server. Attempting to reconnect...');
       });
 
-      // Message handlers
       socketRef.current.on(config.socketMethods.messageFromServer, ({ roomId, message }: any) => {
         setRoom(prevRoom => {
           if (prevRoom && prevRoom._id === roomId) {
@@ -101,7 +110,6 @@ const Chat: React.FC = () => {
     }
   }, []);
 
-  // Initial connection
   useEffect(() => {
     if (userAuthRef.current) {
       connectHandler();
@@ -149,7 +157,6 @@ const Chat: React.FC = () => {
     }
   };
 
-  // Scroll to bottom when messages change
   useEffect(() => {
     if (messagesEndRef.current) {
       messagesEndRef.current.scrollIntoView({ behavior: 'smooth' });
@@ -165,7 +172,13 @@ const Chat: React.FC = () => {
   }
 
   return (
-    <Box sx={{ maxWidth: 800, mx: 'auto', p: 3 }}>
+    <Box sx={{ 
+      maxWidth: '100%', 
+      mx: 'auto', 
+      p: 3,
+      display: 'flex',
+      gap: 3,
+    }}>
       <Snackbar
         open={!!error}
         autoHideDuration={6000}
@@ -177,55 +190,263 @@ const Chat: React.FC = () => {
         </Alert>
       </Snackbar>
 
-      <div className="chat-container">
-        <div className="message-input">
-          <input
-            type="text"
-            onChange={(e) => setMessageContent(e.target.value)}
-            value={messageContent}
+      <Paper 
+        elevation={3}
+        sx={{
+          p: 3,
+          display: 'flex',
+          flexDirection: 'column',
+          gap: 2,
+          bgcolor: 'background.paper',
+          borderRadius: 3,
+          boxShadow: '0 8px 32px rgba(0, 0, 0, 0.08)',
+          transition: 'all 0.3s ease',
+          '&:hover': {
+            boxShadow: '0 12px 48px rgba(0, 0, 0, 0.12)',
+          },
+          flex: 1,
+          maxWidth: '1200px',
+        }}
+      >
+        <Box className="message-input" sx={{ 
+          display: 'flex', 
+          gap: 2,
+          bgcolor: 'background.default',
+          p: 2,
+          borderRadius: 2,
+          boxShadow: '0 2px 8px rgba(0, 0, 0, 0.05)',
+        }}>
+          <TextField
+            fullWidth
+            variant="outlined"
             placeholder="Type your message..."
+            value={messageContent}
+            onChange={(e) => setMessageContent(e.target.value)}
             disabled={!isConnected}
+            onKeyPress={(e) => {
+              if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                sendMessageHandler();
+              }
+            }}
+            sx={{
+              '& .MuiOutlinedInput-root': {
+                bgcolor: 'background.paper',
+                borderRadius: 2,
+                transition: 'all 0.3s ease',
+                '& fieldset': {
+                  borderColor: 'divider',
+                },
+                '&:hover fieldset': {
+                  borderColor: 'primary.main',
+                },
+                '&.Mui-focused fieldset': {
+                  borderColor: 'primary.main',
+                  borderWidth: '1px',
+                },
+                '& input': {
+                  color: 'text.primary',
+                  '&::placeholder': {
+                    color: 'text.secondary',
+                    opacity: 0.7,
+                  },
+                },
+              },
+            }}
           />
-          <button 
+          <Button
+            variant="contained"
+            color="primary"
             onClick={sendMessageHandler}
             disabled={!isConnected || !messageContent.trim()}
+            endIcon={<SendIcon />}
+            sx={{ 
+              borderRadius: 2,
+              px: 3,
+              minWidth: '100px',
+              transition: 'all 0.3s ease',
+              '&:hover': {
+                transform: 'translateY(-2px)',
+                boxShadow: '0 4px 12px rgba(9, 132, 227, 0.2)',
+              },
+              '&.Mui-disabled': {
+                bgcolor: 'action.disabledBackground',
+                color: 'action.disabled',
+              },
+            }}
           >
             Send
-          </button>
-        </div>
+          </Button>
+        </Box>
 
-        <div className="chat-messages">
+        <Paper
+          className="chat-messages"
+          elevation={0}
+          sx={{
+            bgcolor: 'background.default',
+            border: 1,
+            borderColor: 'divider',
+            borderRadius: 2,
+            p: 2,
+            maxHeight: '60vh',
+            overflowY: 'auto',
+            '&::-webkit-scrollbar': {
+              width: '8px',
+            },
+            '&::-webkit-scrollbar-track': {
+              background: 'transparent',
+            },
+            '&::-webkit-scrollbar-thumb': {
+              background: 'rgba(0, 0, 0, 0.1)',
+              borderRadius: '4px',
+            },
+            '&::-webkit-scrollbar-thumb:hover': {
+              background: 'rgba(0, 0, 0, 0.2)',
+            },
+          }}
+        >
           {room.messages.length === 0 ? (
-            <div className="no-messages">
-              <p>No messages yet. Start the conversation!</p>
-            </div>
+            <Box className="no-messages" sx={{ py: 4 }}>
+              <Typography variant="body1" color="text.secondary" sx={{ opacity: 0.7 }}>
+                No messages yet. Start the conversation!
+              </Typography>
+            </Box>
           ) : (
             room.messages.map((m: any, index: number) => (
-              <div key={index} className="message">
-                <div className="message-header">
-                  <span className="message-user">
+              <Box 
+                key={index} 
+                className="message"
+                sx={{
+                  mb: 2,
+                  p: 2,
+                  borderRadius: 2,
+                  maxWidth: '80%',
+                  ml: m?.userId === userAuthRef.current?.id ? 'auto' : 0,
+                  mr: m?.userId === userAuthRef.current?.id ? 0 : 'auto',
+                  bgcolor: m?.userId === userAuthRef.current?.id ? 'primary.main' : 'background.paper',
+                  color: m?.userId === userAuthRef.current?.id ? 'primary.contrastText' : 'text.primary',
+                  boxShadow: '0 2px 8px rgba(0, 0, 0, 0.05)',
+                  transition: 'all 0.3s ease',
+                  '&:hover': {
+                    transform: 'translateY(-2px)',
+                    boxShadow: '0 4px 12px rgba(0, 0, 0, 0.08)',
+                  },
+                }}
+              >
+                <Box className="message-header" sx={{ mb: 1, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <Typography
+                    variant="subtitle2"
+                    sx={{
+                      color: m?.userId === userAuthRef.current?.id ? 'inherit' : 'primary.main',
+                      fontWeight: 600,
+                    }}
+                    className="message-user"
+                  >
                     {Array.from(usersMetadataCacheRef.current).find(u => u.id === m?.userId)?.email}
-                  </span>
-                  <span className="message-time">
+                  </Typography>
+                  <Typography
+                    variant="caption"
+                    sx={{
+                      color: m?.userId === userAuthRef.current?.id ? 'inherit' : 'text.secondary',
+                      opacity: 0.8,
+                    }}
+                    className="message-time"
+                  >
                     {new Date(m?.createdAt).toLocaleTimeString()}
-                  </span>
-                </div>
-                <div className="message-content">{m?.content}</div>
-              </div>
+                  </Typography>
+                </Box>
+                <Typography
+                  variant="body1"
+                  sx={{
+                    color: 'inherit',
+                    lineHeight: 1.5,
+                  }}
+                  className="message-content"
+                >
+                  {m?.content}
+                </Typography>
+              </Box>
             ))
           )}
           <div ref={messagesEndRef} />
-        </div>
+        </Paper>
+      </Paper>
 
-        <div className="online-users">
-          <h3>Online Users:</h3>
-          <DividedList 
-            onlineUsers={onlineUsers} 
-            onUserClick={onUserClick}
-            disabled={!isConnected}
-          />
-        </div>
-      </div>
+      <Paper
+        elevation={3}
+        sx={{
+          width: 300,
+          p: 2,
+          bgcolor: 'background.paper',
+          borderRadius: 3,
+          boxShadow: '0 8px 32px rgba(0, 0, 0, 0.08)',
+          transition: 'all 0.3s ease',
+          '&:hover': {
+            boxShadow: '0 12px 48px rgba(0, 0, 0, 0.12)',
+          },
+          display: 'flex',
+          flexDirection: 'column',
+          gap: 2,
+          height: 'fit-content',
+          position: 'sticky',
+          top: 24,
+        }}
+      >
+        <Box sx={{ 
+          display: 'flex', 
+          alignItems: 'center', 
+          gap: 1,
+          pb: 1,
+          borderBottom: 1,
+          borderColor: 'divider',
+        }}>
+          <Typography 
+            variant="h6" 
+            color="text.primary" 
+            sx={{ 
+              fontWeight: 600,
+              display: 'flex',
+              alignItems: 'center',
+              gap: 1,
+            }}
+          >
+            Online Users
+          </Typography>
+          <Box sx={{ 
+            ml: 'auto',
+            display: 'flex',
+            alignItems: 'center',
+            gap: 0.5,
+            color: 'success.main',
+            fontSize: '0.875rem',
+          }}>
+            <Box sx={{ 
+              width: 8, 
+              height: 8, 
+              borderRadius: '50%', 
+              bgcolor: 'success.main',
+              animation: 'pulse 2s infinite',
+              '@keyframes pulse': {
+                '0%': {
+                  boxShadow: '0 0 0 0 rgba(0, 200, 83, 0.4)',
+                },
+                '70%': {
+                  boxShadow: '0 0 0 6px rgba(0, 200, 83, 0)',
+                },
+                '100%': {
+                  boxShadow: '0 0 0 0 rgba(0, 200, 83, 0)',
+                },
+              },
+            }} />
+            {onlineUsers.length} online
+          </Box>
+        </Box>
+        <DividedList 
+          onlineUsers={onlineUsers} 
+          onUserClick={onUserClick}
+          disabled={!isConnected}
+        />
+      </Paper>
     </Box>
   );
 };

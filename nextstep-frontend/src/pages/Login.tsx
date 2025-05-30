@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import axios from 'axios';
-import { Container, TextField, Button, Typography, Box, Paper, Link, Alert } from '@mui/material';
+import { Container, TextField, Button, Typography, Box, Paper, Link, Alert, IconButton } from '@mui/material';
 import { Link as RouterLink, useNavigate } from 'react-router-dom';
 import './Login.css';
 import { config } from '../config';
@@ -8,14 +8,15 @@ import { LoginResponse } from '../models/LoginResponse';
 import {setUserAuth} from "../handlers/userAuth.ts";
 import { signInWithPopup } from "firebase/auth";
 import { auth, googleProvider } from "../firebase";
-
-
+import { LightMode, DarkMode } from '@mui/icons-material';
+import { useTheme as useCustomTheme } from '../contexts/ThemeContext';
 
 const Login: React.FC = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const navigate = useNavigate();
+  const { isDarkMode, toggleTheme } = useCustomTheme();
 
    // Google Login
    const handleGoogleLogin = async () => {
@@ -67,7 +68,27 @@ const Login: React.FC = () => {
   return (
     <div className="login-container">
       <Container component="main" maxWidth="xs">
-        <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center'}}>
+        <Box
+          sx={{
+            position: 'relative',
+            mt: 8,
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+          }}
+        >
+          <IconButton
+            onClick={toggleTheme}
+            sx={{
+              position: 'absolute',
+              top: -40,
+              right: 0,
+              color: 'text.primary',
+            }}
+          >
+            {isDarkMode ? <LightMode /> : <DarkMode />}
+          </IconButton>
+
           <Typography component="h1" variant="h3" gutterBottom>
             Next Step
           </Typography>

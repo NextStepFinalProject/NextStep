@@ -1,170 +1,233 @@
 import React, { useRef, useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { Box, Drawer, List, ListItem, ListItemIcon, ListItemText, IconButton, Tooltip, Divider } from '@mui/material';
-import { Home, Person, Message, Logout, DocumentScannerTwoTone, Feed, Quiz, Menu, ChevronLeft } from '@mui/icons-material';
+import { Box, Drawer, List, ListItem, ListItemIcon, ListItemText, IconButton, Tooltip, Divider, useTheme as useMuiTheme, ListItemButton } from '@mui/material';
+import { Home, Person, Message, Logout, DocumentScannerTwoTone, Feed, Quiz, Menu, ChevronLeft, LightMode, DarkMode } from '@mui/icons-material';
 import { getUserAuth, removeUserAuth } from "../handlers/userAuth.ts";
 import api from "../serverApi.ts";
 import logo from '../../assets/NextStep.png';
+import { useTheme } from '../contexts/ThemeContext';
 
 const LeftBar: React.FC = () => {
-  const userAuthRef = useRef(getUserAuth());
   const navigate = useNavigate();
   const location = useLocation();
-  const [collapsed, setCollapsed] = useState(false);
+  const [collapsed, setCollapsed] = useState(true);
+  const { isDarkMode, toggleTheme } = useTheme();
+  const muiTheme = useMuiTheme();
 
   useEffect(() => {
-    if (!userAuthRef.current) {
-      setCollapsed(true);
-    }
-  }, [userAuthRef.current]);
+    const handleResize = () => {
+      if (window.innerWidth < 600) {
+        setCollapsed(true);
+      }
+    };
+
+    handleResize();
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   const handleLogout = async () => {
-    if (userAuthRef.current) {
-      await api.post(`/auth/logout`, {
-        refreshToken: userAuthRef.current.refreshToken,
-      });
+    try {
+      const userAuth = getUserAuth();
+      if (userAuth) {
+        await api.post('/auth/logout', {}, {
+          headers: { Authorization: `Bearer ${userAuth.accessToken}` }
+        });
+      }
+    } catch (error) {
+      console.error('Logout error:', error);
+    } finally {
       removeUserAuth();
+      navigate('/login');
     }
-    navigate('/logout');
-  };
-
-  const toggleCollapse = () => {
-    setCollapsed(!collapsed);
   };
 
   const menuItems = [
-    { path: '/main-dashboard', icon: <Home />, text: 'Home' },
-    { path: '/resume', icon: <DocumentScannerTwoTone />, text: 'Resume' },
-    { path: '/quiz', icon: <Quiz />, text: 'Quiz' },
-    { path: '/feed', icon: <Feed />, text: 'Feed' },
-    { path: '/chat', icon: <Message />, text: 'Chat' },
-    { path: '/profile', icon: <Person />, text: 'Profile' },
+    { text: 'Dashboard', icon: <Home />, path: '/main-dashboard' },
+    { text: 'Feed', icon: <Feed />, path: '/feed' },
+    { text: 'Profile', icon: <Person />, path: '/profile' },
+    { text: 'Chat', icon: <Message />, path: '/chat' },
+    { text: 'Resume', icon: <DocumentScannerTwoTone />, path: '/resume' },
+    { text: 'Quiz', icon: <Quiz />, path: '/quiz' },
   ];
 
   return (
     <Drawer
       variant="permanent"
       sx={{
-        width: collapsed ? 72 : 240,
+        width: collapsed ? 64 : 240,
         flexShrink: 0,
-        [`& .MuiDrawer-paper`]: {
-          width: collapsed ? 72 : 240,
+        position: 'fixed',
+        '& .MuiDrawer-paper': {
+          width: collapsed ? 64 : 240,
           boxSizing: 'border-box',
-          backgroundColor: 'background.paper',
+          transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+          bgcolor: 'background.paper',
           borderRight: '1px solid',
           borderColor: 'divider',
-          transition: 'width 0.3s ease',
           overflowX: 'hidden',
+          '&:hover': {
+            width: 240,
+            boxShadow: '4px 0 20px rgba(0, 0, 0, 0.1)',
+            '& .logo-text': {
+              opacity: 1,
+              transform: 'translateX(0)',
+            },
+            '& .menu-text': {
+              opacity: 1,
+              transform: 'translateX(0)',
+            },
+          },
         },
       }}
     >
-      <Box
-        sx={{
-          display: 'flex',
+      <Box 
+        sx={{ 
+          p: 2, 
+          display: 'flex', 
+          justifyContent: 'center', 
           alignItems: 'center',
-          justifyContent: collapsed ? 'center' : 'space-between',
-          p: 2,
-          minHeight: 64,
+          transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
         }}
       >
-        {!collapsed && (
-          <Box
-            component="img"
-            src={logo}
-            alt="Logo"
-            sx={{ 
-              height: 40,
-              width: 'auto',
-              transition: 'all 0.3s ease',
-            }}
-          />
-        )}
-        <IconButton 
-          onClick={toggleCollapse} 
+        <Box
+          component="img"
+          src={logo}
+          alt="NextStep"
+          className="logo-text"
           sx={{ 
-            color: 'text.secondary',
-            '&:hover': {
-              backgroundColor: 'action.hover',
-            },
+            height: 40, 
+            cursor: 'pointer',
+            opacity: 1,
+            transform: collapsed ? 'scale(0.8)' : 'scale(1)',
+            transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
           }}
-        >
-          {collapsed ? <Menu /> : <ChevronLeft />}
-        </IconButton>
+          onClick={() => navigate('/')}
+        />
       </Box>
       <Divider />
-      <List sx={{ px: 1 }}>
+      <List>
         {menuItems.map((item) => (
-          <Tooltip 
-            key={item.path} 
-            title={collapsed ? item.text : ''} 
-            placement="right"
-          >
-            <ListItem
-              button
+          <ListItem key={item.text} disablePadding>
+            <ListItemButton
+              selected={location.pathname === item.path}
               onClick={() => navigate(item.path)}
               sx={{
-                borderRadius: 2,
-                mb: 0.5,
-                backgroundColor: location.pathname === item.path ? 'action.selected' : 'transparent',
-                '&:hover': {
-                  backgroundColor: 'action.hover',
+                minHeight: 48,
+                justifyContent: collapsed ? 'center' : 'initial',
+                px: 2.5,
+                transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                '&.Mui-selected': {
+                  bgcolor: 'primary.main',
+                  color: 'primary.contrastText',
+                  '&:hover': {
+                    bgcolor: 'primary.dark',
+                  },
+                  '& .MuiListItemIcon-root': {
+                    color: 'inherit',
+                  },
                 },
-                transition: 'all 0.2s ease',
+                '&:hover': {
+                  bgcolor: 'action.hover',
+                  transform: 'translateX(4px)',
+                },
               }}
             >
               <ListItemIcon
                 sx={{
                   minWidth: collapsed ? 'auto' : 40,
-                  color: location.pathname === item.path ? 'primary.main' : 'text.secondary',
+                  mr: collapsed ? 0 : 2,
+                  color: location.pathname === item.path ? 'inherit' : 'text.secondary',
+                  transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
                 }}
               >
                 {item.icon}
               </ListItemIcon>
-              {!collapsed && (
-                <ListItemText 
-                  primary={item.text}
-                  primaryTypographyProps={{
-                    color: location.pathname === item.path ? 'primary.main' : 'text.primary',
-                    fontWeight: location.pathname === item.path ? 600 : 400,
-                  }}
-                />
-              )}
-            </ListItem>
-          </Tooltip>
+              <ListItemText 
+                primary={item.text}
+                className="menu-text"
+                sx={{
+                  opacity: collapsed ? 0 : 1,
+                  transform: collapsed ? 'translateX(-20px)' : 'translateX(0)',
+                  transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                  ml: 1,
+                }}
+              />
+            </ListItemButton>
+          </ListItem>
         ))}
       </List>
       <Box sx={{ flexGrow: 1 }} />
       <Divider />
       <List sx={{ px: 1 }}>
-        <Tooltip title={collapsed ? 'Logout' : ''} placement="right">
-          <ListItem
-            button
-            onClick={handleLogout}
-            sx={{
-              borderRadius: 2,
-              mb: 0.5,
-              '&:hover': {
-                backgroundColor: 'action.hover',
-              },
-              transition: 'all 0.2s ease',
-            }}
-          >
-            <ListItemIcon
+        <Tooltip title={collapsed ? 'Theme' : ''} placement="right">
+          <ListItem disablePadding>
+            <ListItemButton
+              onClick={toggleTheme}
               sx={{
-                minWidth: collapsed ? 'auto' : 40,
-                color: 'text.secondary',
+                borderRadius: 2,
+                mb: 0.5,
+                '&:hover': {
+                  backgroundColor: 'action.hover',
+                },
+                transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
               }}
             >
-              <Logout />
-            </ListItemIcon>
-            {!collapsed && (
+              <ListItemIcon
+                sx={{
+                  minWidth: collapsed ? 'auto' : 40,
+                  mr: collapsed ? 0 : 2,
+                  color: 'text.secondary',
+                }}
+              >
+                {isDarkMode ? <LightMode /> : <DarkMode />}
+              </ListItemIcon>
               <ListItemText 
-                primary="Logout"
-                primaryTypographyProps={{
-                  color: 'text.primary',
+                primary={isDarkMode ? 'Light Mode' : 'Dark Mode'}
+                className="menu-text"
+                sx={{
+                  opacity: collapsed ? 0 : 1,
+                  transform: collapsed ? 'translateX(-20px)' : 'translateX(0)',
+                  transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                  ml: 1,
                 }}
               />
-            )}
+            </ListItemButton>
+          </ListItem>
+        </Tooltip>
+        <Tooltip title={collapsed ? 'Logout' : ''} placement="right">
+          <ListItem disablePadding>
+            <ListItemButton
+              onClick={handleLogout}
+              sx={{
+                borderRadius: 2,
+                mb: 0.5,
+                '&:hover': {
+                  backgroundColor: 'action.hover',
+                },
+                transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+              }}
+            >
+              <ListItemIcon
+                sx={{
+                  minWidth: collapsed ? 'auto' : 40,
+                  mr: collapsed ? 0 : 2,
+                  color: 'text.secondary',
+                }}
+              >
+                <Logout />
+              </ListItemIcon>
+              <ListItemText 
+                primary="Logout"
+                className="menu-text"
+                sx={{
+                  opacity: collapsed ? 0 : 1,
+                  transform: collapsed ? 'translateX(-20px)' : 'translateX(0)',
+                  transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                  ml: 1,
+                }}
+              />
+            </ListItemButton>
           </ListItem>
         </Tooltip>
       </List>

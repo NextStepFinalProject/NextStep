@@ -11,6 +11,8 @@ import {
   Stack,
   useTheme,
   useMediaQuery,
+  Paper,
+  IconButton,
 } from '@mui/material';
 import {
   School,
@@ -18,11 +20,15 @@ import {
   Psychology,
   Chat,
   ArrowForward,
+  LightMode,
+  DarkMode,
 } from '@mui/icons-material';
+import { useTheme as useCustomTheme } from '../contexts/ThemeContext';
 
 const Landing: React.FC = () => {
   const navigate = useNavigate();
   const theme = useTheme();
+  const { isDarkMode, toggleTheme } = useCustomTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
 
   const features = [
@@ -49,16 +55,57 @@ const Landing: React.FC = () => {
   ];
 
   return (
-    <Box sx={{ minHeight: '100vh', bgcolor: 'background.default' }}>
+    <>
       {/* Hero Section */}
       <Box
         sx={{
           pt: { xs: 8, md: 12 },
           pb: { xs: 8, md: 12 },
-          background: `linear-gradient(45deg, ${theme.palette.primary.main} 0%, ${theme.palette.secondary.main} 100%)`,
+          background: 'linear-gradient(45deg, #0984E3 0%, #00B894 100%)',
           color: 'white',
+          position: 'relative',
+          overflow: 'hidden',
+          '&::before': {
+            content: '""',
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            background: 'radial-gradient(circle at 50% 50%, rgba(255, 255, 255, 0.1) 0%, transparent 50%)',
+            animation: 'pulse 8s ease-in-out infinite',
+          },
+          '@keyframes pulse': {
+            '0%': {
+              transform: 'scale(1)',
+              opacity: 0.5,
+            },
+            '50%': {
+              transform: 'scale(1.5)',
+              opacity: 0.2,
+            },
+            '100%': {
+              transform: 'scale(1)',
+              opacity: 0.5,
+            },
+          },
         }}
       >
+        <IconButton
+          onClick={toggleTheme}
+          sx={{
+            position: 'absolute',
+            top: 16,
+            right: 16,
+            color: 'white',
+            '&:hover': {
+              bgcolor: 'rgba(255, 255, 255, 0.1)',
+              transform: 'scale(1.1)',
+            },
+          }}
+        >
+          {isDarkMode ? <LightMode /> : <DarkMode />}
+        </IconButton>
         <Container maxWidth="lg">
           <Grid container spacing={4} alignItems="center">
             <Grid item xs={12} md={6}>
@@ -66,21 +113,39 @@ const Landing: React.FC = () => {
                 variant="h1"
                 sx={{
                   fontSize: { xs: '2.5rem', md: '3.5rem' },
-                  fontWeight: 700,
+                  fontWeight: 800,
                   mb: 2,
+                  animation: 'fadeInUp 0.8s ease-out',
+                  '@keyframes fadeInUp': {
+                    '0%': {
+                      opacity: 0,
+                      transform: 'translateY(20px)',
+                    },
+                    '100%': {
+                      opacity: 1,
+                      transform: 'translateY(0)',
+                    },
+                  },
                 }}
               >
                 Take Your Next Step Towards Success
               </Typography>
               <Typography
                 variant="h5"
-                sx={{ mb: 4, opacity: 0.9 }}
+                sx={{
+                  mb: 4,
+                  opacity: 0.9,
+                  animation: 'fadeInUp 0.8s ease-out 0.2s both',
+                }}
               >
                 Your personalized career development platform that helps you navigate your professional journey with confidence.
               </Typography>
               <Stack
                 direction={{ xs: 'column', sm: 'row' }}
                 spacing={2}
+                sx={{
+                  animation: 'fadeInUp 0.8s ease-out 0.4s both',
+                }}
               >
                 <Button
                   variant="contained"
@@ -91,6 +156,7 @@ const Landing: React.FC = () => {
                     color: 'primary.main',
                     '&:hover': {
                       bgcolor: 'grey.100',
+                      transform: 'translateY(-2px)',
                     },
                   }}
                 >
@@ -106,6 +172,7 @@ const Landing: React.FC = () => {
                     '&:hover': {
                       borderColor: 'white',
                       bgcolor: 'rgba(255, 255, 255, 0.1)',
+                      transform: 'translateY(-2px)',
                     },
                   }}
                 >
@@ -123,6 +190,18 @@ const Landing: React.FC = () => {
                   maxWidth: 500,
                   height: 'auto',
                   display: { xs: 'none', md: 'block' },
+                  animation: 'float 6s ease-in-out infinite',
+                  '@keyframes float': {
+                    '0%': {
+                      transform: 'translateY(0px)',
+                    },
+                    '50%': {
+                      transform: 'translateY(-20px)',
+                    },
+                    '100%': {
+                      transform: 'translateY(0px)',
+                    },
+                  },
                 }}
               />
             </Grid>
@@ -135,38 +214,67 @@ const Landing: React.FC = () => {
         <Typography
           variant="h2"
           align="center"
-          sx={{ mb: 6, fontWeight: 700 }}
+          sx={{
+            mb: 6,
+            fontWeight: 800,
+            color: 'text.primary',
+            animation: 'fadeInUp 0.8s ease-out',
+          }}
         >
           Why Choose Next Step?
         </Typography>
         <Grid container spacing={4}>
           {features.map((feature, index) => (
             <Grid item xs={12} sm={6} md={3} key={index}>
-              <Card
+              <Paper
+                elevation={2}
                 sx={{
+                  p: 3,
                   height: '100%',
                   display: 'flex',
                   flexDirection: 'column',
-                  transition: 'transform 0.2s ease-in-out',
+                  alignItems: 'center',
+                  textAlign: 'center',
+                  bgcolor: 'background.paper',
+                  animation: `fadeInUp 0.8s ease-out ${index * 0.2}s both`,
                   '&:hover': {
                     transform: 'translateY(-8px)',
+                    boxShadow: '0 12px 40px rgba(0, 0, 0, 0.12)',
+                    '& .feature-icon': {
+                      transform: 'scale(1.1) rotate(5deg)',
+                    },
                   },
                 }}
               >
-                <CardContent sx={{ flexGrow: 1, textAlign: 'center' }}>
-                  <Box sx={{ mb: 2 }}>{feature.icon}</Box>
-                  <Typography
-                    variant="h5"
-                    component="h3"
-                    sx={{ mb: 2, fontWeight: 600 }}
-                  >
-                    {feature.title}
-                  </Typography>
-                  <Typography color="text.secondary">
-                    {feature.description}
-                  </Typography>
-                </CardContent>
-              </Card>
+                <Box
+                  className="feature-icon"
+                  sx={{
+                    mb: 2,
+                    transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                  }}
+                >
+                  {feature.icon}
+                </Box>
+                <Typography
+                  variant="h6"
+                  component="h3"
+                  sx={{
+                    mb: 1,
+                    fontWeight: 600,
+                    color: 'text.primary',
+                  }}
+                >
+                  {feature.title}
+                </Typography>
+                <Typography
+                  variant="body1"
+                  sx={{
+                    color: 'text.secondary',
+                  }}
+                >
+                  {feature.description}
+                </Typography>
+              </Paper>
             </Grid>
           ))}
         </Grid>
@@ -175,42 +283,115 @@ const Landing: React.FC = () => {
       {/* CTA Section */}
       <Box
         sx={{
-          py: { xs: 8, md: 12 },
-          bgcolor: 'grey.50',
+          py: { xs: 12, md: 16 },
+          position: 'relative',
+          overflow: 'hidden',
+          '&::before': {
+            content: '""',
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            background: theme.palette.mode === 'dark' 
+              ? 'linear-gradient(135deg, rgba(116, 185, 255, 0.1) 0%, rgba(85, 239, 196, 0.1) 100%)'
+              : 'linear-gradient(135deg, rgba(9, 132, 227, 0.1) 0%, rgba(0, 184, 148, 0.1) 100%)',
+            zIndex: 0,
+            animation: 'gradientShift 15s ease infinite',
+            '@keyframes gradientShift': {
+              '0%': {
+                backgroundPosition: '0% 50%',
+              },
+              '50%': {
+                backgroundPosition: '100% 50%',
+              },
+              '100%': {
+                backgroundPosition: '0% 50%',
+              },
+            },
+          },
         }}
       >
-        <Container maxWidth="md">
+        <Container maxWidth="md" sx={{ position: 'relative', zIndex: 1 }}>
           <Box
             sx={{
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
               textAlign: 'center',
-              p: { xs: 3, md: 6 },
-              borderRadius: 4,
-              bgcolor: 'background.paper',
-              boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)',
+              gap: 4,
+              animation: 'fadeInUp 0.8s ease-out',
             }}
           >
             <Typography
-              variant="h3"
-              sx={{ mb: 3, fontWeight: 700 }}
+              variant="h2"
+              component="h1"
+              sx={{
+                fontWeight: 800,
+                color: 'text.primary',
+                fontSize: { xs: '2.5rem', md: '3.5rem' },
+                lineHeight: 1.2,
+                mb: 2,
+                background: theme.palette.mode === 'dark'
+                  ? 'linear-gradient(135deg, #74B9FF 0%, #55EFC4 100%)'
+                  : 'linear-gradient(135deg, #0984E3 0%, #00B894 100%)',
+                WebkitBackgroundClip: 'text',
+                WebkitTextFillColor: 'transparent',
+                animation: 'gradientText 8s ease infinite',
+                '@keyframes gradientText': {
+                  '0%': {
+                    backgroundPosition: '0% 50%',
+                  },
+                  '50%': {
+                    backgroundPosition: '100% 50%',
+                  },
+                  '100%': {
+                    backgroundPosition: '0% 50%',
+                  },
+                },
+              }}
             >
               Ready to Start Your Journey?
             </Typography>
             <Typography
-              variant="h6"
-              color="text.secondary"
-              sx={{ mb: 4 }}
+              variant="h5"
+              sx={{
+                color: 'text.secondary',
+                maxWidth: '600px',
+                mb: 4,
+                fontWeight: 400,
+                animation: 'fadeInUp 0.8s ease-out 0.2s both',
+              }}
             >
               Join thousands of professionals who have already taken their next step towards success.
             </Typography>
             <Button
               variant="contained"
               size="large"
-              onClick={() => navigate('/register')}
               endIcon={<ArrowForward />}
+              onClick={() => navigate('/register')}
               sx={{
-                px: 4,
-                py: 1.5,
-                fontSize: '1.1rem',
+                px: 6,
+                py: 2,
+                fontSize: '1.2rem',
+                fontWeight: 600,
+                borderRadius: '50px',
+                boxShadow: theme.palette.mode === 'dark'
+                  ? '0 4px 20px rgba(116, 185, 255, 0.3)'
+                  : '0 4px 20px rgba(9, 132, 227, 0.3)',
+                animation: 'fadeInUp 0.8s ease-out 0.4s both',
+                '&:hover': {
+                  transform: 'translateY(-2px)',
+                  boxShadow: theme.palette.mode === 'dark'
+                    ? '0 6px 25px rgba(116, 185, 255, 0.4)'
+                    : '0 6px 25px rgba(9, 132, 227, 0.4)',
+                  '& .MuiButton-endIcon': {
+                    transform: 'translateX(4px)',
+                  },
+                },
+                '& .MuiButton-endIcon': {
+                  transition: 'transform 0.3s ease',
+                },
               }}
             >
               Get Started Now
@@ -218,7 +399,7 @@ const Landing: React.FC = () => {
           </Box>
         </Container>
       </Box>
-    </Box>
+    </>
   );
 };
 

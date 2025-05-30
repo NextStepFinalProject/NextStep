@@ -248,9 +248,7 @@ const Quiz: React.FC = () => {
 
       {/* Subject Input */}
       {!quiz && (
-        <Box sx={{ mb: 4, p: 3, bgcolor: 'background.paper', borderRadius: 2, boxShadow: 1 }}>
-          <Typography variant="h6" gutterBottom>
-          </Typography>
+        <Box sx={{ mb: 4 }}>
           <TextField
             fullWidth
             label="Quiz Subject"

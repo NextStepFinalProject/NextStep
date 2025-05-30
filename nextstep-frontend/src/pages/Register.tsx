@@ -1,8 +1,10 @@
 import React, { useState } from 'react';
 import axios from 'axios';
-import { Container, TextField, Button, Typography, Box, Paper, Link, Alert } from '@mui/material';
+import { Container, TextField, Button, Typography, Box, Paper, Link, Alert, IconButton } from '@mui/material';
 import { Link as RouterLink, useNavigate } from 'react-router-dom';
 import { config } from '../config';
+import { LightMode, DarkMode } from '@mui/icons-material';
+import { useTheme as useCustomTheme } from '../contexts/ThemeContext';
 
 const Register: React.FC = () => {
   const [username, setUsername] = useState('');
@@ -11,6 +13,7 @@ const Register: React.FC = () => {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState(false);
   const navigate = useNavigate();
+  const { isDarkMode, toggleTheme } = useCustomTheme();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -40,7 +43,27 @@ const Register: React.FC = () => {
   return (
     <div className="body">
       <Container component="main" maxWidth="xs">
-        <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+        <Box
+          sx={{
+            position: 'relative',
+            mt: 8,
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+          }}
+        >
+          <IconButton
+            onClick={toggleTheme}
+            sx={{
+              position: 'absolute',
+              top: -40,
+              right: 0,
+              color: 'text.primary',
+            }}
+          >
+            {isDarkMode ? <LightMode /> : <DarkMode />}
+          </IconButton>
+
           <Typography component="h1" variant="h3" gutterBottom>
             Next Step
           </Typography>

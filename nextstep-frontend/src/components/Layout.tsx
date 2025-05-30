@@ -13,12 +13,12 @@ const Layout: React.FC<LayoutProps> = ({
 }) => {
   return (
     <Box
+      component="main"
       sx={{
-        width: '100%',
-        minHeight: '100%',
         display: 'flex',
         flexDirection: 'column',
-        transition: 'all 0.3s ease',
+        minHeight: '100vh',
+        width: '100%',
       }}
     >
       <Container

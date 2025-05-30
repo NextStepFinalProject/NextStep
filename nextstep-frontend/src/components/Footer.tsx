@@ -1,8 +1,11 @@
 import React from 'react';
-import { Box, Container, Typography, Link, Stack } from '@mui/material';
-import { GitHub, LinkedIn, Twitter } from '@mui/icons-material';
+import { Box, Container, Typography, Link, useTheme, useMediaQuery } from '@mui/material';
+import { Link as RouterLink } from 'react-router-dom';
 
 const Footer: React.FC = () => {
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
+
   return (
     <Box
       component="footer"
@@ -10,75 +13,109 @@ const Footer: React.FC = () => {
         py: 3,
         px: 2,
         mt: 'auto',
-        backgroundColor: 'background.paper',
+        backgroundColor: theme.palette.mode === 'dark' ? 'background.paper' : 'background.default',
         borderTop: '1px solid',
         borderColor: 'divider',
+        width: '100%',
       }}
     >
       <Container maxWidth="lg">
-        <Stack
-          direction={{ xs: 'column', sm: 'row' }}
-          spacing={{ xs: 2, sm: 4 }}
-          justifyContent="space-between"
-          alignItems="center"
+        <Box
+          sx={{
+            display: 'flex',
+            flexDirection: isMobile ? 'column' : 'row',
+            justifyContent: 'space-between',
+            alignItems: isMobile ? 'center' : 'flex-start',
+            gap: 2,
+          }}
         >
-          <Typography
-            variant="body2"
-            color="text.secondary"
-            sx={{ fontWeight: 500 }}
+          <Box
+            sx={{
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: isMobile ? 'center' : 'flex-start',
+              gap: 1,
+            }}
           >
-            © {new Date().getFullYear()} Next Step. All rights reserved.
+            <Typography variant="h6" color="text.primary" sx={{ fontWeight: 600 }}>
+              NextStep
+            </Typography>
+            <Typography variant="body2" color="text.secondary" align={isMobile ? 'center' : 'left'}>
+              Empowering your career journey
+            </Typography>
+          </Box>
+
+          <Box
+            sx={{
+              display: 'flex',
+              flexDirection: isMobile ? 'column' : 'row',
+              gap: isMobile ? 2 : 4,
+              alignItems: isMobile ? 'center' : 'flex-start',
+            }}
+          >
+            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+              <Typography variant="subtitle2" color="text.primary" sx={{ fontWeight: 600 }}>
+                Quick Links
+              </Typography>
+              <Link component={RouterLink} to="/feed" color="text.secondary" underline="hover">
+                Feed
+              </Link>
+              <Link component={RouterLink} to="/profile" color="text.secondary" underline="hover">
+                Profile
+              </Link>
+              <Link component={RouterLink} to="/chat" color="text.secondary" underline="hover">
+                Chat
+              </Link>
+            </Box>
+
+            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+              <Typography variant="subtitle2" color="text.primary" sx={{ fontWeight: 600 }}>
+                Resources
+              </Typography>
+              <Link component={RouterLink} to="/resume" color="text.secondary" underline="hover">
+                Resume Builder
+              </Link>
+              <Link component={RouterLink} to="/quiz" color="text.secondary" underline="hover">
+                Career Quiz
+              </Link>
+              <Link component={RouterLink} to="/main-dashboard" color="text.secondary" underline="hover">
+                Dashboard
+              </Link>
+            </Box>
+          </Box>
+        </Box>
+
+        <Box
+          sx={{
+            mt: 3,
+            pt: 2,
+            borderTop: '1px solid',
+            borderColor: 'divider',
+            display: 'flex',
+            flexDirection: isMobile ? 'column' : 'row',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            gap: 1,
+          }}
+        >
+          <Typography variant="body2" color="text.secondary" align={isMobile ? 'center' : 'left'}>
+            © {new Date().getFullYear()} NextStep. All rights reserved.
           </Typography>
-          
-          <Stack
-            direction="row"
-            spacing={2}
-            alignItems="center"
+          <Box
+            sx={{
+              display: 'flex',
+              gap: 2,
+              justifyContent: isMobile ? 'center' : 'flex-end',
+            }}
           >
-            <Link
-              href="https://github.com"
-              target="_blank"
-              rel="noopener noreferrer"
-              color="text.secondary"
-              sx={{
-                '&:hover': {
-                  color: 'primary.main',
-                },
-                transition: 'color 0.2s ease',
-              }}
-            >
-              <GitHub />
+            <Link href="/terms" color="text.secondary" underline="hover">
+              Terms
             </Link>
-            <Link
-              href="https://linkedin.com"
-              target="_blank"
-              rel="noopener noreferrer"
-              color="text.secondary"
-              sx={{
-                '&:hover': {
-                  color: 'primary.main',
-                },
-                transition: 'color 0.2s ease',
-              }}
-            >
-              <LinkedIn />
+            <Link href="/privacy" color="text.secondary" underline="hover">
+              Privacy
             </Link>
-            <Link
-              href="https://twitter.com"
-              target="_blank"
-              rel="noopener noreferrer"
-              color="text.secondary"
-              sx={{
-                '&:hover': {
-                  color: 'primary.main',
-                },
-                transition: 'color 0.2s ease',
-              }}
-            >
-              <Twitter />
-            </Link>
-          </Stack>
-        </Stack>
+          </Box>
+        </Box>
       </Container>
     </Box>
   );
