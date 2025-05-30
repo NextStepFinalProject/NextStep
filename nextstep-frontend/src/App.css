@@ -1,23 +1,28 @@
 :root {
-  --color-1: #1877f2;
-  --color-2: #f0f2f5;
-  --color-3: #606770;
-  --color-4: #ccd0d5;
-  --color-5: #165dbb;
-  --color-6: #052652;
-  --color-shadow-1: rgba(0, 0, 0, 0.1);
+  --color-primary: #2D3436;
+  --color-secondary: #0984E3;
+  --color-accent: #00B894;
+  --color-background: #FFFFFF;
+  --color-surface: #F8F9FA;
+  --color-text: #2D3436;
+  --color-text-secondary: #636E72;
+  --color-border: #DFE6E9;
+  --color-shadow: rgba(0, 0, 0, 0.08);
+  --font-primary: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --transition-standard: all 0.3s ease;
+  --border-radius: 12px;
+  --spacing-unit: 8px;
 }
 
 #root {
   display: flex;
   flex-direction: column;
-  justify-content: space-between;
-  align-items: center;
-  height: 100vh;
+  min-height: 100vh;
   width: 100%;
   margin: 0 auto;
-  text-align: center;
-  background-color: #f9f9f9;
+  font-family: var(--font-primary);
+  background-color: var(--color-background);
+  color: var(--color-text);
 }
 
 .logo {
@@ -48,37 +53,114 @@
   }
 }
 
+/* Modern Card Styles */
 .card {
-  padding: 2em;
+  background: var(--color-background);
+  border-radius: var(--border-radius);
+  box-shadow: 0 4px 6px var(--color-shadow);
+  transition: var(--transition-standard);
+  border: 1px solid var(--color-border);
+}
+
+.card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 12px var(--color-shadow);
+}
+
+/* Modern Button Styles */
+.button {
+  background: var(--color-secondary);
+  color: white;
+  border: none;
+  padding: calc(var(--spacing-unit) * 1.5) calc(var(--spacing-unit) * 3);
+  border-radius: var(--border-radius);
+  font-weight: 500;
+  transition: var(--transition-standard);
+  cursor: pointer;
+}
+
+.button:hover {
+  background: var(--color-accent);
+  transform: translateY(-1px);
+}
+
+/* Modern Input Styles */
+.input {
+  border: 1px solid var(--color-border);
+  border-radius: var(--border-radius);
+  padding: calc(var(--spacing-unit) * 1.5);
+  transition: var(--transition-standard);
+  background: var(--color-surface);
+}
+
+.input:focus {
+  border-color: var(--color-secondary);
+  box-shadow: 0 0 0 2px rgba(9, 132, 227, 0.1);
+  outline: none;
+}
+
+/* Layout Components */
+.layout {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: calc(var(--spacing-unit) * 3);
+}
+
+/* Navigation */
+.nav {
+  background: var(--color-background);
+  border-bottom: 1px solid var(--color-border);
+  padding: calc(var(--spacing-unit) * 2);
+}
+
+/* Job Card Modernization */
+.job-card {
+  padding: calc(var(--spacing-unit) * 3);
+  border: 1px solid var(--color-border);
+  border-radius: var(--border-radius);
+  background: var(--color-background);
+  transition: var(--transition-standard);
+  height: auto;
+  min-height: 200px;
+  display: flex;
+  flex-direction: column;
+  gap: calc(var(--spacing-unit) * 2);
+}
+
+.job-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 12px var(--color-shadow);
+}
+
+.job-card img {
+  width: 24px;
+  height: 24px;
+  object-fit: contain;
+}
+
+.job-card .company-name {
+  font-weight: 600;
+  color: var(--color-text);
+  font-size: 1.1em;
+}
+
+.job-card .location {
+  color: var(--color-text-secondary);
+  font-size: 0.9em;
+  margin-top: calc(var(--spacing-unit));
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .layout {
+    padding: calc(var(--spacing-unit) * 2);
+  }
+  
+  .job-card {
+    padding: calc(var(--spacing-unit) * 2);
+  }
 }
 
 .read-the-docs {
   color: #888;
-}
-
-.job-card {
-    padding: 16px;
-    border: 1px solid #ddd;
-    border-radius: 8px;
-    height: 200px; /* Fixed height for all cards */
-    display: flex;
-    flex-direction: column;
-    justify-content: space-between; /* Align content and button */
-    overflow-y: auto; /* Enable vertical scrolling for overflow */
-}
-
-.job-card img {
-    display: inline-block;
-    margin: 0;
-    max-width: 20px;
-    height: 20px;
-}
-
-.job-card .company-name {
-    font-weight: bold; /* Make company name bold */
-}
-
-.job-card .location {
-    margin-top: 8px; /* Add separation between company name and location */
-    display: block; /* Ensure it appears on a new line */
 }

@@ -1,6 +1,6 @@
 import React, { useRef, useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { Box, Drawer, List, ListItem, ListItemIcon, ListItemText, IconButton } from '@mui/material';
+import { useNavigate, useLocation } from 'react-router-dom';
+import { Box, Drawer, List, ListItem, ListItemIcon, ListItemText, IconButton, Tooltip, Divider } from '@mui/material';
 import { Home, Person, Message, Logout, DocumentScannerTwoTone, Feed, Quiz, Menu, ChevronLeft } from '@mui/icons-material';
 import { getUserAuth, removeUserAuth } from "../handlers/userAuth.ts";
 import api from "../serverApi.ts";
@@ -9,10 +9,10 @@ import logo from '../../assets/NextStep.png';
 const LeftBar: React.FC = () => {
   const userAuthRef = useRef(getUserAuth());
   const navigate = useNavigate();
+  const location = useLocation();
   const [collapsed, setCollapsed] = useState(false);
 
   useEffect(() => {
-    // Automatically collapse the sidebar if the user is disconnected
     if (!userAuthRef.current) {
       setCollapsed(true);
     }
@@ -32,19 +32,29 @@ const LeftBar: React.FC = () => {
     setCollapsed(!collapsed);
   };
 
+  const menuItems = [
+    { path: '/main-dashboard', icon: <Home />, text: 'Home' },
+    { path: '/resume', icon: <DocumentScannerTwoTone />, text: 'Resume' },
+    { path: '/quiz', icon: <Quiz />, text: 'Quiz' },
+    { path: '/feed', icon: <Feed />, text: 'Feed' },
+    { path: '/chat', icon: <Message />, text: 'Chat' },
+    { path: '/profile', icon: <Person />, text: 'Profile' },
+  ];
+
   return (
     <Drawer
       variant="permanent"
       sx={{
-        width: collapsed ? 60 : 180,
+        width: collapsed ? 72 : 240,
         flexShrink: 0,
         [`& .MuiDrawer-paper`]: {
-          width: collapsed ? 60 : 180,
+          width: collapsed ? 72 : 240,
           boxSizing: 'border-box',
-          backgroundColor: '#233752',
-          color: 'white',
+          backgroundColor: 'background.paper',
+          borderRight: '1px solid',
+          borderColor: 'divider',
+          transition: 'width 0.3s ease',
           overflowX: 'hidden',
-          transition: 'width 0.3s',
         },
       }}
     >
@@ -53,7 +63,8 @@ const LeftBar: React.FC = () => {
           display: 'flex',
           alignItems: 'center',
           justifyContent: collapsed ? 'center' : 'space-between',
-          padding: '8px',
+          p: 2,
+          minHeight: 64,
         }}
       >
         {!collapsed && (
@@ -61,56 +72,101 @@ const LeftBar: React.FC = () => {
             component="img"
             src={logo}
             alt="Logo"
-            sx={{ height: 120, width: 150 }}
+            sx={{ 
+              height: 40,
+              width: 'auto',
+              transition: 'all 0.3s ease',
+            }}
           />
         )}
-        <IconButton onClick={toggleCollapse} sx={{ color: 'white' }}>
-          {collapsed ? <Menu /> : <ChevronLeft fontSize="large" />}
+        <IconButton 
+          onClick={toggleCollapse} 
+          sx={{ 
+            color: 'text.secondary',
+            '&:hover': {
+              backgroundColor: 'action.hover',
+            },
+          }}
+        >
+          {collapsed ? <Menu /> : <ChevronLeft />}
         </IconButton>
       </Box>
-      <List>
-        <ListItem button onClick={() => navigate('/main-dashboard')} sx={{ cursor: 'pointer' }}>
-          <ListItemIcon>
-            <Home sx={{ color: 'white' }} />
-          </ListItemIcon>
-          {!collapsed && <ListItemText primary="Home" />}
-        </ListItem>
-        <ListItem button onClick={() => navigate('/resume')} sx={{ cursor: 'pointer' }}>
-          <ListItemIcon>
-            <DocumentScannerTwoTone sx={{ color: 'white' }} />
-          </ListItemIcon>
-          {!collapsed && <ListItemText primary="Resume" />}
-        </ListItem>
-        <ListItem button onClick={() => navigate('/quiz')} sx={{ cursor: 'pointer' }}>
-          <ListItemIcon>
-            <Quiz sx={{ color: 'white' }} />
-          </ListItemIcon>
-          {!collapsed && <ListItemText primary="Quiz" />}
-        </ListItem>
-        <ListItem button onClick={() => navigate('/feed')} sx={{ cursor: 'pointer' }}>
-          <ListItemIcon>
-            <Feed sx={{ color: 'white' }} />
-          </ListItemIcon>
-          {!collapsed && <ListItemText primary="Feed" />}
-        </ListItem>
-        <ListItem button onClick={() => navigate('/chat')} sx={{ cursor: 'pointer' }}>
-          <ListItemIcon>
-            <Message sx={{ color: 'white' }} />
-          </ListItemIcon>
-          {!collapsed && <ListItemText primary="Chat" />}
-        </ListItem>
-        <ListItem button onClick={() => navigate('/profile')} sx={{ cursor: 'pointer' }}>
-          <ListItemIcon>
-            <Person sx={{ color: 'white' }} />
-          </ListItemIcon>
-          {!collapsed && <ListItemText primary="Profile" />}
-        </ListItem>
-        <ListItem button onClick={handleLogout} sx={{ cursor: 'pointer' }}>
-          <ListItemIcon>
-            <Logout sx={{ color: 'white' }} />
-          </ListItemIcon>
-          {!collapsed && <ListItemText primary="Logout" />}
-        </ListItem>
+      <Divider />
+      <List sx={{ px: 1 }}>
+        {menuItems.map((item) => (
+          <Tooltip 
+            key={item.path} 
+            title={collapsed ? item.text : ''} 
+            placement="right"
+          >
+            <ListItem
+              button
+              onClick={() => navigate(item.path)}
+              sx={{
+                borderRadius: 2,
+                mb: 0.5,
+                backgroundColor: location.pathname === item.path ? 'action.selected' : 'transparent',
+                '&:hover': {
+                  backgroundColor: 'action.hover',
+                },
+                transition: 'all 0.2s ease',
+              }}
+            >
+              <ListItemIcon
+                sx={{
+                  minWidth: collapsed ? 'auto' : 40,
+                  color: location.pathname === item.path ? 'primary.main' : 'text.secondary',
+                }}
+              >
+                {item.icon}
+              </ListItemIcon>
+              {!collapsed && (
+                <ListItemText 
+                  primary={item.text}
+                  primaryTypographyProps={{
+                    color: location.pathname === item.path ? 'primary.main' : 'text.primary',
+                    fontWeight: location.pathname === item.path ? 600 : 400,
+                  }}
+                />
+              )}
+            </ListItem>
+          </Tooltip>
+        ))}
+      </List>
+      <Box sx={{ flexGrow: 1 }} />
+      <Divider />
+      <List sx={{ px: 1 }}>
+        <Tooltip title={collapsed ? 'Logout' : ''} placement="right">
+          <ListItem
+            button
+            onClick={handleLogout}
+            sx={{
+              borderRadius: 2,
+              mb: 0.5,
+              '&:hover': {
+                backgroundColor: 'action.hover',
+              },
+              transition: 'all 0.2s ease',
+            }}
+          >
+            <ListItemIcon
+              sx={{
+                minWidth: collapsed ? 'auto' : 40,
+                color: 'text.secondary',
+              }}
+            >
+              <Logout />
+            </ListItemIcon>
+            {!collapsed && (
+              <ListItemText 
+                primary="Logout"
+                primaryTypographyProps={{
+                  color: 'text.primary',
+                }}
+              />
+            )}
+          </ListItem>
+        </Tooltip>
       </List>
     </Drawer>
   );
