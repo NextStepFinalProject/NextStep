@@ -81,6 +81,7 @@ const Login: React.FC = () => {
         alignItems: 'center',
         justifyContent: 'center',
         py: 4,
+        position: 'relative',
       }}
     >
       <Container maxWidth={false} sx={{ px: { xs: 2, sm: 3, md: 4 } }}>
@@ -106,31 +107,53 @@ const Login: React.FC = () => {
               sx={{
                 fontWeight: 800,
                 mb: 2,
-                background: 'linear-gradient(45deg, #0984E3, #00B894)',
+                background: theme.palette.mode === 'dark'
+                  ? 'linear-gradient(45deg, #64B5F6, #4DD0E1)'
+                  : 'linear-gradient(45deg, #0984E3, #00B894)',
                 backgroundClip: 'text',
                 WebkitBackgroundClip: 'text',
                 color: 'transparent',
+                textShadow: theme.palette.mode === 'dark'
+                  ? '0 0 20px rgba(100, 181, 246, 0.2)'
+                  : '0 0 20px rgba(9, 132, 227, 0.2)',
               }}
             >
               Welcome Back!
             </Typography>
             <Typography
               variant="h5"
-              color="text.secondary"
-              sx={{ mb: 3, fontWeight: 500 }}
+              sx={{ 
+                mb: 3, 
+                fontWeight: 500,
+                color: theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.9)' : 'text.secondary'
+              }}
             >
               Sign in to continue your career journey
             </Typography>
             <Box sx={{ display: { xs: 'none', md: 'block' } }}>
-              <Typography variant="body1" color="text.secondary" sx={{ mb: 2 }}>
-                • Access personalized career insights
-              </Typography>
-              <Typography variant="body1" color="text.secondary" sx={{ mb: 2 }}>
-                • Connect with industry professionals
-              </Typography>
-              <Typography variant="body1" color="text.secondary" sx={{ mb: 2 }}>
-                • Track your career progress
-              </Typography>
+              {[
+                'Access personalized career insights',
+                'Connect with industry professionals',
+                'Track your career progress'
+              ].map((text, index) => (
+                <Typography
+                  key={index}
+                  variant="body1"
+                  sx={{
+                    mb: 2,
+                    color: theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.8)' : 'text.secondary',
+                    display: 'flex',
+                    alignItems: 'center',
+                    '&::before': {
+                      content: '"•"',
+                      mr: 1,
+                      color: theme.palette.mode === 'dark' ? '#64B5F6' : '#0984E3',
+                    }
+                  }}
+                >
+                  {text}
+                </Typography>
+              ))}
             </Box>
           </motion.div>
 
@@ -153,13 +176,35 @@ const Login: React.FC = () => {
                 width: '100%',
                 maxWidth: '1000px',
                 mx: 'auto',
+                border: `1px solid ${theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)'}`,
+                boxShadow: theme.palette.mode === 'dark'
+                  ? '0 8px 32px rgba(0, 0, 0, 0.3)'
+                  : '0 8px 32px rgba(0, 0, 0, 0.1)',
               }}
             >
-              <Typography variant="h4" sx={{ mb: 3, fontWeight: 600 }}>
+              <Typography 
+                variant="h4" 
+                sx={{ 
+                  mb: 3, 
+                  fontWeight: 600,
+                  color: theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.9)' : 'text.primary'
+                }}
+              >
                 Sign In
               </Typography>
 
-              {error && <Alert severity="error" sx={{ mb: 3 }}>{error}</Alert>}
+              {error && (
+                <Alert 
+                  severity="error" 
+                  sx={{ 
+                    mb: 3,
+                    background: theme.palette.mode === 'dark' ? 'rgba(211, 47, 47, 0.1)' : undefined,
+                    border: theme.palette.mode === 'dark' ? '1px solid rgba(211, 47, 47, 0.3)' : undefined,
+                  }}
+                >
+                  {error}
+                </Alert>
+              )}
 
               <Box sx={{ mb: 3 }}>
                 <Button
@@ -167,14 +212,33 @@ const Login: React.FC = () => {
                   variant="outlined"
                   startIcon={<Google />}
                   onClick={handleGoogleLogin}
-                  sx={{ mb: 2, py: 1.5 }}
+                  sx={{ 
+                    mb: 2, 
+                    py: 1.5,
+                    borderColor: theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.2)' : undefined,
+                    color: theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.9)' : undefined,
+                    '&:hover': {
+                      borderColor: theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.3)' : undefined,
+                      background: theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.05)' : undefined,
+                    }
+                  }}
                 >
                   Continue with Google
                 </Button>
               </Box>
 
-              <Divider sx={{ my: 3 }}>
-                <Typography variant="body2" color="text.secondary">
+              <Divider sx={{ 
+                my: 3,
+                '&::before, &::after': {
+                  borderColor: theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.1)' : undefined,
+                }
+              }}>
+                <Typography 
+                  variant="body2" 
+                  sx={{ 
+                    color: theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.7)' : 'text.secondary'
+                  }}
+                >
                   or continue with email
                 </Typography>
               </Divider>
@@ -187,7 +251,20 @@ const Login: React.FC = () => {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   required
-                  sx={{ mb: 2 }}
+                  sx={{ 
+                    mb: 2,
+                    '& .MuiOutlinedInput-root': {
+                      '& fieldset': {
+                        borderColor: theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.2)' : undefined,
+                      },
+                      '&:hover fieldset': {
+                        borderColor: theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.3)' : undefined,
+                      },
+                    },
+                    '& .MuiInputLabel-root': {
+                      color: theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.7)' : undefined,
+                    },
+                  }}
                 />
                 <TextField
                   fullWidth
@@ -202,27 +279,68 @@ const Login: React.FC = () => {
                         <IconButton
                           onClick={() => setShowPassword(!showPassword)}
                           edge="end"
+                          sx={{
+                            color: theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.7)' : undefined,
+                          }}
                         >
                           {showPassword ? <VisibilityOff /> : <Visibility />}
                         </IconButton>
                       </InputAdornment>
                     ),
                   }}
-                  sx={{ mb: 3 }}
+                  sx={{ 
+                    mb: 3,
+                    '& .MuiOutlinedInput-root': {
+                      '& fieldset': {
+                        borderColor: theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.2)' : undefined,
+                      },
+                      '&:hover fieldset': {
+                        borderColor: theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.3)' : undefined,
+                      },
+                    },
+                    '& .MuiInputLabel-root': {
+                      color: theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.7)' : undefined,
+                    },
+                  }}
                 />
                 <Button
                   type="submit"
                   fullWidth
                   variant="contained"
                   size="large"
-                  sx={{ mb: 2, py: 1.5 }}
+                  sx={{ 
+                    mb: 2, 
+                    py: 1.5,
+                    background: theme.palette.mode === 'dark'
+                      ? 'linear-gradient(45deg, #64B5F6, #4DD0E1)'
+                      : 'linear-gradient(45deg, #0984E3, #00B894)',
+                    '&:hover': {
+                      background: theme.palette.mode === 'dark'
+                        ? 'linear-gradient(45deg, #42A5F5, #26C6DA)'
+                        : 'linear-gradient(45deg, #0873C4, #00A884)',
+                    }
+                  }}
                 >
                   Sign In
                 </Button>
                 <Box sx={{ textAlign: 'center' }}>
-                  <Typography variant="body2" color="text.secondary">
+                  <Typography 
+                    variant="body2" 
+                    sx={{ 
+                      color: theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.7)' : 'text.secondary'
+                    }}
+                  >
                     Don't have an account?{' '}
-                    <Link component={RouterLink} to="/register" color="primary">
+                    <Link 
+                      component={RouterLink} 
+                      to="/register" 
+                      sx={{ 
+                        color: theme.palette.mode === 'dark' ? '#64B5F6' : 'primary.main',
+                        '&:hover': {
+                          color: theme.palette.mode === 'dark' ? '#42A5F5' : 'primary.dark',
+                        }
+                      }}
+                    >
                       Sign up
                     </Link>
                   </Typography>

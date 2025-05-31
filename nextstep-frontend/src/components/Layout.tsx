@@ -21,9 +21,31 @@ const Layout: React.FC<LayoutProps> = ({
         flexDirection: 'column',
         minHeight: '100vh',
         width: '100%',
-        background: theme.palette.mode === 'dark' 
-          ? 'linear-gradient(45deg, #1A1A1A 0%, #2D2D2D 100%)'
-          : 'linear-gradient(45deg, #F8F9FA 0%, #FFFFFF 100%)',
+        position: 'relative',
+        overflow: 'hidden',
+        backgroundColor: theme.palette.background.default,
+        '&::before': {
+          content: '""',
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          backgroundColor: theme.palette.background.default,
+          zIndex: -2,
+        },
+        '&::after': {
+          content: '""',
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          background: theme.palette.mode === 'dark'
+            ? 'radial-gradient(circle at 50% 50%, rgba(45, 45, 45, 0.1) 0%, rgba(26, 26, 26, 0.2) 100%)'
+            : 'radial-gradient(circle at 50% 50%, rgba(255, 255, 255, 0.1) 0%, rgba(248, 249, 250, 0.2) 100%)',
+          zIndex: -1,
+        },
       }}
     >
       <Container
@@ -36,6 +58,9 @@ const Layout: React.FC<LayoutProps> = ({
           display: 'flex',
           flexDirection: 'column',
           gap: 3,
+          position: 'relative',
+          minHeight: 'calc(100vh - 64px)',
+          backgroundColor: 'transparent',
           '&.login, &.register': {
             display: 'flex',
             alignItems: 'center',
