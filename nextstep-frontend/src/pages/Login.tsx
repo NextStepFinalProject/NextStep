@@ -16,13 +16,14 @@ import {
   Alert,
 } from '@mui/material';
 import { motion } from 'framer-motion';
-import { Visibility, VisibilityOff, Google } from '@mui/icons-material';
+import { Visibility, VisibilityOff, Google, LightMode, DarkMode } from '@mui/icons-material';
 import axios from 'axios';
 import { config } from '../config';
 import { LoginResponse } from '../models/LoginResponse';
 import { setUserAuth } from "../handlers/userAuth";
 import { signInWithPopup } from "firebase/auth";
 import { auth, googleProvider } from "../firebase";
+import { useTheme as useCustomTheme } from '../contexts/ThemeContext';
 
 const Login: React.FC = () => {
   const [email, setEmail] = useState('');
@@ -31,6 +32,7 @@ const Login: React.FC = () => {
   const [error, setError] = useState('');
   const navigate = useNavigate();
   const theme = useTheme();
+  const { isDarkMode, toggleTheme } = useCustomTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
 
   // Google Login
@@ -84,6 +86,21 @@ const Login: React.FC = () => {
         position: 'relative',
       }}
     >
+      <IconButton
+        onClick={toggleTheme}
+        sx={{
+          position: 'fixed',
+          top: 16,
+          right: 16,
+          zIndex: 1000,
+          color: theme.palette.mode === 'dark' ? 'white' : 'text.primary',
+          '&:hover': {
+            transform: 'scale(1.1)',
+          },
+        }}
+      >
+        {isDarkMode ? <LightMode /> : <DarkMode />}
+      </IconButton>
       <Container maxWidth={false} sx={{ px: { xs: 2, sm: 3, md: 4 } }}>
         <Box
           sx={{

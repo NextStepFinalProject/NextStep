@@ -16,9 +16,10 @@ import {
   Alert,
 } from '@mui/material';
 import { motion } from 'framer-motion';
-import { Visibility, VisibilityOff } from '@mui/icons-material';
+import { Visibility, VisibilityOff, LightMode, DarkMode } from '@mui/icons-material';
 import axios from 'axios';
 import { config } from '../config';
+import { useTheme as useCustomTheme } from '../contexts/ThemeContext';
 
 const Register: React.FC = () => {
   const [formData, setFormData] = useState({
@@ -32,6 +33,7 @@ const Register: React.FC = () => {
   const [success, setSuccess] = useState(false);
   const navigate = useNavigate();
   const theme = useTheme();
+  const { isDarkMode, toggleTheme } = useCustomTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -79,6 +81,21 @@ const Register: React.FC = () => {
         position: 'relative',
       }}
     >
+      <IconButton
+        onClick={toggleTheme}
+        sx={{
+          position: 'fixed',
+          top: 16,
+          right: 16,
+          zIndex: 1000,
+          color: theme.palette.mode === 'dark' ? 'white' : 'text.primary',
+          '&:hover': {
+            transform: 'scale(1.1)',
+          },
+        }}
+      >
+        {isDarkMode ? <LightMode /> : <DarkMode />}
+      </IconButton>
       <Container maxWidth={false} sx={{ px: { xs: 2, sm: 3, md: 4 } }}>
         <Box
           sx={{
