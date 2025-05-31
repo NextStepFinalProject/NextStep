@@ -37,15 +37,16 @@ const UploadBox = styled(Box)(({ theme }) => ({
 const FeedbackContainer = styled(Box)(({ theme }) => ({
   maxHeight: '60vh',
   overflowY: 'auto',
-  padding: theme.spacing(2),
+  padding: theme.spacing(4),
   backgroundColor: theme.palette.background.paper,
   borderRadius: theme.shape.borderRadius,
   textAlign: 'left',
   '& pre': {
     backgroundColor: theme.palette.grey[100],
-    padding: theme.spacing(1),
+    padding: theme.spacing(2),
     borderRadius: theme.shape.borderRadius,
     overflowX: 'auto',
+    margin: theme.spacing(2, 0),
   },
   '& table': {
     borderCollapse: 'collapse',
@@ -54,7 +55,7 @@ const FeedbackContainer = styled(Box)(({ theme }) => ({
   },
   '& th, & td': {
     border: `1px solid ${theme.palette.divider}`,
-    padding: theme.spacing(1),
+    padding: theme.spacing(1.5),
     textAlign: 'left',
   },
   '& th': {
@@ -62,9 +63,27 @@ const FeedbackContainer = styled(Box)(({ theme }) => ({
   },
   '& h1, & h2, & h3, & h4, & h5, & h6': {
     textAlign: 'left',
+    marginTop: theme.spacing(3),
+    marginBottom: theme.spacing(2),
   },
   '& p': {
     textAlign: 'left',
+    marginBottom: theme.spacing(2),
+    lineHeight: 1.6,
+  },
+  '& ul, & ol': {
+    marginLeft: theme.spacing(4),
+    marginBottom: theme.spacing(2),
+  },
+  '& li': {
+    marginBottom: theme.spacing(1),
+  },
+  '& blockquote': {
+    borderLeft: `4px solid ${theme.palette.primary.main}`,
+    margin: theme.spacing(2, 0),
+    padding: theme.spacing(2),
+    backgroundColor: theme.palette.grey[50],
+    borderRadius: theme.shape.borderRadius,
   },
 }));
 
@@ -463,7 +482,7 @@ const Resume: React.FC = () => {
             {loading && <CircularProgress />}
 
             {feedback && (
-              <Box sx={{ mb: 3 }}>
+              <Box sx={{ mb: 3, width: '100%' }}>
                 <Typography variant="h6" gutterBottom>
                   Analysis Feedback:
                 </Typography>
@@ -477,7 +496,14 @@ const Resume: React.FC = () => {
             )}
 
             {score !== null && (
-              <Box sx={{ mb: 3 }}>
+              <Box sx={{ 
+                mb: 3,
+                display: 'flex',
+                justifyContent: 'center',
+                alignItems: 'center',
+                minHeight: '200px',
+                width: '100%'
+              }}>
                 <ScoreGauge score={score} />
               </Box>
             )}
