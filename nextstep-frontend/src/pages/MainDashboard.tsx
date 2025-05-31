@@ -205,7 +205,17 @@ const MainDashboard: React.FC = () => {
                 />
                 <Tooltip title="Upload CV" arrow placement="left">
                 <label htmlFor="upload-resume">
-                  <IconButton component="span" sx={{ p: 0 }}>
+                  <IconButton 
+                    component="span" 
+                    sx={{ 
+                      p: 0,
+                      color: 'primary.main',
+                      '&:hover': {
+                        color: 'primary.dark',
+                        backgroundColor: 'rgba(25, 118, 210, 0.08)'
+                      }
+                    }}
+                  >
                     <DocumentScannerTwoTone />
                   </IconButton>
                 </label>
@@ -376,16 +386,41 @@ const MainDashboard: React.FC = () => {
               </Box>
             ) : (
               <Stack spacing={2}>
-                <Button variant="contained" startIcon={<LinkedIn />} fullWidth>
+                <Button 
+                  variant="contained" 
+                  startIcon={<LinkedIn />} 
+                  fullWidth
+                  sx={{
+                    backgroundColor: '#0077B5',
+                    '&:hover': {
+                      backgroundColor: '#005582',
+                    },
+                    transition: 'all 0.3s ease',
+                    boxShadow: '0 2px 4px rgba(0,0,0,0.2)',
+                    '&:active': {
+                      transform: 'scale(0.98)',
+                    }
+                  }}
+                >
                   Connect LinkedIn
                 </Button>
                 <Button
                   variant="contained"
-                  color="secondary"
                   startIcon={<GitHub />}
                   fullWidth
                   onClick={() => setShowAuthOptions(true)}
-                  sx={{backgroundColor: 'darkslategrey'}}
+                  sx={{
+                    backgroundColor: '#1a1a1a',
+                    color: '#ffffff',
+                    '&:hover': {
+                      backgroundColor: '#000000',
+                    },
+                    transition: 'all 0.3s ease',
+                    boxShadow: '0 2px 4px rgba(0,0,0,0.2)',
+                    '&:active': {
+                      transform: 'scale(0.98)',
+                    }
+                  }}
                 >
                   Connect GitHub
                 </Button>
