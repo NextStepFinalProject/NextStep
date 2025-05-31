@@ -1,4 +1,4 @@
-import { Container, Box } from '@mui/material';
+import { Container, Box, useTheme } from '@mui/material';
 import React from 'react';
 import './Layout.css';
 
@@ -11,6 +11,8 @@ const Layout: React.FC<LayoutProps> = ({
   className = '',
   children
 }) => {
+  const theme = useTheme();
+
   return (
     <Box
       component="main"
@@ -19,6 +21,9 @@ const Layout: React.FC<LayoutProps> = ({
         flexDirection: 'column',
         minHeight: '100vh',
         width: '100%',
+        background: theme.palette.mode === 'dark' 
+          ? 'linear-gradient(45deg, #1A1A1A 0%, #2D2D2D 100%)'
+          : 'linear-gradient(45deg, #F8F9FA 0%, #FFFFFF 100%)',
       }}
     >
       <Container
@@ -32,7 +37,6 @@ const Layout: React.FC<LayoutProps> = ({
           flexDirection: 'column',
           gap: 3,
           '&.login, &.register': {
-            maxWidth: 'sm',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
