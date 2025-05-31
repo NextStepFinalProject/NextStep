@@ -420,7 +420,12 @@ const Resume: React.FC = () => {
                 label="Job Description"
                 value={jobDescription}
                 onChange={(e) => setJobDescription(e.target.value)}
-                sx={{ mb: 2, backgroundColor: 'white' }}
+                sx={{ 
+                  mb: 2,
+                  '& .MuiOutlinedInput-root': {
+                    backgroundColor: 'background.paper'
+                  }
+                }}
               />
 
               <input
