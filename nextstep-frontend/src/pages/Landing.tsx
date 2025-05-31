@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   Box,
@@ -30,6 +30,76 @@ const Landing: React.FC = () => {
   const theme = useTheme();
   const { isDarkMode, toggleTheme } = useCustomTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
+  const logoRef = useRef<HTMLImageElement>(null);
+  const [stepZones, setStepZones] = React.useState<{ x: number; y: number; width: number; height: number }[]>([]);
+
+  useEffect(() => {
+    const analyzeLogo = () => {
+      if (!logoRef.current) return;
+
+      const img = logoRef.current;
+      const canvas = document.createElement('canvas');
+      const ctx = canvas.getContext('2d');
+      if (!ctx) return;
+
+      // Set canvas size to match image
+      canvas.width = img.naturalWidth;
+      canvas.height = img.naturalHeight;
+
+      // Draw image to canvas
+      ctx.drawImage(img, 0, 0);
+
+      // Get image data
+      const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+      const data = imageData.data;
+
+      // Find steps by analyzing pixel data
+      const steps: { x: number; y: number; width: number; height: number }[] = [];
+      let currentStep: { x: number; y: number; width: number; height: number } | null = null;
+
+      // Scan the image for non-transparent pixels
+      for (let y = 0; y < canvas.height; y++) {
+        for (let x = 0; x < canvas.width; x++) {
+          const idx = (y * canvas.width + x) * 4;
+          const alpha = data[idx + 3];
+
+          if (alpha > 0) {
+            if (!currentStep) {
+              currentStep = { x, y, width: 1, height: 1 };
+            } else {
+              currentStep.width = Math.max(currentStep.width, x - currentStep.x + 1);
+              currentStep.height = Math.max(currentStep.height, y - currentStep.y + 1);
+            }
+          } else if (currentStep) {
+            // If we find a gap, save the current step and start a new one
+            steps.push(currentStep);
+            currentStep = null;
+          }
+        }
+      }
+
+      // Convert coordinates to percentages
+      const percentageSteps = steps.map(step => ({
+        x: (step.x / canvas.width) * 100,
+        y: (step.y / canvas.height) * 100,
+        width: (step.width / canvas.width) * 100,
+        height: (step.height / canvas.height) * 100
+      }));
+
+      setStepZones(percentageSteps);
+    };
+
+    // Wait for image to load
+    if (logoRef.current?.complete) {
+      analyzeLogo();
+    } else {
+      logoRef.current?.addEventListener('load', analyzeLogo);
+    }
+
+    return () => {
+      logoRef.current?.removeEventListener('load', analyzeLogo);
+    };
+  }, []);
 
   const features = [
     {
@@ -182,28 +252,52 @@ const Landing: React.FC = () => {
             </Grid>
             <Grid item xs={12} md={6}>
               <Box
-                component="img"
-                src="/assets/landing-hero.svg"
-                alt="Career Development"
                 sx={{
+                  position: 'relative',
                   width: '100%',
-                  maxWidth: 500,
+                  maxWidth: 400,
                   height: 'auto',
                   display: { xs: 'none', md: 'block' },
-                  animation: 'float 6s ease-in-out infinite',
-                  '@keyframes float': {
-                    '0%': {
-                      transform: 'translateY(0px)',
-                    },
-                    '50%': {
-                      transform: 'translateY(-20px)',
-                    },
-                    '100%': {
-                      transform: 'translateY(0px)',
-                    },
-                  },
                 }}
-              />
+              >
+                <Box
+                  component="img"
+                  src="/NextStepLogo.png"
+                  alt="NextStep Logo"
+                  sx={{
+                    width: '100%',
+                    height: 'auto',
+                    animation: 'float 6s ease-in-out infinite, glow 3s ease-in-out infinite',
+                    filter: 'drop-shadow(0 0 20px rgba(255, 255, 255, 0.3))',
+                    '@keyframes float': {
+                      '0%': {
+                        transform: 'translateY(0px) rotate(0deg)',
+                      },
+                      '50%': {
+                        transform: 'translateY(-20px) rotate(2deg)',
+                      },
+                      '100%': {
+                        transform: 'translateY(0px) rotate(0deg)',
+                      },
+                    },
+                    '@keyframes glow': {
+                      '0%': {
+                        filter: 'drop-shadow(0 0 20px rgba(255, 255, 255, 0.3))',
+                      },
+                      '50%': {
+                        filter: 'drop-shadow(0 0 30px rgba(255, 255, 255, 0.5))',
+                      },
+                      '100%': {
+                        filter: 'drop-shadow(0 0 20px rgba(255, 255, 255, 0.3))',
+                      },
+                    },
+                    '&:hover': {
+                      filter: 'drop-shadow(0 0 40px rgba(255, 255, 255, 0.6))',
+                      transition: 'all 0.3s ease',
+                    },
+                  }}
+                />
+              </Box>
             </Grid>
           </Grid>
         </Container>
