@@ -117,14 +117,14 @@ export const darkTheme = createTheme({
   palette: {
     mode: 'dark',
     primary: {
-      main: '#74B9FF',
-      light: '#A3D4FF',
-      dark: '#0984E3',
+      main: '#0984E3',
+      light: '#74B9FF',
+      dark: '#0652DD',
     },
     secondary: {
-      main: '#55EFC4',
-      light: '#7FFFD4',
-      dark: '#00B894',
+      main: '#00B894',
+      light: '#55EFC4',
+      dark: '#00A884',
     },
     background: {
       default: '#1A1A1A',
@@ -150,9 +150,15 @@ export const darkTheme = createTheme({
           },
         },
         contained: {
-          boxShadow: '0 4px 14px rgba(0, 0, 0, 0.1)',
+          boxShadow: '0 4px 14px rgba(0, 0, 0, 0.2)',
           '&:hover': {
-            boxShadow: '0 6px 20px rgba(0, 0, 0, 0.15)',
+            boxShadow: '0 6px 20px rgba(0, 0, 0, 0.25)',
+          },
+        },
+        outlined: {
+          borderColor: 'rgba(255, 255, 255, 0.23)',
+          '&:hover': {
+            borderColor: 'rgba(255, 255, 255, 0.5)',
           },
         },
       },
@@ -202,9 +208,28 @@ export const darkTheme = createTheme({
     MuiIconButton: {
       styleOverrides: {
         root: {
-          color: '#FFFFFF',
+          color: 'inherit',
           '&:hover': {
             backgroundColor: 'rgba(255, 255, 255, 0.1)',
+          },
+          '&.Mui-selected': {
+            backgroundColor: 'rgba(9, 132, 227, 0.2)',
+            color: '#0984E3',
+            '&:hover': {
+              backgroundColor: 'rgba(9, 132, 227, 0.3)',
+            },
+          },
+          '&.MuiIconButton-colorPrimary': {
+            color: '#0984E3',
+            '&:hover': {
+              backgroundColor: 'rgba(9, 132, 227, 0.1)',
+            },
+          },
+          '&.MuiIconButton-colorDefault': {
+            color: 'rgba(255, 255, 255, 0.7)',
+            '&:hover': {
+              backgroundColor: 'rgba(255, 255, 255, 0.1)',
+            },
           },
         },
       },
@@ -213,6 +238,22 @@ export const darkTheme = createTheme({
       styleOverrides: {
         root: {
           borderColor: 'rgba(255, 255, 255, 0.12)',
+        },
+      },
+    },
+    MuiListItemButton: {
+      styleOverrides: {
+        root: {
+          '&.Mui-selected': {
+            backgroundColor: 'rgba(9, 132, 227, 0.2)',
+            color: '#0984E3',
+            '&:hover': {
+              backgroundColor: 'rgba(9, 132, 227, 0.3)',
+            },
+            '& .MuiListItemIcon-root': {
+              color: '#0984E3',
+            },
+          },
         },
       },
     },
