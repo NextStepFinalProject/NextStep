@@ -471,7 +471,14 @@ const Quiz: React.FC = () => {
               )}
               {/* Correct answer display is now independent of quizSubmitted for showing */}
               {showAnswer[index] && q.correctAnswer && (
-                <Box sx={{ mt: 2, p: 1.5, bgcolor: 'background.paper', borderRadius: 1 }}>
+                <Box sx={{ 
+                  mt: 2, 
+                  p: 1.5, 
+                  bgcolor: theme => theme.palette.mode === 'light' ? '#FFFFFF' : 'background.paper',
+                  borderRadius: 1,
+                  border: '1px solid',
+                  borderColor: 'divider'
+                }}>
                   <Typography variant="subtitle2">Correct Answer:</Typography>
                   <Typography variant="body2">{q.correctAnswer}</Typography>
                 </Box>
