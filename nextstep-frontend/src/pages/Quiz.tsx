@@ -482,7 +482,16 @@ const Quiz: React.FC = () => {
           )}
 
           {quizSubmitted && quiz.finalGrade !== undefined && (
-            <Box sx={{ mt: 4, p: 3, bgcolor: 'success.light', borderRadius: 2, boxShadow: 2, textAlign: 'center' }}>
+            <Box sx={{ 
+              mt: 4, 
+              p: 3, 
+              bgcolor: theme => theme.palette.mode === 'light' ? '#e8f5e9' : 'rgba(46, 125, 50, 0.15)', 
+              borderRadius: 2, 
+              boxShadow: 2, 
+              textAlign: 'center',
+              border: '1px solid',
+              borderColor: theme => theme.palette.mode === 'light' ? 'rgba(46, 125, 50, 0.2)' : 'rgba(46, 125, 50, 0.3)'
+            }}>
               <Typography variant="h5" gutterBottom>
                 Final Quiz Grade:
               </Typography>
