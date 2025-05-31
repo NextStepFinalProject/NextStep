@@ -37,6 +37,13 @@ const PostDetails: React.FC = () => {
       if (!imageFilename) {
         return defaultProfileImage;
       }
+      
+      // If it's a Google profile image URL, return it directly
+      if (imageFilename.startsWith('https://')) {
+        return imageFilename;
+      }
+      
+      // Otherwise, fetch from our backend
       const response = await api.get(`/resource/image/${imageFilename}`, {
         responseType: 'blob',
       });
@@ -248,53 +255,67 @@ const PostDetails: React.FC = () => {
                     onChange={(e) => setEditedTitle(e.target.value)}
                     sx={{ mb: 2 }}
                   />
-                  <FroalaEditor
-                    tag="textarea"
-                    model={editedContent}
-                    onModelChange={setEditedContent}
-                    config={{
-                      placeholderText: "Edit your content here...",
-                      charCounterCount: false,
-                      toolbarButtons: [
-                        "bold",
-                        "italic",
-                        "underline",
-                        "insertImage",
-                        "insertLink",
-                        "paragraphFormat",
-                      ],
-                      imageUploadRemoteUrls: true,
-                      imageAllowedTypes: ["jpeg", "jpg", "png", "gif"],
-                      events: {
-                        "image.beforeUpload": async function (fileList: File[]) {
-                          const editor = this as any;
-                          const firstFile = fileList[0];
-
-                          if (firstFile) {
-                            const formData = new FormData();
-                            formData.append("file", firstFile);
-
-                            try {
-                              const response = await api.post(`/resource/image`, formData, {
-                                headers: {
-                                  "Content-Type": "multipart/form-data",
-                                  Authorization: `Bearer ${auth.accessToken}`,
-                                },
-                              });
-
-                              const imageUrl = `${config.app.backend_url()}/resources/images/${response.data}`;
-                              editor.image.insert(imageUrl, null, null, editor.image.get());
-                            } catch (error) {
-                              console.error("Error uploading image:", error);
+                  {editedContent !== null && (
+                    <FroalaEditor
+                      tag="textarea"
+                      model={editedContent}
+                      onModelChange={setEditedContent}
+                      config={{
+                        placeholderText: "Edit your content here...",
+                        charCounterCount: false,
+                        toolbarButtons: [
+                          "bold",
+                          "italic",
+                          "underline",
+                          "insertImage",
+                          "insertLink",
+                          "paragraphFormat",
+                        ],
+                        imageUploadRemoteUrls: true,
+                        imageAllowedTypes: ["jpeg", "jpg", "png", "gif"],
+                        events: {
+                          "initialized": function() {
+                            const editor = this as any;
+                            if (editor && editor.html) {
+                              editor.html.set(editedContent || '');
                             }
-                          }
+                          },
+                          "contentChanged": function() {
+                            const editor = this as any;
+                            if (editor && editor.html) {
+                              setEditedContent(editor.html.get());
+                            }
+                          },
+                          "image.beforeUpload": async function (fileList: File[]) {
+                            const editor = this as any;
+                            const firstFile = fileList[0];
 
-                          return false; // Prevent Froala's default upload mechanism
+                            if (firstFile) {
+                              const formData = new FormData();
+                              formData.append("file", firstFile);
+
+                              try {
+                                const response = await api.post(`/resource/image`, formData, {
+                                  headers: {
+                                    "Content-Type": "multipart/form-data",
+                                    Authorization: `Bearer ${auth.accessToken}`,
+                                  },
+                                });
+
+                                const imageUrl = `${config.app.backend_url()}/resources/images/${response.data}`;
+                                editor.image.insert(imageUrl, null, null, editor.image.get());
+                              } catch (error) {
+                                console.error("Error uploading image:", error);
+                              }
+                            }
+
+                            return false; // Prevent Froala's default upload mechanism
+                          }
                         },
-                      },
-                      pluginsEnabled: ["image", "link", "paragraphFormat"],
-                    }}
-                  />
+                        pluginsEnabled: ["image", "link", "paragraphFormat"],
+                      }}
+                    />
+                  )}
                 </>
               ) : (
                 <>
@@ -353,53 +374,67 @@ const PostDetails: React.FC = () => {
                     </Box>
                   ))}
                 </Box>
-                <FroalaEditor
-                  tag="textarea"
-                  model={newComment}
-                  onModelChange={setNewComment}
-                  config={{
-                    placeholderText: "Write a comment...",
-                    charCounterCount: false,
-                    toolbarButtons: [
-                      "bold",
-                      "italic",
-                      "underline",
-                      "insertImage",
-                      "insertLink",
-                      "paragraphFormat",
-                    ],
-                    imageUploadRemoteUrls: true,
-                    imageAllowedTypes: ["jpeg", "jpg", "png", "gif"],
-                    events: {
-                      "image.beforeUpload": async function (fileList: File[]) {
-                        const editor = this as any;
-                        const firstFile = fileList[0];
-
-                        if (firstFile) {
-                          const formData = new FormData();
-                          formData.append("file", firstFile);
-
-                          try {
-                            const response = await api.post(`/resource/image`, formData, {
-                              headers: {
-                                "Content-Type": "multipart/form-data",
-                                Authorization: `Bearer ${auth.accessToken}`,
-                              },
-                            });
-
-                            const imageUrl = `${config.app.backend_url()}/resources/images/${response.data}`;
-                            editor.image.insert(imageUrl, null, null, editor.image.get());
-                          } catch (error) {
-                            console.error("Error uploading image:", error);
+                {commentsOpen && (
+                  <FroalaEditor
+                    tag="textarea"
+                    model={newComment}
+                    onModelChange={setNewComment}
+                    config={{
+                      placeholderText: "Write a comment...",
+                      charCounterCount: false,
+                      toolbarButtons: [
+                        "bold",
+                        "italic",
+                        "underline",
+                        "insertImage",
+                        "insertLink",
+                        "paragraphFormat",
+                      ],
+                      imageUploadRemoteUrls: true,
+                      imageAllowedTypes: ["jpeg", "jpg", "png", "gif"],
+                      events: {
+                        "initialized": function() {
+                          const editor = this as any;
+                          if (editor && editor.html) {
+                            editor.html.set(newComment || '');
                           }
-                        }
+                        },
+                        "contentChanged": function() {
+                          const editor = this as any;
+                          if (editor && editor.html) {
+                            setNewComment(editor.html.get());
+                          }
+                        },
+                        "image.beforeUpload": async function (fileList: File[]) {
+                          const editor = this as any;
+                          const firstFile = fileList[0];
 
-                        return false; // Prevent Froala's default upload mechanism
+                          if (firstFile) {
+                            const formData = new FormData();
+                            formData.append("file", firstFile);
+
+                            try {
+                              const response = await api.post(`/resource/image`, formData, {
+                                headers: {
+                                  "Content-Type": "multipart/form-data",
+                                  Authorization: `Bearer ${auth.accessToken}`,
+                                },
+                              });
+
+                              const imageUrl = `${config.app.backend_url()}/resources/images/${response.data}`;
+                              editor.image.insert(imageUrl, null, null, editor.image.get());
+                            } catch (error) {
+                              console.error("Error uploading image:", error);
+                            }
+                          }
+
+                          return false; // Prevent Froala's default upload mechanism
+                        }
                       },
-                    },
-                    pluginsEnabled: ["image", "link", "paragraphFormat"],
-                  }}
-                />
+                      pluginsEnabled: ["image", "link", "paragraphFormat"]
+                    }}
+                  />
+                )}
                 <Button variant="contained" color="primary" onClick={handleAddComment} sx={{ mt: 2 }}>
                   Add Comment
                 </Button>
