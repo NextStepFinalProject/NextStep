@@ -432,18 +432,29 @@ const Quiz: React.FC = () => {
               {quizSubmitted && (
                 <>
                   <Box sx={{ mt: 2 }}>
-                    <Typography variant="subtitle2" sx={{ mb: 0.5 }}>
+                    <Typography variant="subtitle2" sx={{ mb: 4 }}>
                       Your Grade:
                     </Typography>
-                    <Slider
-                      value={q.grade || 0}
-                      aria-label="Question grade"
-                      valueLabelDisplay="on"
-                      min={0}
-                      max={100}
-                      sx={{ width: '90%', mx: 'auto' }}
-                      disabled
-                    />
+                    <Box sx={{ px: 2, py: 1 }}>
+                      <Slider
+                        value={q.grade || 0}
+                        aria-label="Question grade"
+                        valueLabelDisplay="on"
+                        min={0}
+                        max={100}
+                        sx={{ 
+                          width: '100%',
+                          '& .MuiSlider-thumb': {
+                            height: 24,
+                            width: 24,
+                          },
+                          '& .MuiSlider-valueLabel': {
+                            top: -6,
+                          }
+                        }}
+                        disabled
+                      />
+                    </Box>
                   </Box>
                   <Box sx={{ mt: 2 }}>
                     <Typography variant="subtitle2" sx={{ mb: 0.5 }}>
@@ -492,18 +503,29 @@ const Quiz: React.FC = () => {
               border: '1px solid',
               borderColor: theme => theme.palette.mode === 'light' ? 'rgba(46, 125, 50, 0.2)' : 'rgba(46, 125, 50, 0.3)'
             }}>
-              <Typography variant="h5" gutterBottom>
+              <Typography variant="h5" gutterBottom sx={{ mb: 4 }}>
                 Final Quiz Grade:
               </Typography>
-              <Slider
-                value={quiz.finalGrade || 0}
-                aria-label="Final quiz grade"
-                valueLabelDisplay="on"
-                min={0}
-                max={100}
-                sx={{ width: '80%', mx: 'auto', mb: 2 }}
-                disabled
-              />
+              <Box sx={{ px: 2, py: 1, mb: 2 }}>
+                <Slider
+                  value={quiz.finalGrade || 0}
+                  aria-label="Final quiz grade"
+                  valueLabelDisplay="on"
+                  min={0}
+                  max={100}
+                  sx={{ 
+                    width: '100%',
+                    '& .MuiSlider-thumb': {
+                      height: 24,
+                      width: 24,
+                    },
+                    '& .MuiSlider-valueLabel': {
+                      top: -6,
+                    }
+                  }}
+                  disabled
+                />
+              </Box>
               <Typography variant="h6" sx={{ mt: 2 }}>
                 Overall Tip:
               </Typography>
