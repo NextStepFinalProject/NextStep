@@ -232,12 +232,43 @@ const Login: React.FC = () => {
                   sx={{ 
                     mb: 2, 
                     py: 1.5,
-                    borderColor: theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.2)' : undefined,
-                    color: theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.9)' : undefined,
+                    position: 'relative',
+                    border: 'none',
+                    background: theme.palette.mode === 'dark' 
+                      ? 'linear-gradient(45deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.05))'
+                      : 'linear-gradient(45deg, rgba(0, 0, 0, 0.05), rgba(0, 0, 0, 0.02))',
+                    '&::before': {
+                      content: '""',
+                      position: 'absolute',
+                      top: 0,
+                      left: 0,
+                      right: 0,
+                      bottom: 0,
+                      borderRadius: 'inherit',
+                      padding: '1px',
+                      background: theme.palette.mode === 'dark'
+                        ? 'linear-gradient(45deg, #64B5F6, #4DD0E1)'
+                        : 'linear-gradient(45deg, #0984E3, #00B894)',
+                      WebkitMask: 'linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0)',
+                      WebkitMaskComposite: 'xor',
+                      maskComposite: 'exclude',
+                    },
+                    color: theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.9)' : 'rgba(0, 0, 0, 0.87)',
                     '&:hover': {
-                      borderColor: theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.3)' : undefined,
-                      background: theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.05)' : undefined,
-                    }
+                      background: theme.palette.mode === 'dark'
+                        ? 'linear-gradient(45deg, rgba(255, 255, 255, 0.15), rgba(255, 255, 255, 0.1))'
+                        : 'linear-gradient(45deg, rgba(0, 0, 0, 0.08), rgba(0, 0, 0, 0.04))',
+                      transform: 'translateY(-1px)',
+                      boxShadow: theme.palette.mode === 'dark'
+                        ? '0 4px 20px rgba(100, 181, 246, 0.2)'
+                        : '0 4px 20px rgba(9, 132, 227, 0.2)',
+                      '&::before': {
+                        background: theme.palette.mode === 'dark'
+                          ? 'linear-gradient(45deg, #42A5F5, #26C6DA)'
+                          : 'linear-gradient(45deg, #0873C4, #00A884)',
+                      }
+                    },
+                    transition: 'all 0.3s ease',
                   }}
                 >
                   Continue with Google
