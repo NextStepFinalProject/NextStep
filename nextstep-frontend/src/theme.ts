@@ -132,11 +132,31 @@ export const darkTheme = createTheme({
     },
     text: {
       primary: '#FFFFFF',
-      secondary: '#B2BEC3',
+      secondary: '#E0E0E0',
     },
   },
   components: {
     ...commonSettings.components,
+    MuiButton: {
+      styleOverrides: {
+        root: {
+          textTransform: 'none',
+          fontWeight: 600,
+          borderRadius: '50px',
+          padding: '10px 24px',
+          transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+          '&:hover': {
+            transform: 'translateY(-2px)',
+          },
+        },
+        contained: {
+          boxShadow: '0 4px 14px rgba(0, 0, 0, 0.1)',
+          '&:hover': {
+            boxShadow: '0 6px 20px rgba(0, 0, 0, 0.15)',
+          },
+        },
+      },
+    },
     MuiCard: {
       styleOverrides: {
         root: {
@@ -148,13 +168,51 @@ export const darkTheme = createTheme({
         },
       },
     },
-    MuiButton: {
+    MuiTypography: {
       styleOverrides: {
-        contained: {
-          boxShadow: '0 4px 14px rgba(0, 0, 0, 0.2)',
+        root: {
+          color: '#FFFFFF',
+        },
+        body1: {
+          color: '#E0E0E0',
+        },
+        body2: {
+          color: '#E0E0E0',
+        },
+        h1: {
+          color: '#FFFFFF',
+        },
+        h2: {
+          color: '#FFFFFF',
+        },
+        h3: {
+          color: '#FFFFFF',
+        },
+        h4: {
+          color: '#FFFFFF',
+        },
+        h5: {
+          color: '#E0E0E0',
+        },
+        h6: {
+          color: '#E0E0E0',
+        },
+      },
+    },
+    MuiIconButton: {
+      styleOverrides: {
+        root: {
+          color: '#FFFFFF',
           '&:hover': {
-            boxShadow: '0 6px 20px rgba(0, 0, 0, 0.3)',
+            backgroundColor: 'rgba(255, 255, 255, 0.1)',
           },
+        },
+      },
+    },
+    MuiDivider: {
+      styleOverrides: {
+        root: {
+          borderColor: 'rgba(255, 255, 255, 0.12)',
         },
       },
     },

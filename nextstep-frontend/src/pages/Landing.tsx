@@ -286,6 +286,9 @@ const Landing: React.FC = () => {
           py: { xs: 12, md: 16 },
           position: 'relative',
           overflow: 'hidden',
+          background: theme.palette.mode === 'dark' 
+            ? 'linear-gradient(135deg, #1A1A1A 0%, #2D2D2D 100%)'
+            : 'linear-gradient(135deg, #FFFFFF 0%, #F8F9FA 100%)',
           '&::before': {
             content: '""',
             position: 'absolute',
@@ -294,21 +297,9 @@ const Landing: React.FC = () => {
             right: 0,
             bottom: 0,
             background: theme.palette.mode === 'dark' 
-              ? 'linear-gradient(135deg, rgba(116, 185, 255, 0.1) 0%, rgba(85, 239, 196, 0.1) 100%)'
+              ? 'linear-gradient(135deg, rgba(116, 185, 255, 0.15) 0%, rgba(85, 239, 196, 0.15) 100%)'
               : 'linear-gradient(135deg, rgba(9, 132, 227, 0.1) 0%, rgba(0, 184, 148, 0.1) 100%)',
             zIndex: 0,
-            animation: 'gradientShift 15s ease infinite',
-            '@keyframes gradientShift': {
-              '0%': {
-                backgroundPosition: '0% 50%',
-              },
-              '50%': {
-                backgroundPosition: '100% 50%',
-              },
-              '100%': {
-                backgroundPosition: '0% 50%',
-              },
-            },
           },
         }}
       >
@@ -328,7 +319,6 @@ const Landing: React.FC = () => {
               component="h1"
               sx={{
                 fontWeight: 800,
-                color: 'text.primary',
                 fontSize: { xs: '2.5rem', md: '3.5rem' },
                 lineHeight: 1.2,
                 mb: 2,
@@ -356,11 +346,12 @@ const Landing: React.FC = () => {
             <Typography
               variant="h5"
               sx={{
-                color: 'text.secondary',
                 maxWidth: '600px',
                 mb: 4,
                 fontWeight: 400,
                 animation: 'fadeInUp 0.8s ease-out 0.2s both',
+                color: theme.palette.mode === 'dark' ? '#E0E0E0' : '#2D3436',
+                opacity: 0.9,
               }}
             >
               Join thousands of professionals who have already taken their next step towards success.
