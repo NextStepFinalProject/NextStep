@@ -295,9 +295,7 @@ const Quiz: React.FC = () => {
 
       {/* Subject Input */}
       {!quiz && (
-        <Box sx={{ mb: 4, p: 3, bgcolor: 'background.paper', borderRadius: 2, boxShadow: 1 }}>
-          <Typography variant="h6" gutterBottom>
-          </Typography>
+        <Box sx={{ mb: 4 }}>
           <TextField
             fullWidth
             label="Quiz Subject"
@@ -369,7 +367,7 @@ const Quiz: React.FC = () => {
           </Typography>
 
           {/* --- Enhanced Display of Quiz Metadata --- */}
-          <Paper elevation={2} sx={{ p: 3, mb: 4, bgcolor: '#f5f5f5', borderRadius: 2 }}>
+          <Paper elevation={2} sx={{ p: 3, mb: 4, bgcolor: 'background.default', borderRadius: 2 }}>
             <Grid container spacing={2}>
               {quiz.title && (
                 <Grid item xs={12}>
@@ -497,7 +495,7 @@ const Quiz: React.FC = () => {
             Your answers may get better grades for broad, in-depth explanations. You can answer in any language you want!
           </Typography>
           {quiz.questions.map((q, index) => (
-            <Paper key={index} sx={{ p: 2, mb: 3, border: '1px solid #e0e0e0' }}>
+            <Paper key={index} sx={{ p: 2, mb: 3, border: '1px solid', borderColor: 'divider' }}>
               <Box display="flex" justifyContent="space-between" alignItems="flex-start" mb={1}>
                 {/* Circled Numbering (Option 2) */}
                 <Avatar
@@ -543,18 +541,29 @@ const Quiz: React.FC = () => {
               {quizSubmitted && (
                 <>
                   <Box sx={{ mt: 2 }}>
-                    <Typography variant="subtitle2" sx={{ mb: 0.5 }}>
+                    <Typography variant="subtitle2" sx={{ mb: 4 }}>
                       Your Grade:
                     </Typography>
-                    <Slider
-                      value={q.grade || 0}
-                      aria-label="Question grade"
-                      valueLabelDisplay="on"
-                      min={0}
-                      max={100}
-                      sx={{ width: '90%', mx: 'auto' }}
-                      disabled
-                    />
+                    <Box sx={{ px: 2, py: 1 }}>
+                      <Slider
+                        value={q.grade || 0}
+                        aria-label="Question grade"
+                        valueLabelDisplay="on"
+                        min={0}
+                        max={100}
+                        sx={{ 
+                          width: '100%',
+                          '& .MuiSlider-thumb': {
+                            height: 24,
+                            width: 24,
+                          },
+                          '& .MuiSlider-valueLabel': {
+                            top: -6,
+                          }
+                        }}
+                        disabled
+                      />
+                    </Box>
                   </Box>
                   <Box sx={{ mt: 2 }}>
                     <Typography variant="subtitle2" sx={{ mb: 0.5 }}>
@@ -571,7 +580,14 @@ const Quiz: React.FC = () => {
               )}
               {/* Correct answer display is now independent of quizSubmitted for showing */}
               {showAnswer[index] && q.correctAnswer && (
-                <Box sx={{ mt: 2, p: 1.5, bgcolor: '#f0f0f0', borderRadius: 1 }}>
+                <Box sx={{ 
+                  mt: 2, 
+                  p: 1.5, 
+                  bgcolor: theme => theme.palette.mode === 'light' ? '#FFFFFF' : 'background.paper',
+                  borderRadius: 1,
+                  border: '1px solid',
+                  borderColor: 'divider'
+                }}>
                   <Typography variant="subtitle2">Correct Answer:</Typography>
                   <Typography variant="body2">{q.correctAnswer}</Typography>
                 </Box>
@@ -593,19 +609,39 @@ const Quiz: React.FC = () => {
           )}
 
           {quizSubmitted && quiz.finalGrade !== undefined && (
-            <Box sx={{ mt: 4, p: 3, bgcolor: '#e8f5e9', borderRadius: 2, boxShadow: 2, textAlign: 'center' }}>
-              <Typography variant="h5" gutterBottom>
+            <Box sx={{ 
+              mt: 4, 
+              p: 3, 
+              bgcolor: theme => theme.palette.mode === 'light' ? '#e8f5e9' : 'rgba(46, 125, 50, 0.15)', 
+              borderRadius: 2, 
+              boxShadow: 2, 
+              textAlign: 'center',
+              border: '1px solid',
+              borderColor: theme => theme.palette.mode === 'light' ? 'rgba(46, 125, 50, 0.2)' : 'rgba(46, 125, 50, 0.3)'
+            }}>
+              <Typography variant="h5" gutterBottom sx={{ mb: 4 }}>
                 Final Quiz Grade:
               </Typography>
-              <Slider
-                value={quiz.finalGrade || 0}
-                aria-label="Final quiz grade"
-                valueLabelDisplay="on"
-                min={0}
-                max={100}
-                sx={{ width: '80%', mx: 'auto', mb: 2 }}
-                disabled
-              />
+              <Box sx={{ px: 2, py: 1, mb: 2 }}>
+                <Slider
+                  value={quiz.finalGrade || 0}
+                  aria-label="Final quiz grade"
+                  valueLabelDisplay="on"
+                  min={0}
+                  max={100}
+                  sx={{ 
+                    width: '100%',
+                    '& .MuiSlider-thumb': {
+                      height: 24,
+                      width: 24,
+                    },
+                    '& .MuiSlider-valueLabel': {
+                      top: -6,
+                    }
+                  }}
+                  disabled
+                />
+              </Box>
               <Typography variant="h6" sx={{ mt: 2 }}>
                 Overall Tip:
               </Typography>

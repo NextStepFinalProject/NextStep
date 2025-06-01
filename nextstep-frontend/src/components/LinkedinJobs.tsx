@@ -12,7 +12,7 @@ interface Job {
   salary?: string;
 }
 
-interface LinkedInIntegrationProps {
+interface LinkedinJobsProps {
   jobs: Job[];
   loadingJobs: boolean;
   fetchJobs: (settings: LinkedInSettings) => Promise<void>;
@@ -30,7 +30,7 @@ interface LinkedInSettings {
   skills: string[];
 }
 
-const LinkedInIntegration: React.FC<LinkedInIntegrationProps> = ({
+const LinkedinJobs: React.FC<LinkedinJobsProps> = ({
   jobs,
   loadingJobs,
   fetchJobs,
@@ -164,8 +164,7 @@ const LinkedInIntegration: React.FC<LinkedInIntegrationProps> = ({
                 />
               ))}
             </Stack>
-            <TextField
-              label="Add Skill"
+            {settings.skills.length < 3 && <TextField
               variant="outlined"
               fullWidth
               onKeyDown={(e) => {
@@ -181,10 +180,10 @@ const LinkedInIntegration: React.FC<LinkedInIntegrationProps> = ({
                   input.value = '';
                 }
               }}
-              placeholder={settings.skills.length >= 3 ? "Reached max of 3 skills" : "Type a skill and press Enter"}
-              disabled={settings.skills.length >= 3} // Disable input if 3 skills are already added
+              placeholder="Type a skill and press Enter"
               sx={{ mt: 1 }}
             />
+          }
           </Grid>
           <br />
           <Box sx={{ textAlign: 'center', mb: 3 }}>
@@ -212,7 +211,7 @@ const LinkedInIntegration: React.FC<LinkedInIntegrationProps> = ({
                       p: 2,
                       border: '1px solid #ddd',
                       borderRadius: 2,
-                      height: '200px',
+                      height: '220px',
                       display: 'flex',
                       flexDirection: 'column',
                       justifyContent: 'space-between',
@@ -312,4 +311,4 @@ const LinkedInIntegration: React.FC<LinkedInIntegrationProps> = ({
   );
 };
 
-export default LinkedInIntegration;
+export default LinkedinJobs;
