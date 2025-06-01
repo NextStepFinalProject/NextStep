@@ -74,7 +74,7 @@ const Chat: React.FC = () => {
         setIsLoading(false);
       });
 
-      socketRef.current.on('connect_error', (err) => {
+      socketRef.current.on('connect_error', (_) => {
         setError('Connection error. Please try again.');
         setIsConnected(false);
         setIsLoading(false);
@@ -439,7 +439,7 @@ const Chat: React.FC = () => {
           </Box>
         </Box>
         <DividedList 
-          onlineUsers={onlineUsers as {id: string, email: string}[]} 
+          onlineUsers={onlineUsers.map(user => ({ id: user.id, email: user.email }))} 
           onUserClick={onUserClick}
           disabled={!isConnected}
         />

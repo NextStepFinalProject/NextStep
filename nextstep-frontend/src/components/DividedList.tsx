@@ -14,13 +14,8 @@ interface User {
   email: string;
 }
 
-interface DividedListProps {
-  onlineUsers: User[];
-  onUserClick: (user: User) => void;
-  disabled?: boolean;
-}
 
-const DividedList: React.FC<DividedListProps> = ({ onlineUsers, onUserClick, disabled = false }) => {
+const DividedList: React.FC<any> = ({ onlineUsers, onUserClick, disabled = false }) => {
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
 
   const handleUserClick = (user: User) => {
@@ -44,7 +39,7 @@ const DividedList: React.FC<DividedListProps> = ({ onlineUsers, onUserClick, dis
           },
         }}
       >
-        {onlineUsers.map((user, index) => (
+        {onlineUsers.map((user: User, index: number) => (
           <div key={user.id}>
             {index !== 0 && <Divider />}
             <ListItemButton

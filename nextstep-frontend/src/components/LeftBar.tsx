@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { Box, Drawer, List, ListItem, ListItemIcon, ListItemText, Tooltip, Divider, useTheme as useMuiTheme, ListItemButton } from '@mui/material';
+import { Box, Drawer, List, ListItem, ListItemIcon, ListItemText, Tooltip, Divider, ListItemButton } from '@mui/material';
 import { Home, Person, Message, Logout, DocumentScannerTwoTone, Feed, Quiz, LightMode, DarkMode } from '@mui/icons-material';
 import { getUserAuth, removeUserAuth } from "../handlers/userAuth.ts";
 import api from "../serverApi.ts";
