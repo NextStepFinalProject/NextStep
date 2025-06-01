@@ -6,6 +6,7 @@ import { scoreResume, streamScoreResume, getResumeTemplates,
     generateImprovedResume, parseResumeFields,
     saveParsedResume, getResumeByOwner } from '../services/resume_service';
 import multer from 'multer';
+import { uploadResume } from '../services/resources_service';
 import { CustomRequest } from "types/customRequest";
 import { handleError } from "../utils/handle_error";
 
@@ -119,7 +120,7 @@ const getResumeData = async (req: CustomRequest, res: Response) => {
         const version = req.query.version ? parseInt(req.query.version as string) : undefined;
         const resume = await getResumeByOwner(ownerId, version);
 
-        return res.status(200).json(resumeData);
+        return res.status(200).json(resume);
     } catch (error) {
         console.error('Error retrieving resume data:', error);
         return handleError(error, res);

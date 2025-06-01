@@ -6,11 +6,11 @@ import mammoth from 'mammoth';
 import pdfParse from 'pdf-parse';
 import AdmZip from 'adm-zip';
 import { DOMParser, XMLSerializer } from 'xmldom';
-import { ParsedResume } from 'types/resume_types';
+import {ParsedResume, ResumeData} from 'types/resume_types';
 import {createResumeExtractionPrompt, createResumeModificationPrompt, feedbackTemplate, SYSTEM_TEMPLATE} from "../utils/resume_handlers/resume_AI_handler";
 import { parseDocument } from '../utils/resume_handlers/resume_files_handler';
 import {ResumeModel} from "../models/resume_model";
-import {PostModel} from "../models/posts_model";
+import {Document} from 'mongoose';
 
 
 
@@ -364,10 +364,10 @@ const saveParsedResume = async (parsedData: ParsedResume, ownerId: string, resum
 };
 
 
-const ysgetResumeByOwner = async (ownerId: string, version?: number) => {
+const getResumeByOwner = async (ownerId: string, version?: number) => {
     try {
-        let query = {
-            owner: ownerId
+        let query: {owner: string, version?: number} = {
+            owner: ownerId,
         };
 
         // If version is specified, add it to the query
