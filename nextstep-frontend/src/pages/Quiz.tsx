@@ -16,6 +16,9 @@ import {
   Divider,
   Grid,
   Avatar,
+  FormGroup,
+  FormControlLabel,
+  Checkbox,
 } from '@mui/material';
 import {
   Visibility,
@@ -106,6 +109,15 @@ interface QuizState {
 const Quiz: React.FC = () => {
   const [searchParams] = useSearchParams();
   const [subject, setSubject] = useState<string>(searchParams.get('subject') || '');
+  const [selectedSpecialties, setSelectedSpecialties] = useState<{
+    code: boolean;
+    design: boolean;
+    technologies: boolean;
+  }>({
+    code: false,
+    design: false,
+    technologies: false,
+  });
   const [quiz, setQuiz] = useState<QuizState | null>(null);
   const [loading, setLoading] = useState<boolean>(false);
   const [showAnswer, setShowAnswer] = useState<{ [key: number]: boolean }>({});
@@ -117,8 +129,15 @@ const Quiz: React.FC = () => {
     setQuiz(null);
     setQuizSubmitted(false);
     setShowAnswer({});
+
+    // Build the full subject with specialties
+    let fullSubject = subject;
+    if (selectedSpecialties.code) fullSubject += ' SPECIALTY_CODE';
+    if (selectedSpecialties.design) fullSubject += ' SPECIALTY_DESIGN';
+    if (selectedSpecialties.technologies) fullSubject += ' SPECIALTY_TECHNOLOGIES';
+
     try {
-      const response = await api.post<QuizGenerationResponse>(`${config.app.backend_url()}/quiz/generate`, { subject });
+      const response = await api.post<QuizGenerationResponse>(`${config.app.backend_url()}/quiz/generate`, { subject: fullSubject });
 
       const generatedQuestions: QuizStateQuestion[] = response.data.question_list.map((q: string, idx: number) => ({
         originalQuestion: q,
@@ -261,6 +280,41 @@ const Quiz: React.FC = () => {
             onKeyDown={e => e.key === 'Enter' && handleGenerateQuiz()}
             sx={{ mb: 2 }}
           />
+          
+          {/* Specialty Selection */}
+          <Typography variant="subtitle2" sx={{ mb: 1, color: 'text.secondary' }}>
+            Select Specialties (Optional):
+          </Typography>
+          <FormGroup row sx={{ mb: 2 }}>
+            <FormControlLabel
+              control={
+                <Checkbox
+                  checked={selectedSpecialties.code}
+                  onChange={(e) => setSelectedSpecialties(prev => ({ ...prev, code: e.target.checked }))}
+                />
+              }
+              label="Code"
+            />
+            <FormControlLabel
+              control={
+                <Checkbox
+                  checked={selectedSpecialties.design}
+                  onChange={(e) => setSelectedSpecialties(prev => ({ ...prev, design: e.target.checked }))}
+                />
+              }
+              label="Design"
+            />
+            <FormControlLabel
+              control={
+                <Checkbox
+                  checked={selectedSpecialties.technologies}
+                  onChange={(e) => setSelectedSpecialties(prev => ({ ...prev, technologies: e.target.checked }))}
+                />
+              }
+              label="Technologies"
+            />
+          </FormGroup>
+
           <Button
             variant="contained"
             onClick={handleGenerateQuiz}
