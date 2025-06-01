@@ -35,6 +35,19 @@ function matchTags(text: string, tags: string[]): string[] {
   return Array.from(found);
 }
 
+// Helper function to check if content matches any of the given terms
+function hasMatchingTerms(content: string, terms: string[]): boolean {
+  const lowerContent = content.toLowerCase();
+  return terms.some(term => lowerContent.includes(term.toLowerCase()));
+}
+
+// Helper function to check if content matches any of the given terms in both English and Hebrew
+function matchTagsBilingual(content: string, englishTerms: string[], hebrewTerms: string[]): boolean {
+  const lowerContent = content.toLowerCase();
+  return englishTerms.some(term => lowerContent.includes(term.toLowerCase())) ||
+         hebrewTerms.some(term => lowerContent.includes(term));
+}
+
 const companyToCompanyData = (company: Document<unknown, {}, ICompany> & ICompany): CompanyData => {
   return {
     ...company.toJSON(),
@@ -95,11 +108,13 @@ const parseJobQuizzesFromJobHuntHtml = (htmlPath: string): CompanyData[] => {
 
       const content = article.find('.faq-content').html() || '';
       const forum_link = article.find('.meta-faq-data-fields a[href]').attr('href') || '';
+      
       // Generate tags: company, job role, technology, year, etc. Deduplicate.
       let quiz_tags = Array.from(new Set([
         company_en_final,
         company_he_final,
         ...quiz_title.split(/\s+/),
+        'SPECIALTY_GENERIC', // Add generic specialty tag to all quizzes
       ].filter(Boolean)));
 
       // Add matched predefined tags from title and content
@@ -108,6 +123,39 @@ const parseJobQuizzesFromJobHuntHtml = (htmlPath: string): CompanyData[] => {
         ...matchTags(content, PREDEFINED_TAGS),
       ]);
       quiz_tags = Array.from(new Set([...quiz_tags, ...matched_tags]));
+
+      // Add specialty tags based on content analysis
+      const contentText = $(content).text().toLowerCase();
+      
+      // Check for code-related content
+      const codeTerms = [
+        'code', 'programming', 'algorithm', 'function', 'class', 'method', 'variable', 'loop', 'condition', 'syntax',
+        'קוד', 'תכנות', 'אלגוריתם', 'פונקציה', 'מחלקה', 'מתודה', 'משתנה', 'לולאה', 'תנאי', 'תחביר',
+        'מבנה נתונים', 'אובייקט', 'מערך', 'רשימה', 'עץ', 'גרף', 'חיפוש', 'מיון', 'רקורסיה', 'סיבוכיות'
+      ];
+      if (hasMatchingTerms(contentText, codeTerms)) {
+        quiz_tags.push('SPECIALTY_CODE');
+      }
+
+      // Check for system design content
+      const designTerms = [
+        'design', 'architecture', 'system', 'component', 'service', 'microservice', 'scalability', 'performance', 'database', 'api',
+        'עיצוב', 'ארכיטקטורה', 'מערכת', 'רכיב', 'שירות', 'מיקרו-שירות', 'הרחבה', 'ביצועים', 'מסד נתונים', 'ממשק תכנות',
+        'תשתית', 'עומסים', 'זמינות', 'שחזור', 'גיבוי', 'אבטחה', 'אימות', 'הרשאות', 'תקשורת', 'פרוטוקול'
+      ];
+      if (hasMatchingTerms(contentText, designTerms)) {
+        quiz_tags.push('SPECIALTY_DESIGN');
+      }
+
+      // Check for specific technologies
+      const techTerms = [
+        'framework', 'library', 'technology', 'stack', 'tool', 'platform', 'language', 'framework', 'library',
+        'מסגרת', 'ספרייה', 'טכנולוגיה', 'סט', 'כלי', 'פלטפורמה', 'שפה', 'מסגרת', 'ספרייה',
+        'פיתוח', 'תשתית', 'סביבה', 'מערכת הפעלה', 'שרת', 'לקוח', 'דפדפן', 'מובייל', 'ענן', 'תשתית'
+      ];
+      if (hasMatchingTerms(contentText, techTerms)) {
+        quiz_tags.push('SPECIALTY_TECHNOLOGIES');
+      }
 
       quizzes.push({
         title: quiz_title,
@@ -167,7 +215,6 @@ const parseJobQuizzesFromCompanyTablesHtml = (htmlPath: string): CompanyData[] =
     // In a real application, you might generate a UUID or use a counter.
     const quiz_id = Math.abs(quiz_title_full.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0));
 
-
     // Extract process details
     const processDetailsRow = $table.find('td:contains("פרטים לגבי התהליך")').closest('tr');
     const process_details = processDetailsRow.find('td[style*="font-size:14px;font-weight:normal;"]').text().trim();
@@ -200,6 +247,7 @@ const parseJobQuizzesFromCompanyTablesHtml = (htmlPath: string): CompanyData[] =
       company_he,
       jobRole,
       ...quiz_title.split(/\s+/),
+      'SPECIALTY_GENERIC', // Add generic specialty tag to all quizzes
     ].filter(Boolean)));
 
     // Add matched predefined tags from title, process details, and interview questions
@@ -209,6 +257,39 @@ const parseJobQuizzesFromCompanyTablesHtml = (htmlPath: string): CompanyData[] =
       ...matchTags(interview_questions, PREDEFINED_TAGS),
     ]);
     quiz_tags = Array.from(new Set([...quiz_tags, ...matched_tags]));
+
+    // Add specialty tags based on content analysis
+    const contentText = (process_details + ' ' + interview_questions).toLowerCase();
+    
+    // Check for code-related content
+    const codeTerms = [
+      'code', 'programming', 'algorithm', 'function', 'class', 'method', 'variable', 'loop', 'condition', 'syntax',
+      'קוד', 'תכנות', 'אלגוריתם', 'פונקציה', 'מחלקה', 'מתודה', 'משתנה', 'לולאה', 'תנאי', 'תחביר',
+      'מבנה נתונים', 'אובייקט', 'מערך', 'רשימה', 'עץ', 'גרף', 'חיפוש', 'מיון', 'רקורסיה', 'סיבוכיות'
+    ];
+    if (hasMatchingTerms(contentText, codeTerms)) {
+      quiz_tags.push('SPECIALTY_CODE');
+    }
+
+    // Check for system design content
+    const designTerms = [
+      'design', 'architecture', 'system', 'component', 'service', 'microservice', 'scalability', 'performance', 'database', 'api',
+      'עיצוב', 'ארכיטקטורה', 'מערכת', 'רכיב', 'שירות', 'מיקרו-שירות', 'הרחבה', 'ביצועים', 'מסד נתונים', 'ממשק תכנות',
+      'תשתית', 'עומסים', 'זמינות', 'שחזור', 'גיבוי', 'אבטחה', 'אימות', 'הרשאות', 'תקשורת', 'פרוטוקול'
+    ];
+    if (hasMatchingTerms(contentText, designTerms)) {
+      quiz_tags.push('SPECIALTY_DESIGN');
+    }
+
+    // Check for specific technologies
+    const techTerms = [
+      'framework', 'library', 'technology', 'stack', 'tool', 'platform', 'language', 'framework', 'library',
+      'מסגרת', 'ספרייה', 'טכנולוגיה', 'סט', 'כלי', 'פלטפורמה', 'שפה', 'מסגרת', 'ספרייה',
+      'פיתוח', 'תשתית', 'סביבה', 'מערכת הפעלה', 'שרת', 'לקוח', 'דפדפן', 'מובייל', 'ענן', 'תשתית'
+    ];
+    if (hasMatchingTerms(contentText, techTerms)) {
+      quiz_tags.push('SPECIALTY_TECHNOLOGIES');
+    }
 
     // Find if company already exists to add the quiz to it
     let existingCompany = companies.find(c => c.company === company_en && c.company_he === company_he);
