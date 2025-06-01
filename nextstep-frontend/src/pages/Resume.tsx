@@ -196,7 +196,7 @@ const Resume: React.FC = () => {
 
   useEffect(() => {
     if (feedbackEndRef.current) {
-      feedbackEndRef.current.scrollIntoView({ behavior: 'smooth' });
+      feedbackEndRef.current.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
     }
   }, [feedback]);
 
