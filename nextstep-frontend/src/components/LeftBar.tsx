@@ -1,4 +1,4 @@
-import React, { useRef, useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { Box, Drawer, List, ListItem, ListItemIcon, ListItemText, Tooltip, Divider, useTheme as useMuiTheme, ListItemButton } from '@mui/material';
 import { Home, Person, Message, Logout, DocumentScannerTwoTone, Feed, Quiz, LightMode, DarkMode } from '@mui/icons-material';
@@ -13,7 +13,6 @@ const LeftBar: React.FC = () => {
   const location = useLocation();
   const [collapsed, setCollapsed] = useState(true);
   const { isDarkMode, toggleTheme } = useTheme();
-  const muiTheme = useMuiTheme();
 
   useEffect(() => {
     const handleResize = () => {

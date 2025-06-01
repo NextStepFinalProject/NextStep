@@ -12,7 +12,6 @@ import {
   IconButton,
   useTheme,
   useMediaQuery,
-  Grid,
   Alert,
 } from '@mui/material';
 import { motion } from 'framer-motion';
@@ -50,7 +49,7 @@ const Register: React.FC = () => {
       return;
     }
     try {
-      const response = await axios.post(`${config.app.backend_url()}/auth/register`, {
+      await axios.post(`${config.app.backend_url()}/auth/register`, {
         username: formData.username,
         email: formData.email,
         password: formData.password,

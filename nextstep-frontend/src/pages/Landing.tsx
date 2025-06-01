@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react';
+import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   Box,
@@ -6,11 +6,8 @@ import {
   Container,
   Grid,
   Typography,
-  Card,
-  CardContent,
   Stack,
   useTheme,
-  useMediaQuery,
   Paper,
   IconButton,
 } from '@mui/material';
@@ -29,77 +26,6 @@ const Landing: React.FC = () => {
   const navigate = useNavigate();
   const theme = useTheme();
   const { isDarkMode, toggleTheme } = useCustomTheme();
-  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
-  const logoRef = useRef<HTMLImageElement>(null);
-  const [stepZones, setStepZones] = React.useState<{ x: number; y: number; width: number; height: number }[]>([]);
-
-  useEffect(() => {
-    const analyzeLogo = () => {
-      if (!logoRef.current) return;
-
-      const img = logoRef.current;
-      const canvas = document.createElement('canvas');
-      const ctx = canvas.getContext('2d');
-      if (!ctx) return;
-
-      // Set canvas size to match image
-      canvas.width = img.naturalWidth;
-      canvas.height = img.naturalHeight;
-
-      // Draw image to canvas
-      ctx.drawImage(img, 0, 0);
-
-      // Get image data
-      const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-      const data = imageData.data;
-
-      // Find steps by analyzing pixel data
-      const steps: { x: number; y: number; width: number; height: number }[] = [];
-      let currentStep: { x: number; y: number; width: number; height: number } | null = null;
-
-      // Scan the image for non-transparent pixels
-      for (let y = 0; y < canvas.height; y++) {
-        for (let x = 0; x < canvas.width; x++) {
-          const idx = (y * canvas.width + x) * 4;
-          const alpha = data[idx + 3];
-
-          if (alpha > 0) {
-            if (!currentStep) {
-              currentStep = { x, y, width: 1, height: 1 };
-            } else {
-              currentStep.width = Math.max(currentStep.width, x - currentStep.x + 1);
-              currentStep.height = Math.max(currentStep.height, y - currentStep.y + 1);
-            }
-          } else if (currentStep) {
-            // If we find a gap, save the current step and start a new one
-            steps.push(currentStep);
-            currentStep = null;
-          }
-        }
-      }
-
-      // Convert coordinates to percentages
-      const percentageSteps = steps.map(step => ({
-        x: (step.x / canvas.width) * 100,
-        y: (step.y / canvas.height) * 100,
-        width: (step.width / canvas.width) * 100,
-        height: (step.height / canvas.height) * 100
-      }));
-
-      setStepZones(percentageSteps);
-    };
-
-    // Wait for image to load
-    if (logoRef.current?.complete) {
-      analyzeLogo();
-    } else {
-      logoRef.current?.addEventListener('load', analyzeLogo);
-    }
-
-    return () => {
-      logoRef.current?.removeEventListener('load', analyzeLogo);
-    };
-  }, []);
 
   const features = [
     {
