@@ -548,7 +548,10 @@ export const searchQuizzesByTags = async (tags: string[]): Promise<QuizData[]> =
 /**
  * Generate a custom-tailored quiz on any subject, based on our real quiz database.
  * @param quizSubject The subject you want to generate a quiz for.
- *                    Example: "Java Spring Boot Microservices Interview Questions" or "QA Automation Python"
+ *                    Example: "Java Spring Boot Microservices Interview Questions" or
+ *                             "QA Automation Python" or
+ *                             "Java Spring Boot Microservices Interview Questions SPECIALTY_CODE SPECIALTY_DESIGN SPECIALTY_TECHNOLOGIES"
+ *                    Note: The SPECIALTY_ tags are optional, and can be used to specify the specialty of the quiz.
  */
 export const generateQuiz = async (quizSubject: string): Promise<any> => {
   // Take the first 10 best matching quizzes.
@@ -557,9 +560,24 @@ export const generateQuiz = async (quizSubject: string): Promise<any> => {
 
   const GEN_QUIZ_SYSTEM_PROMPT = "You are an AI assistant specialized in generating personalized interview quiz content based on real-world interview data. Your goal is to create a new, well-structured interview quiz tailored to a user's specific search query, drawing insights and patterns from a provided set of actual interview quizzes.";
 
+  const userQuizSpecialties = quizSubject.split(' ')
+  .filter((tag: string) => tag.startsWith('SPECIALTY_'))
+  .map((tag: string) => tag.replace('SPECIALTY_', ''))
+  .filter((tag: string) => tag !== 'GENERIC')
+  .join(', ');
+
   const prompt = `
 **User Search Query:**
 ${quizSubject}
+
+${userQuizSpecialties.length > 0 ? `**User Quiz Specialties:**
+${userQuizSpecialties}` : ''}
+
+${userQuizSpecialties.length > 0 ? `**Specialty Tags Description:**
+Added content analysis to detect and add the specialty tags:
+CODE: Added when content contains code-related terms like 'code', 'programming', 'algorithm', 'function', 'class', 'method', 'variable', 'loop', 'condition', or 'syntax'
+DESIGN: Added when content contains system design terms like 'design', 'architecture', 'system', 'component', 'service', 'microservice', 'scalability', 'performance', 'database', or 'api'
+TECHNOLOGIES: Added when content contains technology-related terms like 'framework', 'library', 'technology', 'stack', 'tool', 'platform', 'language'` : ''}
 
 **Relevant Real Quiz Data (JSON Array):**
 \`\`\`json
@@ -583,6 +601,7 @@ Content Details:
   answer_list: Crucially, parse the question_list string into an array of individual answers. Each element should be a distinct answer, corresponding to the questions.
   keywords: Extract 5-10 additional relevant technical or conceptual keywords that the user might find useful for preparation.
   interviewer_mindset: Describe the soft skills, characteristics, temperament, and professional attributes that an interviewer for this specific job role (based on the user's query and the context from real quizzes) would likely be looking for. Focus on traits that would give the applicant "extra points," such as straightforwardness, curiosity, social skills, professionalism, collaboration, communication (with colleagues, 3rd parties, customers), problem-solving approach, adaptability, initiative, attention to detail, etc. Aim for a paragraph or two.
+  ${userQuizSpecialties.length > 0 ? `specialty_tags: Define the quiz with specialty tags, as provided to you earlier, relevant technical or conceptual keywords that the user might find useful for preparation. The possible tags are: Code, Design, Technologies. The quiz should have at least one specialty tag.` : ''}
 
 **Desired Output Format (JSON)**:
 \`\`\`json
@@ -598,7 +617,8 @@ Content Details:
   "question_list": ["string", "string", ...],
   "answer_list": ["string", "string", ...],
   "keywords": ["string", "string", ...],
-  "interviewer_mindset": "string"
+  "interviewer_mindset": "string",
+  ${userQuizSpecialties.length > 0 ? `"specialty_tags": ["string", "string", ...]` : ''}
 }
 \`\`\`
 
@@ -607,6 +627,8 @@ Return ONLY the JSON, without any other text, so I could easily retrieve it.
 
   const aiResponse = await chatWithAI(GEN_QUIZ_SYSTEM_PROMPT, [prompt]);
   const parsed = JSON.parse(aiResponse.trim().replace("```json", "").replace("```", "")) as any;
+
+  parsed.specialty_tags = parsed.specialty_tags || [];
 
   return parsed;
 }
