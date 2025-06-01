@@ -48,6 +48,7 @@ interface QuizGenerationResponse {
   answer_list: string[];
   keywords: string[];
   interviewer_mindset: string;
+  specialty_tags: string[];
 }
 
 interface UserAnsweredQuiz {
@@ -64,6 +65,7 @@ interface UserAnsweredQuiz {
   user_answer_list: string[];
   keywords: string[];
   interviewer_mindset: string;
+  specialty_tags: string[];
 }
 
 interface GradedAnswer {
@@ -104,6 +106,7 @@ interface QuizState {
   keywords?: string[];
   interviewerMindset?: string;
   answer_list?: string[]; // Store the original answer list for display after grading
+  specialty_tags?: string[]; // Add specialty tags to the state
 }
 
 const Quiz: React.FC = () => {
@@ -158,6 +161,7 @@ const Quiz: React.FC = () => {
         keywords: response.data.keywords,
         interviewerMindset: response.data.interviewer_mindset,
         answer_list: response.data.answer_list,
+        specialty_tags: response.data.specialty_tags,
       });
 
     } catch (error) {
@@ -201,6 +205,7 @@ const Quiz: React.FC = () => {
       user_answer_list: quiz.questions.map(q => q.userAnswer),
       keywords: quiz.keywords || [],
       interviewer_mindset: quiz.interviewerMindset || '',
+      specialty_tags: quiz.specialty_tags || [],
     };
 
     try {
@@ -379,6 +384,26 @@ const Quiz: React.FC = () => {
                   <Stack direction="row" flexWrap="wrap" spacing={1}>
                     {quiz.tags.map((tag, i) => (
                       <Chip key={i} label={tag} size="small" variant="outlined" color="primary" />
+                    ))}
+                  </Stack>
+                </Grid>
+              )}
+
+              {quiz.specialty_tags && quiz.specialty_tags.length > 0 && (
+                <Grid item xs={12}>
+                  <Typography variant="body2" sx={{ mb: 1 }}>
+                    <LocalOfferOutlinedIcon sx={{ verticalAlign: 'middle', mr: 0.5 }} />
+                    Specialties:
+                  </Typography>
+                  <Stack direction="row" flexWrap="wrap" spacing={1}>
+                    {quiz.specialty_tags.map((specialty, i) => (
+                      <Chip 
+                        key={i} 
+                        label={specialty.replace('SPECIALTY_', '')} 
+                        size="small" 
+                        variant="outlined" 
+                        color="info"
+                      />
                     ))}
                   </Stack>
                 </Grid>
