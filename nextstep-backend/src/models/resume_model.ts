@@ -33,4 +33,4 @@ ResumeSchema.set('toJSON', {
     }
 });
 
-export default mongoose.model('Resume', ResumeSchema);
+export const ResumeModel = mongoose.model('Resume', ResumeSchema);

@@ -50,7 +50,9 @@ const getImageResource = async (req: Request, res: Response) => {
 
 const createResumeResource = async (req: Request, res: Response) => {
     try {
-        const resumeFilename = await uploadResume(req);    
+        const resumeFilename = await uploadResume(req);
+
+
         return res.status(201).send(resumeFilename);
     } catch (error) {
         if (error instanceof multer.MulterError || error instanceof TypeError) {

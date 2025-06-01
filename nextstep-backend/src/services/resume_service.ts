@@ -9,6 +9,8 @@ import { DOMParser, XMLSerializer } from 'xmldom';
 import { ParsedResume } from 'types/resume_types';
 import {createResumeExtractionPrompt, createResumeModificationPrompt, feedbackTemplate, SYSTEM_TEMPLATE} from "../utils/resume_handlers/resume_AI_handler";
 import { parseDocument } from '../utils/resume_handlers/resume_files_handler';
+import {ResumeModel} from "../models/resume_model";
+import {PostModel} from "../models/posts_model";
 
 
 
@@ -17,6 +19,11 @@ import { parseDocument } from '../utils/resume_handlers/resume_files_handler';
 const FEEDBACK_ERROR_MESSAGE = 'The Chat AI feature is turned off. Could not score your resume.';
 
 
+const resumeToResumeData = async (resume: Document<unknown, {}, any> & any): Promise<ResumeData> => {
+    // The mongoose schema's toJSON transform already handles basic conversion
+    // You could add additional fields here if needed in the future
+    return resume.toJSON();
+};
 
 const scoreResume = async (resumePath: string, jobDescription?: string): Promise<{ score: number; feedback: string }> => {
     try {
@@ -321,4 +328,70 @@ const parseResumeFields = async (
     return parsed;
   };
 
-export { scoreResume, streamScoreResume, getResumeTemplates, generateImprovedResume, parseResumeFields };
+
+const getLatestResumeByUser = async (ownerId: string): Promise<number> => {
+    try {
+        const latestResume = await ResumeModel.findOne({ owner: ownerId })
+            .sort({ version: -1 })
+            .exec();
+
+        return latestResume ? latestResume.version : 0; // Return version number or 0 if no resume exists
+    } catch (error) {
+        console.error('Error finding latest resume:', error);
+        throw new Error('Failed to retrieve latest resume');
+    }
+};
+
+
+const saveParsedResume = async (parsedData: ParsedResume, ownerId: string, resumeRawLink: string): Promise<ResumeData> => {
+    const lastVersion = await getLatestResumeByUser(ownerId);
+    const newVersion = lastVersion + 1;
+
+    const newResume = new ResumeModel({
+        owner: ownerId,
+        version: newVersion,
+        rawContentLink: resumeRawLink,
+        parsedData: {
+            aboutMe: parsedData.aboutMe,
+            skills: parsedData.skills,
+            roleMatch: parsedData.roleMatch,
+            experience: parsedData.experience
+        }
+    });
+
+    const savedResume = await newResume.save();
+    return resumeToResumeData(savedResume);
+};
+
+
+const ysgetResumeByOwner = async (ownerId: string, version?: number) => {
+    try {
+        let query = {
+            owner: ownerId
+        };
+
+        // If version is specified, add it to the query
+        if (version !== undefined) {
+            query = { ...query, version };
+        }
+
+        const resume = await ResumeModel.findOne(query)
+            .sort(version === undefined ? { version: -1 } : {}) // Sort by version descending only if no specific version requested
+            .exec();
+
+        if (!resume) {
+            throw new Error(version !== undefined
+                ? `Resume version ${version} not found for user ${ownerId}`
+                : `No resume found for user ${ownerId}`);
+        }
+
+        return resume;
+    } catch (error) {
+        console.error('Error retrieving resume:', error);
+        throw error;
+    }
+};
+
+export { scoreResume, streamScoreResume,
+    getResumeTemplates, generateImprovedResume, parseResumeFields,
+    saveParsedResume, getResumeByOwner };
