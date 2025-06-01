@@ -142,6 +142,11 @@ const Quiz: React.FC = () => {
     try {
       const response = await api.post<QuizGenerationResponse>(`${config.app.backend_url()}/quiz/generate`, { subject: fullSubject });
 
+      // Validate the response data
+      if (!response.data || !response.data.question_list || !response.data.answer_list) {
+        throw new Error('Invalid quiz data received from server');
+      }
+
       const generatedQuestions: QuizStateQuestion[] = response.data.question_list.map((q: string, idx: number) => ({
         originalQuestion: q,
         userAnswer: '',
@@ -164,9 +169,27 @@ const Quiz: React.FC = () => {
         specialty_tags: response.data.specialty_tags,
       });
 
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error generating quiz:', error);
-      alert('Failed to generate quiz. Please try again.');
+      let errorMessage = 'Failed to generate quiz. ';
+      
+      if (error.response?.data?.message) {
+        // Server returned an error message
+        errorMessage += error.response.data.message;
+      } else if (error.message) {
+        // Other error with message
+        errorMessage += error.message;
+      } else {
+        // Generic error
+        errorMessage += 'Please try again.';
+      }
+
+      // Show error in a more user-friendly way
+      alert(errorMessage);
+      
+      // Reset loading state
+      setLoading(false);
+      return;
     } finally {
       setLoading(false);
     }
@@ -402,7 +425,14 @@ const Quiz: React.FC = () => {
                         label={specialty.replace('SPECIALTY_', '')} 
                         size="small" 
                         variant="outlined" 
-                        color="info"
+                        sx={{
+                          borderColor: 'warning.main',
+                          color: 'warning.dark',
+                          '&:hover': {
+                            backgroundColor: 'warning.light',
+                            borderColor: 'warning.dark',
+                          }
+                        }}
                       />
                     ))}
                   </Stack>
