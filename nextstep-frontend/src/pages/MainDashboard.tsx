@@ -141,15 +141,30 @@ const MainDashboard: React.FC = () => {
 
   // Upload & parse resume
   const handleResumeUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+
+    const uploadResume = async (formData: FormData) => {
+      const response = await api.post('/resource/resume', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
+      return response.data;
+    };
+
     const file = e.target.files?.[0];
     if (!file) return;
     setResumeFileName(file.name);
     setParsing(true);
     const form = new FormData();
-    form.append('resume', file);
+    form.append('file', file);
     try {
-      const res = await api.post('/resume/parseResume', form, {
-        headers: { 'Content-Type': 'multipart/form-data' }
+      const uplaodedResume = await uploadResume(form);
+
+      const res = await api.post('/resume/parseResume',
+          {
+            resumefileName: uplaodedResume,
+            }, {
+        headers: { 'Content-Type': 'multipart/form-data' },
       });
       const { aboutMe: aiAbout, skills: aiSkills, roleMatch: aiRole, experience: aiExp } = res.data;
       setAboutMe(aiAbout);

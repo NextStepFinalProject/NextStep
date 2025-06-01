@@ -6,7 +6,7 @@ import { scoreResume, streamScoreResume, getResumeTemplates,
     generateImprovedResume, parseResumeFields,
     saveParsedResume, getResumeByOwner } from '../services/resume_service';
 import multer from 'multer';
-import { uploadResume } from '../services/resources_service';
+import {getResumeBuffer, resumeExists, uploadResume} from '../services/resources_service';
 import { CustomRequest } from "types/customRequest";
 import { handleError } from "../utils/handle_error";
 
@@ -99,11 +99,15 @@ const generateResume = async (req: Request, res: Response) => {
 
 const parseResume = async (req: CustomRequest, res: Response) => {
     try {
-      if (!req.file) {
+      if (!req.body.resumefileName) {
         return res.status(400).json({ error: 'No resume file uploaded' });
       }
-      const resumeFilename = await uploadResume(req);
-      const parsed = await parseResumeFields(req.file.buffer, req.file.originalname);
+      else if (!resumeExists(req.body.resumefileName)) {
+          return res.status(400).json({ error: 'No resume file uploaded' });
+      }
+
+      const resumeFilename = req.body.resumefileName;
+      const parsed = await parseResumeFields(getResumeBuffer(req.body.resumefileName), resumeFilename);
       const resumeData = await saveParsedResume(parsed, req.user.id, resumeFilename);
 
       return res.status(200).json(parsed);
