@@ -1,46 +1,93 @@
 import { useState } from 'react';
-import Avatar from '@mui/joy/Avatar';
-import Box from '@mui/joy/Box';
-import List from '@mui/joy/List';
-import ListDivider from '@mui/joy/ListDivider';
-import ListItem from '@mui/joy/ListItem';
-import ListItemDecorator from '@mui/joy/ListItemDecorator';
-import Typography from '@mui/joy/Typography';
+import {
+  Avatar,
+  Box,
+  List,
+  ListItemAvatar,
+  ListItemText,
+  Divider,
+  ListItemButton,
+} from '@mui/material';
 
-const DividedList: React.FC<any> = ({ onlineUsers, onUserClick }) => {
+interface User {
+  id: string;
+  email: string;
+}
+
+
+const DividedList: React.FC<any> = ({ onlineUsers, onUserClick, disabled = false }) => {
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
 
-  const handleUserClick = (user: any) => {
+  const handleUserClick = (user: User) => {
+    if (disabled) return;
     setSelectedUserId(user.id);
     onUserClick(user);
   };
 
   return (
     <Box sx={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'center', gap: 4 }}>
-      <div>
-        <List variant="outlined" sx={{ minWidth: 240, borderRadius: 'sm' }}>
-          {onlineUsers.map((user: any, index: number) => (
-            <div key={user.id} id={user.id} onClick={() => handleUserClick(user)}>
-              {index !== 0 && <ListDivider />}
-              <ListItem
-                sx={{
-                  cursor: 'pointer',
-                  backgroundColor: user.id === selectedUserId ? 'var(--color-1)' : 'transparent',
-                  color: user.id === selectedUserId ? 'white' : 'inherit',
-                  borderRadius: '5px',
-                  transition: 'background 0.1s ease-in-out',
-                  '&:hover': { backgroundColor: 'var(--color-4)' },
+      <List
+        sx={{
+          width: '100%',
+          maxWidth: 360,
+          bgcolor: 'background.paper',
+          borderRadius: 2,
+          boxShadow: '0 2px 8px rgba(0, 0, 0, 0.05)',
+          transition: 'all 0.3s ease',
+          '&:hover': {
+            boxShadow: '0 4px 12px rgba(0, 0, 0, 0.08)',
+          },
+        }}
+      >
+        {onlineUsers.map((user: User, index: number) => (
+          <div key={user.id}>
+            {index !== 0 && <Divider />}
+            <ListItemButton
+              onClick={() => handleUserClick(user)}
+              disabled={disabled}
+              sx={{
+                py: 1.5,
+                px: 2,
+                backgroundColor: user.id === selectedUserId ? 'primary.main' : 'transparent',
+                color: user.id === selectedUserId ? 'primary.contrastText' : 'text.primary',
+                transition: 'all 0.3s ease',
+                '&:hover': {
+                  backgroundColor: user.id === selectedUserId ? 'primary.dark' : 'action.hover',
+                  transform: 'translateX(4px)',
+                },
+                '&.Mui-disabled': {
+                  opacity: 0.5,
+                },
+              }}
+            >
+              <ListItemAvatar>
+                <Avatar
+                  alt={user.email}
+                  src="/static/images/avatar/1.jpg"
+                  sx={{ 
+                    width: 36, 
+                    height: 36,
+                    transition: 'all 0.3s ease',
+                    '&:hover': {
+                      transform: 'scale(1.1)',
+                    },
+                  }}
+                />
+              </ListItemAvatar>
+              <ListItemText
+                primary={user.email}
+                primaryTypographyProps={{
+                  fontSize: '0.875rem',
+                  fontWeight: user.id === selectedUserId ? 600 : 400,
                 }}
-              >
-                <ListItemDecorator>
-                  <Avatar size="sm" src="/static/images/avatar/1.jpg" />
-                </ListItemDecorator>
-                <Typography>{user.email}</Typography>
-              </ListItem>
-            </div>
-          ))}
-        </List>
-      </div>
+                sx={{
+                  transition: 'all 0.3s ease',
+                }}
+              />
+            </ListItemButton>
+          </div>
+        ))}
+      </List>
     </Box>
   );
 };
