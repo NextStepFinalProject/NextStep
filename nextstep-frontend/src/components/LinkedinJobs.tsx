@@ -211,7 +211,7 @@ const LinkedinJobs: React.FC<LinkedinJobsProps> = ({
                       p: 2,
                       border: '1px solid #ddd',
                       borderRadius: 2,
-                      height: '200px',
+                      height: '220px',
                       display: 'flex',
                       flexDirection: 'column',
                       justifyContent: 'space-between',

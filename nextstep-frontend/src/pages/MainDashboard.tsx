@@ -261,7 +261,7 @@ const MainDashboard: React.FC = () => {
             {/* Desired Role */}
             <Box sx={{ bgcolor: 'background.paper', p: 3, borderRadius: 2, boxShadow: 1 }}>
               <Box display="flex" alignItems="center" mb={2}>
-                <WorkIcon fontSize="large" color="inherit" sx={{ mr: 1, color: 'darkslategrey' }} />
+                <WorkIcon fontSize="large" color="inherit" sx={{ mr: 1, color: 'dark' }} />
                 <Typography variant="h6" sx={{ flexGrow: 1 }} align="center">
                   Desired Role
                 </Typography>

@@ -47,8 +47,19 @@ const App: React.FC = () => {
                 <Route
                   path="/*"
                   element={
-                    <Box sx={{ display: 'flex', flex: 1 }}>
-                      <LeftBar />
+                    <Box sx={{ position: 'relative', flex: 1 }}>
+                      <Box
+                        sx={{
+                          position: 'absolute',
+                          top: 0,
+                          left: 0,
+                          zIndex: 10,
+                          backgroundColor: 'background.paper',
+                          boxShadow: 3,
+                        }}
+                      >
+                        <LeftBar />
+                      </Box>
                       <Box
                         component="main"
                         sx={{

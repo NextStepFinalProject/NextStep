@@ -1,10 +1,11 @@
 import React, { useRef, useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { Box, Drawer, List, ListItem, ListItemIcon, ListItemText, IconButton, Tooltip, Divider, useTheme as useMuiTheme, ListItemButton } from '@mui/material';
-import { Home, Person, Message, Logout, DocumentScannerTwoTone, Feed, Quiz, Menu, ChevronLeft, LightMode, DarkMode } from '@mui/icons-material';
+import { Box, Drawer, List, ListItem, ListItemIcon, ListItemText, Tooltip, Divider, useTheme as useMuiTheme, ListItemButton } from '@mui/material';
+import { Home, Person, Message, Logout, DocumentScannerTwoTone, Feed, Quiz, LightMode, DarkMode } from '@mui/icons-material';
 import { getUserAuth, removeUserAuth } from "../handlers/userAuth.ts";
 import api from "../serverApi.ts";
-import logo from '../../assets/NextStep.png';
+import fullLogo from '../../assets/NextStep.png';
+import partialLogo from '../../assets/NextStepLogo.png';
 import { useTheme } from '../contexts/ThemeContext';
 
 const LeftBar: React.FC = () => {
@@ -53,6 +54,8 @@ const LeftBar: React.FC = () => {
 
   return (
     <Drawer
+      onMouseEnter={() => setCollapsed(false)}
+      onMouseLeave={() => setCollapsed(true)}
       variant="permanent"
       sx={{
         width: collapsed ? 64 : 240,
@@ -67,7 +70,7 @@ const LeftBar: React.FC = () => {
           borderColor: 'divider',
           overflowX: 'hidden',
           '&:hover': {
-            width: 240,
+            width: 220,
             boxShadow: '4px 0 20px rgba(0, 0, 0, 0.1)',
             '& .logo-text': {
               opacity: 1,
@@ -92,17 +95,17 @@ const LeftBar: React.FC = () => {
       >
         <Box
           component="img"
-          src={logo}
+          src={collapsed ? partialLogo : fullLogo}
           alt="NextStep"
           className="logo-text"
           sx={{ 
-            height: 40, 
+            height: collapsed ? 50 : 100, 
             cursor: 'pointer',
             opacity: 1,
             transform: collapsed ? 'scale(0.8)' : 'scale(1)',
             transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
           }}
-          onClick={() => navigate('/')}
+          onClick={() => navigate('/main-dashboard')}
         />
       </Box>
       <Divider />
