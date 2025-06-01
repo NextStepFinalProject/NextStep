@@ -113,8 +113,7 @@ const parseJobQuizzesFromJobHuntHtml = (htmlPath: string): CompanyData[] => {
       let quiz_tags = Array.from(new Set([
         company_en_final,
         company_he_final,
-        ...quiz_title.split(/\s+/),
-        'SPECIALTY_GENERIC', // Add generic specialty tag to all quizzes
+        ...quiz_title.split(/\s+/)
       ].filter(Boolean)));
 
       // Add matched predefined tags from title and content
@@ -246,8 +245,7 @@ const parseJobQuizzesFromCompanyTablesHtml = (htmlPath: string): CompanyData[] =
       company_en,
       company_he,
       jobRole,
-      ...quiz_title.split(/\s+/),
-      'SPECIALTY_GENERIC', // Add generic specialty tag to all quizzes
+      ...quiz_title.split(/\s+/)
     ].filter(Boolean)));
 
     // Add matched predefined tags from title, process details, and interview questions
@@ -563,7 +561,6 @@ export const generateQuiz = async (quizSubject: string): Promise<any> => {
   const userQuizSpecialties = quizSubject.split(' ')
   .filter((tag: string) => tag.startsWith('SPECIALTY_'))
   .map((tag: string) => tag.replace('SPECIALTY_', ''))
-  .filter((tag: string) => tag !== 'GENERIC')
   .join(', ');
 
   const prompt = `
