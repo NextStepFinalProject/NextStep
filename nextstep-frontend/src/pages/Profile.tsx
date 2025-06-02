@@ -104,7 +104,8 @@ const Profile: React.FC = () => {
       }, 2000);
     } catch (err: any) {
       if (err.response && err.response.status === 400 &&
-        err.response.data && err.response.data.errors[0] &&
+        err.response.data && err.response.data.errors &&
+        err.response.data.errors[0] &&
         err.response.data.errors[0].message) {
         setError(err.response.data.errors[0].message);
       } else {
