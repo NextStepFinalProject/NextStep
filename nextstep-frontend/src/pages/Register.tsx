@@ -61,7 +61,11 @@ const Register: React.FC = () => {
       }, 4000);
     } catch (error) {
       const err = error as any;
-      if (err.response && err.response.data) {
+      if (err.response && err.response.status === 400 &&
+        err.response.data && err.response.data.errors[0] &&
+        err.response.data.errors[0].message) {
+        setError(err.response.data.errors[0].message);
+      } else if (err.response && err.response.data) {
         setError(err.response.data.message);
       } else {
         setError('An error occurred. Please try again.');
