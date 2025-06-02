@@ -1,27 +1,37 @@
 import React, { useState } from 'react';
-import { Container, Button, Typography, Box } from '@mui/material';
-import { useNavigate } from 'react-router-dom';
-import { config } from '../config';
+import {
+  Button,
+  Typography,
+  Container,
+  Modal,
+} from '@mui/material';
 import FroalaEditor from 'react-froala-wysiwyg';
 import 'froala-editor/css/froala_style.min.css';
 import 'froala-editor/css/froala_editor.pkgd.min.css';
 import 'froala-editor/js/plugins/image.min.js';
+import { config } from '../config';
 import api from "../serverApi.ts";
 import { getUserAuth } from '../handlers/userAuth.ts';
 
-const NewPost: React.FC = () => {
+
+type Props = {
+  open: boolean;
+  onClose: () => void;
+  onPostCreated?: () => void;
+};
+
+const NewPostModal: React.FC<Props> = ({ open, onClose, onPostCreated }) => {
   const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
-  const [images, setImages] = useState<File[]>([]); // Store images locally
-  const navigate = useNavigate();
+  const [images, setImages] = useState<File[]>([]);
   const auth = getUserAuth();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
     try {
-      // Upload images to the server
       const uploadedImages: { [placeholder: string]: string } = {};
+
       for (const image of images) {
         const formData = new FormData();
         formData.append('file', image);
@@ -33,36 +43,32 @@ const NewPost: React.FC = () => {
           },
         });
 
-        // Map the placeholder to the actual URL
         const imageUrl = `${config.app.backend_url()}/resources/images/${response.data}`;
         uploadedImages[image.name] = imageUrl;
       }
 
-      // Replace placeholders in the content with actual URLs
       let updatedContent = content;
       Object.keys(uploadedImages).forEach((placeholder) => {
         updatedContent = updatedContent.replace(placeholder, uploadedImages[placeholder]);
       });
 
-      // Submit the post with the updated content
       await api.post(`/post`, {
         title,
         content: updatedContent,
       });
 
-      navigate('/feed'); // Redirect to feed after successful post creation
+      onClose();
+      onPostCreated?.(); // Call callback to reload posts in Feed
     } catch (error) {
       console.error('Error creating post:', error);
     }
   };
 
   return (
-    <Container component="main" maxWidth="md">
-      <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', mt: 8 }}>
-        <Typography component="h1" variant="h4" gutterBottom>
-          Create New Post
-        </Typography>
-        <form onSubmit={handleSubmit} style={{ width: '90vh', overflowY: 'scroll', height: '60vh', marginTop: '1rem' }}>
+    <Modal open={open} onClose={onClose}>
+      <Container maxWidth="md" sx={{ mt: 10, backgroundColor: 'white', borderRadius: 2, p: 4 }}>
+        <Typography variant="h5" gutterBottom>Create New Post</Typography>
+        <form onSubmit={handleSubmit}>
           <input
             type="text"
             placeholder="Title"
@@ -77,57 +83,35 @@ const NewPost: React.FC = () => {
             onModelChange={setContent}
             config={{
               placeholderText: "Edit Your Content Here!",
-              charCounterCount: false,
-              toolbarButtons: [
-                "bold",
-                "italic",
-                "underline",
-                "insertImage",
-                "insertLink",
-                "paragraphFormat",
-                "alert",
-              ],
-              imageUploadRemoteUrls: true,
+              toolbarButtons: ["bold", "italic", "underline", "insertImage", "insertLink", "paragraphFormat"],
+              pluginsEnabled: ["image"],
               imageAllowedTypes: ['jpeg', 'jpg', 'png', 'gif'],
               events: {
-                // Custom image upload handling
-                "image.beforeUpload": async function (fileList: File[]) {
+                "image.beforeUpload": function (fileList: File[]) {
                   const editor = this as any;
                   const firstFile = fileList[0];
 
                   if (firstFile) {
-                    // Generate a placeholder for the image
                     const placeholder = `[[image-${firstFile.name}]]`;
-
-                    // Insert the placeholder into the editor
                     editor.image.insert(placeholder, null, null, editor.image.get());
-
-                    // Store the image locally
-                    setImages((prevImages) => [...prevImages, firstFile]);
+                    setImages((prev) => [...prev, firstFile]);
                   }
 
-                  return false; // Prevent Froala's default upload mechanism
+                  return false;
                 },
               },
-              pluginsEnabled: ["image"], // Ensure image plugin is enabled
             }}
           />
-          <Button type="submit" fullWidth variant="contained" color="primary" sx={{ mt: 3, mb: 2 }}>
+          <Button type="submit" fullWidth variant="contained" color="primary" sx={{ mt: 2 }}>
             Submit
           </Button>
-          <Button
-            fullWidth
-            variant="outlined"
-            color="secondary"
-            onClick={() => navigate('/feed')}
-            sx={{ mt: 2 }}
-          >
-            Back to Feed
+          <Button fullWidth onClick={onClose} sx={{ mt: 1 }}>
+            Cancel
           </Button>
         </form>
-      </Box>
-    </Container>
+      </Container>
+    </Modal>
   );
 };
 
-export default NewPost;
+export default NewPostModal;

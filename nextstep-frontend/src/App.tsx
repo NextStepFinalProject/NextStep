@@ -74,7 +74,6 @@ const App: React.FC = () => {
                         <Routes>
                           <Route path="/feed" element={<RequireAuth><Layout className="feed"><Feed /></Layout></RequireAuth>} />
                           <Route path="/profile" element={<RequireAuth><Layout className="profile"><Profile /></Layout></RequireAuth>} />
-                          <Route path="/new-post" element={<RequireAuth><Layout className="new-post"><NewPost /></Layout></RequireAuth>} />
                           <Route path="/post/:postId" element={<RequireAuth><Layout className="post-details"><PostDetails /></Layout></RequireAuth>} />
                           <Route path="/chat" element={<RequireAuth><Layout className="chat"><Chat /></Layout></RequireAuth>} />
                           <Route path="/resume" element={<RequireAuth><Layout className="resume"><Resume /></Layout></RequireAuth>} />
