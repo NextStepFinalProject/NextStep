@@ -710,14 +710,24 @@ paths:
         '400':
           description: Bad request
           content:
-            text/plain:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    description: Error message indicating the specific issue
+                    example: "File too large"
               examples:
                 fileTooLarge:
-                  value: "File too large"
+                  value:
+                    message: "File too large"
                 invalidFileType:
-                  value: "Invalid file type. Only images are allowed: /jpeg|jpg|png|gif/"
+                  value:
+                    message: "Invalid file type. Only images are allowed: /jpeg|jpg|png|gif/"
                 noFileUploaded:
-                  value: "No file uploaded"
+                  value:
+                    message: "No file uploaded"
         '404':
           description: User not found
         '500':
@@ -751,14 +761,24 @@ paths:
         '400':
           description: Bad request
           content:
-            text/plain:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    description: Error message indicating the specific issue
+                    example: "File too large"
               examples:
                 fileTooLarge:
-                  value: "File too large"
+                  value:
+                    message: "File too large"
                 invalidFileType:
-                  value: "Invalid file type. Only images are allowed: /jpeg|jpg|png|gif/"
+                  value:
+                    message: "Invalid file type. Only images are allowed: /jpeg|jpg|png|gif/"
                 noFileUploaded:
-                  value: "No file uploaded"
+                  value:
+                    message: "No file uploaded"
         '500':
           description: Internal server error
 
