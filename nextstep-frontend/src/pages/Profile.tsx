@@ -75,11 +75,15 @@ const Profile: React.FC = () => {
           setSuccess(false);
           window.location.reload();
         }, 3000);
+      }
+    } catch (err: any) {
+      if (err.response && err.response.status === 400 &&
+        err.response.data && err.response.data &&
+        err.response.data.message) {
+        setError(err.response.data.message);
       } else {
         setError('Error uploading image. Please try again.');
       }
-    } catch (err) {
-      setError('Error uploading image. Please try again.');
     }
   };
 
