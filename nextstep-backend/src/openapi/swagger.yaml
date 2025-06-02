@@ -816,14 +816,24 @@ paths:
         '400':
           description: Bad request
           content:
-            text/plain:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    description: Error message indicating the specific issue
+                    example: "File too large"
               examples:
                 fileTooLarge:
-                  value: "File too large"
+                  value:
+                    message: "File too large"
                 invalidFileType:
-                  value: "Invalid file type. Only PDF, DOC, DOCX and TXT/TEXT files are allowed"
+                  value:
+                    message: "Invalid file type. Only PDF, DOC, DOCX and TXT/TEXT files are allowed"
                 noFileUploaded:
-                  value: "No file uploaded"
+                  value:
+                    message: "No file uploaded"
         '401':
           description: Unauthorized
         '500':
