@@ -65,7 +65,7 @@ describe('Resources Service - Upload Image', () => {
             .attach('file', nonImageBlob, 'test-non-image.pdf');
 
         expect(res.statusCode).toBe(400);
-        expect(res.text).toBe("Invalid file type. Only images are allowed: /jpeg|jpg|png|gif/");
+        expect(res.text).toBe(`{"message":"Invalid file type. Only images are allowed: /jpeg|jpg|png|gif/"}`);
     });
 
     it('should fail to upload an image larger than the max size', async () => {
@@ -76,7 +76,7 @@ describe('Resources Service - Upload Image', () => {
             .attach('file', largeImageBlob, 'large-test-image.jpg');
 
         expect(res.statusCode).toBe(400);
-        expect(res.text).toBe("File too large");
+        expect(res.text).toBe(`{"message":"File too large"}`);
     });
 
     afterAll(async () => {
