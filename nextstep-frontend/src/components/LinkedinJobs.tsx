@@ -92,9 +92,10 @@ const LinkedinJobs: React.FC<LinkedinJobsProps> = ({
           <Box sx={{ mb: 3 }}>
             <Grid container spacing={2}>
               <Grid item xs={12}>
-                <Typography variant="body2" color="text.secondary">
-                  <strong>Selected Role:</strong> {selectedRole || 'None'}
-                </Typography>
+              <Typography variant="body2" color="text.secondary">
+                <strong color="text.secondary">Selected Role:</strong>{' '}
+                {selectedRole ? selectedRole : <span style={{ color: 'error.main' }}>Choose a role</span>}
+              </Typography>
               </Grid>
               <Grid item xs={12} sm={6}>
                 <TextField
@@ -180,6 +181,7 @@ const LinkedinJobs: React.FC<LinkedinJobsProps> = ({
                   input.value = '';
                 }
               }}
+              error={settings.skills.length == 0}
               placeholder="Type a skill and press Enter"
               sx={{ mt: 1 }}
             />
@@ -251,7 +253,7 @@ const LinkedinJobs: React.FC<LinkedinJobsProps> = ({
             </Grid>
           ) : (
             <Typography variant="body2" color="text.secondary" textAlign="center" sx={{ mt: 2 }}>
-              No job recommendations found. Try adjusting your search settings.
+              {!selectedRole || skills.length == 0 ? "Select a role or add skills to the search." : "No job recommendations found. Try adjusting your search settings."}
             </Typography>
           )}
 
