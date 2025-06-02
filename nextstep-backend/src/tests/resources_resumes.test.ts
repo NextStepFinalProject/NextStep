@@ -143,7 +143,7 @@ describe('Resume API Tests', () => {
                 .attach('file', Buffer.from('invalid content'), { filename: 'test.png' })
                 .expect(400);
 
-            expect(response.text).toBe('Invalid file type. Only PDF, DOC, DOCX and TXT/TEXT files are allowed.');
+            expect(response.text).toBe(`{"message":"Invalid file type. Only PDF, DOC, DOCX and TXT/TEXT files are allowed."}`);
         });
 
         it('should handle missing file', async () => {
@@ -152,7 +152,7 @@ describe('Resume API Tests', () => {
                 .set('Authorization', `Bearer ${testToken}`)
                 .expect(400);
 
-            expect(response.text).toBe('No file uploaded.');
+            expect(response.text).toBe(`{"message":"No file uploaded."}`);
         });
     });
 
