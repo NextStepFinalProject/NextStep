@@ -16,6 +16,9 @@ import {
   Divider,
   Grid,
   Avatar,
+  FormGroup,
+  FormControlLabel,
+  Checkbox,
 } from '@mui/material';
 import {
   Visibility,
@@ -45,6 +48,7 @@ interface QuizGenerationResponse {
   answer_list: string[];
   keywords: string[];
   interviewer_mindset: string;
+  specialty_tags: string[];
 }
 
 interface UserAnsweredQuiz {
@@ -61,6 +65,7 @@ interface UserAnsweredQuiz {
   user_answer_list: string[];
   keywords: string[];
   interviewer_mindset: string;
+  specialty_tags: string[];
 }
 
 interface GradedAnswer {
@@ -101,11 +106,21 @@ interface QuizState {
   keywords?: string[];
   interviewerMindset?: string;
   answer_list?: string[]; // Store the original answer list for display after grading
+  specialty_tags?: string[]; // Add specialty tags to the state
 }
 
 const Quiz: React.FC = () => {
   const [searchParams] = useSearchParams();
   const [subject, setSubject] = useState<string>(searchParams.get('subject') || '');
+  const [selectedSpecialties, setSelectedSpecialties] = useState<{
+    code: boolean;
+    design: boolean;
+    technologies: boolean;
+  }>({
+    code: false,
+    design: false,
+    technologies: false,
+  });
   const [quiz, setQuiz] = useState<QuizState | null>(null);
   const [loading, setLoading] = useState<boolean>(false);
   const [showAnswer, setShowAnswer] = useState<{ [key: number]: boolean }>({});
@@ -117,8 +132,20 @@ const Quiz: React.FC = () => {
     setQuiz(null);
     setQuizSubmitted(false);
     setShowAnswer({});
+
+    // Build the full subject with specialties
+    let fullSubject = subject;
+    if (selectedSpecialties.code) fullSubject += ' SPECIALTY_CODE';
+    if (selectedSpecialties.design) fullSubject += ' SPECIALTY_DESIGN';
+    if (selectedSpecialties.technologies) fullSubject += ' SPECIALTY_TECHNOLOGIES';
+
     try {
-      const response = await api.post<QuizGenerationResponse>(`${config.app.backend_url()}/quiz/generate`, { subject });
+      const response = await api.post<QuizGenerationResponse>(`${config.app.backend_url()}/quiz/generate`, { subject: fullSubject });
+
+      // Validate the response data
+      if (!response.data || !response.data.question_list || !response.data.answer_list) {
+        throw new Error('Invalid quiz data received from server');
+      }
 
       const generatedQuestions: QuizStateQuestion[] = response.data.question_list.map((q: string, idx: number) => ({
         originalQuestion: q,
@@ -139,11 +166,30 @@ const Quiz: React.FC = () => {
         keywords: response.data.keywords,
         interviewerMindset: response.data.interviewer_mindset,
         answer_list: response.data.answer_list,
+        specialty_tags: response.data.specialty_tags,
       });
 
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error generating quiz:', error);
-      alert('Failed to generate quiz. Please try again.');
+      let errorMessage = 'Failed to generate quiz. ';
+      
+      if (error.response?.data?.message) {
+        // Server returned an error message
+        errorMessage += error.response.data.message;
+      } else if (error.message) {
+        // Other error with message
+        errorMessage += error.message;
+      } else {
+        // Generic error
+        errorMessage += 'Please try again.';
+      }
+
+      // Show error in a more user-friendly way
+      alert(errorMessage);
+      
+      // Reset loading state
+      setLoading(false);
+      return;
     } finally {
       setLoading(false);
     }
@@ -182,6 +228,7 @@ const Quiz: React.FC = () => {
       user_answer_list: quiz.questions.map(q => q.userAnswer),
       keywords: quiz.keywords || [],
       interviewer_mindset: quiz.interviewerMindset || '',
+      specialty_tags: quiz.specialty_tags || [],
     };
 
     try {
@@ -259,6 +306,41 @@ const Quiz: React.FC = () => {
             onKeyDown={e => e.key === 'Enter' && handleGenerateQuiz()}
             sx={{ mb: 2 }}
           />
+          
+          {/* Specialty Selection */}
+          <Typography variant="subtitle2" sx={{ mb: 1, color: 'text.secondary' }}>
+            Select Specialties (Optional):
+          </Typography>
+          <FormGroup row sx={{ mb: 2 }}>
+            <FormControlLabel
+              control={
+                <Checkbox
+                  checked={selectedSpecialties.code}
+                  onChange={(e) => setSelectedSpecialties(prev => ({ ...prev, code: e.target.checked }))}
+                />
+              }
+              label="Code"
+            />
+            <FormControlLabel
+              control={
+                <Checkbox
+                  checked={selectedSpecialties.design}
+                  onChange={(e) => setSelectedSpecialties(prev => ({ ...prev, design: e.target.checked }))}
+                />
+              }
+              label="Design"
+            />
+            <FormControlLabel
+              control={
+                <Checkbox
+                  checked={selectedSpecialties.technologies}
+                  onChange={(e) => setSelectedSpecialties(prev => ({ ...prev, technologies: e.target.checked }))}
+                />
+              }
+              label="Technologies"
+            />
+          </FormGroup>
+
           <Button
             variant="contained"
             onClick={handleGenerateQuiz}
@@ -323,6 +405,33 @@ const Quiz: React.FC = () => {
                   <Stack direction="row" flexWrap="wrap" spacing={1}>
                     {quiz.tags.map((tag, i) => (
                       <Chip key={i} label={tag} size="small" variant="outlined" color="primary" />
+                    ))}
+                  </Stack>
+                </Grid>
+              )}
+
+              {quiz.specialty_tags && quiz.specialty_tags.length > 0 && (
+                <Grid item xs={12}>
+                  <Typography variant="body2" sx={{ mb: 1 }}>
+                    <LocalOfferOutlinedIcon sx={{ verticalAlign: 'middle', mr: 0.5 }} />
+                    Specialties:
+                  </Typography>
+                  <Stack direction="row" flexWrap="wrap" spacing={1}>
+                    {quiz.specialty_tags.map((specialty, i) => (
+                      <Chip 
+                        key={i} 
+                        label={specialty.replace('SPECIALTY_', '')} 
+                        size="small" 
+                        variant="outlined" 
+                        sx={{
+                          borderColor: 'warning.main',
+                          color: 'warning.dark',
+                          '&:hover': {
+                            backgroundColor: 'warning.light',
+                            borderColor: 'warning.dark',
+                          }
+                        }}
+                      />
                     ))}
                   </Stack>
                 </Grid>

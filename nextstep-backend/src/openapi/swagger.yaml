@@ -1282,6 +1282,7 @@ paths:
         - Quizzes
       summary: Generate a quiz for a certain subject.
       description: Generate a quiz for a certain subject. The quiz is generated based on our real-world quizzes database.
+                   In the subject field, the SPECIALTY_ tags are optional, and can be used to specify the specialty of the quiz.
       security:
         - BearerAuth: []
       requestBody:
@@ -1295,8 +1296,9 @@ paths:
               properties:
                 subject:
                   type: string
-                  description: The subject of the quiz to be generated (e.g., "Java Spring Boot Microservices")
-                  example: "Java Spring Boot Microservices"
+                  description: The subject of the quiz to be generated (e.g., "Java Spring Boot Microservices") or (e.g., "Java Spring Boot Microservices SPECIALTY_CODE SPECIALTY_DESIGN SPECIALTY_TECHNOLOGIES")
+                  example: "Java Spring Boot Microservices SPECIALTY_CODE SPECIALTY_DESIGN SPECIALTY_TECHNOLOGIES"
+                  note: The SPECIALTY_ tags are optional, and can be used to specify the specialty of the quiz.
       responses:
         '200':
           description: A generated quiz custom-tailored for the targeted subject.
@@ -1595,6 +1597,7 @@ components:
         - answer_list
         - keywords
         - interviewer_mindset
+        - specialty_tags
       properties:
         _id:
           type: string
@@ -1652,6 +1655,12 @@ components:
           type: string
           description: A description of the soft skills, characteristics, and professional attributes an interviewer looks for.
           example: "מחפשים מועמד עם סקרנות טכנולוגית גבוהה, יכולת פתרון בעיות יצירתית, תקשורת ברורה ותמציתית, וגישה פרואקטיבית לשיתוף פעולה בצוות."
+        specialty_tags:
+          type: array
+          description: Additional relevant technical or conceptual keywords that the user might find useful for preparation.
+          items:
+            type: string
+          example: ["Code", "Design", "Technologies"]
 
     AnsweredQuiz:
       type: object
@@ -1668,6 +1677,7 @@ components:
         - answer_list
         - keywords
         - interviewer_mindset
+        - specialty_tags
       properties:
         _id:
           type: string
@@ -1731,6 +1741,12 @@ components:
           type: string
           description: A description of the soft skills, characteristics, and professional attributes an interviewer looks for.
           example: "מחפשים מועמד עם סקרנות טכנולוגית גבוהה, יכולת פתרון בעיות יצירתית, תקשורת ברורה ותמציתית, וגישה פרואקטיבית לשיתוף פעולה בצוות."
+        specialty_tags:
+          type: array
+          description: Additional relevant technical or conceptual keywords that the user might find useful for preparation.
+          items:
+            type: string
+          example: ["Code", "Design", "Technologies"]
 
     GradedQuiz:
       type: object
