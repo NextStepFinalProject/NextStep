@@ -94,7 +94,7 @@ const LinkedinJobs: React.FC<LinkedinJobsProps> = ({
               <Grid item xs={12}>
               <Typography variant="body2" color="text.secondary">
                 <strong color="text.secondary">Selected Role:</strong>{' '}
-                {selectedRole ? selectedRole : <span style={{ color: 'error.main' }}>Choose a role</span>}
+                {selectedRole ? selectedRole : <span style={{ color: 'red' }}>Choose a role</span>}
               </Typography>
               </Grid>
               <Grid item xs={12} sm={6}>
