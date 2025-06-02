@@ -16,7 +16,11 @@ const createUserImageResource = async (req: CustomRequest, res: Response) => {
 
         return res.status(201).send(updatedUser);
     } catch (error) {
-        handleError(error, res);
+        if (error instanceof multer.MulterError || error instanceof TypeError) {
+            return res.status(400).send({ message: error.message });
+        } else {
+            handleError(error, res);
+        }
     }
 };
 
@@ -26,7 +30,7 @@ const createImageResource = async (req: Request, res: Response) => {
         return res.status(201).send(imageFilename);
     } catch (error) {
         if (error instanceof multer.MulterError || error instanceof TypeError) {
-            return res.status(400).send(error.message);
+            return res.status(400).send({ message: error.message });
         } else {
             handleError(error, res);
         }
