@@ -77,13 +77,12 @@ describe('Rooms Controller', () => {
     });
 
     it('should return 400 for invalid user IDs', async () => {
-        const invalidUserId = "invalidUserId"
         const response = await request(app)
             .get(`/room/user/invalidUserId`)
             .set('Authorization', `Bearer ${initiatorUser.accessToken}`)
             .query({ userId: 'invalidUserId' });
 
         expect(response.status).toBe(400);
-        expect(response.text).toBe(`{"message":"Validation failed","errors":[{"field":"receiverUserId","message":"Invalid user ID","value":"${invalidUserId}"}]}`);
+        expect(response.text).toBe(`{"message":"Validation failed","errors":[{"field":"receiverUserId","message":"Invalid user ID"}]}`);
     });
 }); 
