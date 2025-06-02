@@ -7,7 +7,6 @@ import './App.css';
 import Feed from './pages/Feed';
 import Footer from './components/Footer';
 import RequireAuth from './hoc/RequireAuth';
-import NewPost from './pages/NewPost';
 import PostDetails from './pages/PostDetails';
 import Chat from './pages/Chat';
 import Resume from './pages/Resume';

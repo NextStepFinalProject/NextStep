@@ -26,7 +26,7 @@ import { Post } from "../models/Post.tsx";
 import api from "../serverApi.ts";
 import {getUserAuth} from "../handlers/userAuth.ts";
 import defaultProfileImage from '../../assets/defaultProfileImage.jpg'; // Import the default profile image
-import NewPostModal from './NewPost';
+import NewPostModal from '../components/NewPost.tsx';
 
 
 const Feed: React.FC = () => {

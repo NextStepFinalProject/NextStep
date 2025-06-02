@@ -9,10 +9,9 @@ import FroalaEditor from 'react-froala-wysiwyg';
 import 'froala-editor/css/froala_style.min.css';
 import 'froala-editor/css/froala_editor.pkgd.min.css';
 import 'froala-editor/js/plugins/image.min.js';
-import { config } from '../config';
+import { config } from '../config.ts';
 import api from "../serverApi.ts";
 import { getUserAuth } from '../handlers/userAuth.ts';
-
 
 type Props = {
   open: boolean;
@@ -23,42 +22,23 @@ type Props = {
 const NewPostModal: React.FC<Props> = ({ open, onClose, onPostCreated }) => {
   const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
-  const [images, setImages] = useState<File[]>([]);
   const auth = getUserAuth();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
     try {
-      const uploadedImages: { [placeholder: string]: string } = {};
-
-      for (const image of images) {
-        const formData = new FormData();
-        formData.append('file', image);
-
-        const response = await api.post(`/resource/image`, formData, {
-          headers: {
-            'Content-Type': 'multipart/form-data',
-            'Authorization': `Bearer ${auth.accessToken}`,
-          },
-        });
-
-        const imageUrl = `${config.app.backend_url()}/resources/images/${response.data}`;
-        uploadedImages[image.name] = imageUrl;
-      }
-
-      let updatedContent = content;
-      Object.keys(uploadedImages).forEach((placeholder) => {
-        updatedContent = updatedContent.replace(placeholder, uploadedImages[placeholder]);
-      });
-
       await api.post(`/post`, {
         title,
-        content: updatedContent,
+        content,
+      }, {
+        headers: {
+          Authorization: `Bearer ${auth.accessToken}`,
+        },
       });
 
       onClose();
-      onPostCreated?.(); // Call callback to reload posts in Feed
+      onPostCreated?.(); // Refresh feed if needed
     } catch (error) {
       console.error('Error creating post:', error);
     }
@@ -66,8 +46,21 @@ const NewPostModal: React.FC<Props> = ({ open, onClose, onPostCreated }) => {
 
   return (
     <Modal open={open} onClose={onClose}>
-      <Container maxWidth="md" sx={{ mt: 10, backgroundColor: 'white', borderRadius: 2, p: 4 }}>
-        <Typography variant="h5" gutterBottom>Create New Post</Typography>
+      <Container
+        maxWidth="md"
+        sx={{
+          mt: 10,
+          backgroundColor: 'white',
+          borderRadius: 2,
+          p: 4,
+          width: '40%',
+          overflowY: 'auto',
+          height: '80vh',
+        }}
+      >
+        <Typography variant="h5" gutterBottom>
+          Create New Post
+        </Typography>
         <form onSubmit={handleSubmit}>
           <input
             type="text"
@@ -82,19 +75,35 @@ const NewPostModal: React.FC<Props> = ({ open, onClose, onPostCreated }) => {
             model={content}
             onModelChange={setContent}
             config={{
+              imageUpload: true,
+              imageUploadParam: 'file',
+              imageUploadMethod: 'POST',
               placeholderText: "Edit Your Content Here!",
               toolbarButtons: ["bold", "italic", "underline", "insertImage", "insertLink", "paragraphFormat"],
               pluginsEnabled: ["image"],
               imageAllowedTypes: ['jpeg', 'jpg', 'png', 'gif'],
               events: {
-                "image.beforeUpload": function (fileList: File[]) {
+                "image.beforeUpload": async function (files: File[]) {
                   const editor = this as any;
-                  const firstFile = fileList[0];
+                  const file = files[0];
 
-                  if (firstFile) {
-                    const placeholder = `[[image-${firstFile.name}]]`;
-                    editor.image.insert(placeholder, null, null, editor.image.get());
-                    setImages((prev) => [...prev, firstFile]);
+                  if (!file) return false;
+
+                  try {
+                    const formData = new FormData();
+                    formData.append('file', file);
+
+                    const response = await api.post(`/resource/image`, formData, {
+                      headers: {
+                        'Content-Type': 'multipart/form-data',
+                        'Authorization': `Bearer ${auth.accessToken}`,
+                      },
+                    });
+
+                    const imageUrl = `${config.app.backend_url()}/resources/images/${response.data}`;
+                    editor.image.insert(imageUrl, null, null, editor.image.get());
+                  } catch (err) {
+                    console.error('Error uploading image:', err);
                   }
 
                   return false;
