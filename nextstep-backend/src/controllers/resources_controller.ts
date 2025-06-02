@@ -58,7 +58,7 @@ const createResumeResource = async (req: Request, res: Response) => {
         return res.status(201).send(resumeFilename);
     } catch (error) {
         if (error instanceof multer.MulterError || error instanceof TypeError) {
-            return res.status(400).send(error.message);
+            return res.status(400).send({ message: error.message });
         } else {
             handleError(error, res);
         }
