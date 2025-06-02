@@ -40,6 +40,10 @@ export const getUserById = async (id: string): Promise<UserData | null> => {
 
 
 export const updateUserById = async (id: string, updateData: Partial<UserData>): Promise<UserData | null> => {
+    if (updateData.password) {
+        const salt = config.token.salt();
+        updateData.password = await bcrypt.hash(updateData.password, salt);
+    }
     const user = await UserModel.findByIdAndUpdate(id, updateData, { new: true }).exec();
     return user ? userToUserData(user) : null;
 };
