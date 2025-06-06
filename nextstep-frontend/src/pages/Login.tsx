@@ -68,7 +68,8 @@ const Login: React.FC = () => {
     } catch (error) {
       const err = error as any;
       if (err.response && err.response.status === 400 &&
-        err.response.data && err.response.data.errors[0] &&
+        err.response.data && err.response.data.errors &&
+        err.response.data.errors[0] &&
         err.response.data.errors[0].message) {
         setError(err.response.data.errors[0].message);
       } else if (err.response && err.response.data) {

@@ -44,11 +44,11 @@ const LeftBar: React.FC = () => {
 
   const menuItems = [
     { text: 'Dashboard', icon: <Home />, path: '/main-dashboard' },
-    { text: 'Feed', icon: <Feed />, path: '/feed' },
-    { text: 'Profile', icon: <Person />, path: '/profile' },
-    { text: 'Chat', icon: <Message />, path: '/chat' },
     { text: 'Resume', icon: <DocumentScannerTwoTone />, path: '/resume' },
     { text: 'Quiz', icon: <Quiz />, path: '/quiz' },
+    { text: 'Feed', icon: <Feed />, path: '/feed' },
+    { text: 'Chat', icon: <Message />, path: '/chat' },
+    { text: 'Profile', icon: <Person />, path: '/profile' },
   ];
 
   return (
