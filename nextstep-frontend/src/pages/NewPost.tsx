@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useRef, useState } from 'react';
 import { Container, Button, Typography, Box } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
 import { config } from '../config';
@@ -12,42 +12,17 @@ import { getUserAuth } from '../handlers/userAuth.ts';
 const NewPost: React.FC = () => {
   const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
-  const [images, setImages] = useState<File[]>([]); // Store images locally
   const navigate = useNavigate();
-  const auth = getUserAuth();
+  const authRef = useRef(getUserAuth());
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
     try {
-      // Upload images to the server
-      const uploadedImages: { [placeholder: string]: string } = {};
-      for (const image of images) {
-        const formData = new FormData();
-        formData.append('file', image);
-
-        const response = await api.post(`/resource/image`, formData, {
-          headers: {
-            'Content-Type': 'multipart/form-data',
-            'Authorization': `Bearer ${auth.accessToken}`,
-          },
-        });
-
-        // Map the placeholder to the actual URL
-        const imageUrl = `${config.app.backend_url()}/resource/image/${response.data}`;
-        uploadedImages[image.name] = imageUrl;
-      }
-
-      // Replace placeholders in the content with actual URLs
-      let updatedContent = content;
-      Object.keys(uploadedImages).forEach((placeholder) => {
-        updatedContent = updatedContent.replace(placeholder, uploadedImages[placeholder]);
-      });
-
-      // Submit the post with the updated content
+      // Submit the post with the content (images are already uploaded and URLs are in place)
       await api.post(`/post`, {
         title,
-        content: updatedContent,
+        content,
       });
 
       navigate('/feed'); // Redirect to feed after successful post creation
@@ -87,29 +62,45 @@ const NewPost: React.FC = () => {
                 "paragraphFormat",
                 "alert",
               ],
-              imageUploadRemoteUrls: true,
+              imageUploadURL: `${config.app.backend_url()}/resource/image`,
+              imageUploadParams: {
+                Authorization: `Bearer ${authRef.current.accessToken}`
+              },
+              imageUploadMethod: 'POST',
+              imageMaxSize: 5 * 1024 * 1024, // 5MB
               imageAllowedTypes: ['jpeg', 'jpg', 'png', 'gif'],
               events: {
-                // Custom image upload handling
-                "image.beforeUpload": async function (fileList: File[]) {
+                'image.beforeUpload': function (files: File[]) {
                   const editor = this as any;
-                  const firstFile = fileList[0];
+                  const file = files[0];
+                  
+                  // Create FormData
+                  const formData = new FormData();
+                  formData.append('file', file);
 
-                  if (firstFile) {
-                    // Generate a placeholder for the image
-                    const placeholder = `[[image-${firstFile.name}]]`;
+                  // Upload the image
+                  fetch(`${config.app.backend_url()}/resource/image`, {
+                    method: 'POST',
+                    headers: {
+                      'Authorization': `Bearer ${authRef.current.accessToken}`
+                    },
+                    body: formData
+                  })
+                  .then(response => { link: response })
+                  .then(data => {
+                    // Insert the uploaded image
+                    editor.image.insert(data, null, null, editor.image.get());
+                  })
+                  .catch(error => {
+                    console.error('Error uploading image:', error);
+                  });
 
-                    // Insert the placeholder into the editor
-                    editor.image.insert(placeholder, null, null, editor.image.get());
-
-                    // Store the image locally
-                    setImages((prevImages) => [...prevImages, firstFile]);
-                  }
-
-                  return false; // Prevent Froala's default upload mechanism
+                  return false; // Prevent default upload
                 },
-              },
-              pluginsEnabled: ["image"], // Ensure image plugin is enabled
+                'image.error': function (error: any, response: any) {
+                  console.error('Image upload error:', error, response);
+                }
+              }
             }}
           />
           <Button type="submit" fullWidth variant="contained" color="primary" sx={{ mt: 3, mb: 2 }}>
