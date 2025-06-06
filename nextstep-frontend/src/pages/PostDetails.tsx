@@ -286,30 +286,34 @@ const PostDetails: React.FC = () => {
                               setEditedContent(editor.html.get());
                             }
                           },
-                          "image.beforeUpload": async function (fileList: File[]) {
+                          "image.beforeUpload": function (files: File[]) {
                             const editor = this as any;
-                            const firstFile = fileList[0];
+                            const file = files[0];
+                            
+                            // Create FormData
+                            const formData = new FormData();
+                            formData.append('file', file);
 
-                            if (firstFile) {
-                              const formData = new FormData();
-                              formData.append("file", firstFile);
+                            // Upload the image
+                            fetch(`${config.app.backend_url()}/resource/image`, {
+                              method: 'POST',
+                              headers: {
+                                'Authorization': `Bearer ${auth.accessToken}`
+                              },
+                              body: formData
+                            })
+                            .then(response => response.text())
+                            .then(imageId => {
+                              // Construct the full image URL
+                              const imageUrl = `${config.app.backend_url()}/resource/image/${imageId}`;
+                              // Insert the uploaded image
+                              editor.image.insert(imageUrl, null, null, editor.image.get());
+                            })
+                            .catch(error => {
+                              console.error('Error uploading image:', error);
+                            });
 
-                              try {
-                                const response = await api.post(`/resource/image`, formData, {
-                                  headers: {
-                                    "Content-Type": "multipart/form-data",
-                                    Authorization: `Bearer ${auth.accessToken}`,
-                                  },
-                                });
-
-                                const imageUrl = `${config.app.backend_url()}/resources/images/${response.data}`;
-                                editor.image.insert(imageUrl, null, null, editor.image.get());
-                              } catch (error) {
-                                console.error("Error uploading image:", error);
-                              }
-                            }
-
-                            return false; // Prevent Froala's default upload mechanism
+                            return false; // Prevent default upload
                           }
                         },
                         pluginsEnabled: ["image", "link", "paragraphFormat"],
@@ -405,30 +409,34 @@ const PostDetails: React.FC = () => {
                             setNewComment(editor.html.get());
                           }
                         },
-                        "image.beforeUpload": async function (fileList: File[]) {
+                        "image.beforeUpload": function (files: File[]) {
                           const editor = this as any;
-                          const firstFile = fileList[0];
+                          const file = files[0];
+                          
+                          // Create FormData
+                          const formData = new FormData();
+                          formData.append('file', file);
 
-                          if (firstFile) {
-                            const formData = new FormData();
-                            formData.append("file", firstFile);
+                          // Upload the image
+                          fetch(`${config.app.backend_url()}/resource/image`, {
+                            method: 'POST',
+                            headers: {
+                              'Authorization': `Bearer ${auth.accessToken}`
+                            },
+                            body: formData
+                          })
+                          .then(response => response.text())
+                          .then(imageId => {
+                            // Construct the full image URL
+                            const imageUrl = `${config.app.backend_url()}/resource/image/${imageId}`;
+                            // Insert the uploaded image
+                            editor.image.insert(imageUrl, null, null, editor.image.get());
+                          })
+                          .catch(error => {
+                            console.error('Error uploading image:', error);
+                          });
 
-                            try {
-                              const response = await api.post(`/resource/image`, formData, {
-                                headers: {
-                                  "Content-Type": "multipart/form-data",
-                                  Authorization: `Bearer ${auth.accessToken}`,
-                                },
-                              });
-
-                              const imageUrl = `${config.app.backend_url()}/resources/images/${response.data}`;
-                              editor.image.insert(imageUrl, null, null, editor.image.get());
-                            } catch (error) {
-                              console.error("Error uploading image:", error);
-                            }
-                          }
-
-                          return false; // Prevent Froala's default upload mechanism
+                          return false; // Prevent default upload
                         }
                       },
                       pluginsEnabled: ["image", "link", "paragraphFormat"]
