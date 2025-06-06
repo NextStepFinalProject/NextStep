@@ -86,10 +86,12 @@ const NewPost: React.FC = () => {
                     },
                     body: formData
                   })
-                  .then(response => { link: response })
-                  .then(data => {
+                  .then(response => response.text())
+                  .then(imageId => {
+                    // Construct the full image URL
+                    const imageUrl = `${config.app.backend_url()}/resource/image/${imageId}`;
                     // Insert the uploaded image
-                    editor.image.insert(data, null, null, editor.image.get());
+                    editor.image.insert(imageUrl, null, null, editor.image.get());
                   })
                   .catch(error => {
                     console.error('Error uploading image:', error);
