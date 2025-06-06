@@ -1,4 +1,4 @@
-import React, { useRef, useState } from 'react';
+import React, { useState } from 'react';
 import { Container, Button, Typography, Box } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
 import { config } from '../config';
@@ -13,7 +13,7 @@ const NewPost: React.FC = () => {
   const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
   const navigate = useNavigate();
-  const authRef = useRef(getUserAuth());
+  const auth = getUserAuth();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -64,7 +64,7 @@ const NewPost: React.FC = () => {
               ],
               imageUploadURL: `${config.app.backend_url()}/resource/image`,
               imageUploadParams: {
-                Authorization: `Bearer ${authRef.current.accessToken}`
+                Authorization: `Bearer ${auth.accessToken}`
               },
               imageUploadMethod: 'POST',
               imageMaxSize: 5 * 1024 * 1024, // 5MB
@@ -82,7 +82,7 @@ const NewPost: React.FC = () => {
                   fetch(`${config.app.backend_url()}/resource/image`, {
                     method: 'POST',
                     headers: {
-                      'Authorization': `Bearer ${authRef.current.accessToken}`
+                      'Authorization': `Bearer ${auth.accessToken}`
                     },
                     body: formData
                   })
