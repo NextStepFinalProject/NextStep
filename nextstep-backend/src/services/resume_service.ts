@@ -58,7 +58,7 @@ const streamScoreResume = async (
     resumePath: string,
     jobDescription: string | undefined,
     onChunk: (chunk: string) => void
-): Promise<number> => {
+): Promise<[number, string]> => {
     try {
         const resumeText = await parseDocument(resumePath);
         if (resumeText.trim() == '') {
@@ -88,7 +88,7 @@ const streamScoreResume = async (
             onChunk(FEEDBACK_ERROR_MESSAGE);
         }
 
-        return finalScore;
+        return [finalScore, fullResponse];
     } catch (error: any) {
         if (error instanceof TypeError) {
             console.error('TypeError while streaming resume score:', error);
@@ -364,6 +364,31 @@ const saveParsedResume = async (parsedData: ParsedResume, ownerId: string, resum
     return resumeToResumeData(savedResume);
 };
 
+const updateResume = async (ownerId: string, jobDescription: string, feedback?: string, score?: number, filename?: string): Promise<void> => {
+    try {
+        const resume = await getResumeByOwner(ownerId);
+        if (!resume) {
+            throw new Error(`Resume not found`);
+        }
+        const parsedData = resume.parsedData as ParsedResume; // Ensure parsedData is of type ParsedResume
+        if (jobDescription !== parsedData.jobDescription) {
+            resume.parsedData = {
+                ...parsedData,
+                jobDescription: jobDescription || parsedData.jobDescription,
+                feedback: feedback || parsedData.feedback || '',
+                score: score || parsedData.score || 0,
+                fileName: parsedData.fileName || filename || ''
+            };
+            resume.markModified('parsedData');
+            await resume.save();
+            
+        }
+    }
+    catch (error) {
+            console.error('Error updating resume:', error);
+            throw new Error(`Failed to update resume`);
+        }
+}
 
 const getResumeByOwner = async (ownerId: string, version?: number) => {
     try {
@@ -395,4 +420,4 @@ const getResumeByOwner = async (ownerId: string, version?: number) => {
 
 export { scoreResume, streamScoreResume,
     getResumeTemplates, generateImprovedResume, parseResumeFields,
-    saveParsedResume, getResumeByOwner };
+    saveParsedResume, getResumeByOwner, updateResume, };

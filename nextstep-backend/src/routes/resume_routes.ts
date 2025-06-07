@@ -10,7 +10,7 @@ const router = express.Router();
 
 router.get('/score/:filename', Resume.getResumeScore);
 
-router.get('/streamScore/:filename', Resume.getStreamResumeScore);
+router.get('/streamScore/:filename', (req: Request, res: Response) => Resume.getStreamResumeScore(req as CustomRequest, res));
 
 router.get('/templates', Resume.getTemplates);
 

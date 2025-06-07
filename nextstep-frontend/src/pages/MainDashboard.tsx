@@ -107,6 +107,8 @@ const MainDashboard: React.FC = () => {
       try {
         const response = await api.get('/resume');
         setResumeFileName(response.data.parsedData.fileName || '');
+        setResumeExperience(response.data.parsedData.experience || []);
+        setRoleMatch(response.data.parsedData.roleMatch || '');
       } catch (err) {
         console.error('Failed to fetch resume data:', err);
       }
