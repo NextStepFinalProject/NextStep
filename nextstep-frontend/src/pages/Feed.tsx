@@ -26,6 +26,7 @@ import { Post } from "../models/Post.tsx";
 import api from "../serverApi.ts";
 import {getUserAuth} from "../handlers/userAuth.ts";
 import defaultProfileImage from '../../assets/defaultProfileImage.jpg'; // Import the default profile image
+import NewPostModal from '../components/NewPost.tsx';
 
 
 const Feed: React.FC = () => {
@@ -42,10 +43,12 @@ const Feed: React.FC = () => {
   const [profileImages, setProfileImages] = useState<{ [key: string]: string }>({});
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
+  const [showNewPostModal, setShowNewPostModal] = useState(false);
+
   const auth = getUserAuth();
 
   const handleCreatePost = () => {
-    navigate('/new-post');
+    setShowNewPostModal(true);
   };
 
   const handleDeletePost = async () => {
@@ -197,10 +200,46 @@ const Feed: React.FC = () => {
         <Box sx={{ display: "flex", flexGrow: 1 }}>
           <Box sx={{ flexGrow: 1}}>
             <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-              <Button variant="contained" color="primary" onClick={handleCreatePost}>
-                Create New Post
-              </Button>
-              <FormControlLabel
+            <Card
+              sx={{
+                mb: 2,
+                p: 2,
+                borderRadius: '12px',
+                boxShadow: 2,
+                width: '80vh',
+                cursor: 'pointer',
+                '&:hover': {
+                  boxShadow: 4,
+                  backgroundColor: 'rgba(0, 0, 0, 0.03)',
+                },
+              }}
+            >
+              <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                <Avatar src={profileImages[auth.userId] || defaultProfileImage} sx={{ mr: 2 }} />
+                <Box
+                  sx={{
+                    backgroundColor: 'background.paper',
+                    borderRadius: '20px',
+                    px: 2,
+                    py: 1,
+                    flexGrow: 1,
+                  }}
+                >
+                  <Typography color="text.primary" sx={{ opacity: 0.7 }}>What's on your mind{', ' + auth.username || 'User'}?</Typography>
+                </Box>
+              </Box>
+              <Box sx={{ display: 'flex', justifyContent: 'space-around', mt: 2 }}>
+                <Button startIcon={<span style={{ color: 'green' }}>📝</span>} sx={{ textTransform: 'none' }}>
+                  Share your resume
+                </Button>
+                <Button onClick={handleCreatePost} startIcon={<span style={{ color: 'orange' }}>📤</span>} sx={{ textTransform: 'none' }}>
+                  Create a new post
+                </Button>
+              </Box>
+            </Card>
+            </Box>
+            
+            <FormControlLabel
                 control={
                   <Switch
                     checked={filterByUser}
@@ -208,9 +247,13 @@ const Feed: React.FC = () => {
                     color="primary"
                   />
                 }
-                label="Show My Posts"
-              />
-            </Box>
+                label="Show only my posts"
+              /> 
+            <NewPostModal
+                open={showNewPostModal}
+                onClose={() => setShowNewPostModal(false)}
+                onPostCreated={() => loadPosts(currentPage)}
+            />
             <Box sx={{ width: '100%', maxHeight: '60vh' }}>
               {isLoading ? (
                 <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%' }}>
@@ -220,11 +263,12 @@ const Feed: React.FC = () => {
                 <Typography color="error">{error}</Typography>
               ) : (
                 <>
-                  <List>
+                  <List sx={{ overflowY: 'auto', maxHeight: '80vh' }}>
                     {posts.map((post) => (
                       <React.Fragment key={post.id}>
                         <Card sx={{
                           mb: 2,
+                          height: '50%',
                           width: '80vh',
                           cursor: 'pointer',
                           transition: 'transform 0.2s, box-shadow 0.2s',
@@ -276,7 +320,7 @@ const Feed: React.FC = () => {
                 </>
               )}
             </Box>
-            <Box sx={{ display: 'flex', justifyContent: 'center', mt: 2 }}>
+             { totalPages > 0 && <Box sx={{ display: 'flex', justifyContent: 'center', mt: 20 }}>
               <Button
                 variant="outlined"
                 onClick={() => handlePageChange(currentPage - 1)}
@@ -293,6 +337,7 @@ const Feed: React.FC = () => {
                 Next
               </Button>
             </Box>
+          }
           </Box>
         </Box>
 

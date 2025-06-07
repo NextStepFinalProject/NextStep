@@ -1,19 +1,31 @@
 import React, { useState } from 'react';
-import { Container, Button, Typography, Box } from '@mui/material';
-import { useNavigate } from 'react-router-dom';
-import { config } from '../config';
+import {
+  Button,
+  Typography,
+  Container,
+  Modal,
+  Snackbar,
+  Alert,
+} from '@mui/material';
 import FroalaEditor from 'react-froala-wysiwyg';
 import 'froala-editor/css/froala_style.min.css';
 import 'froala-editor/css/froala_editor.pkgd.min.css';
 import 'froala-editor/js/plugins/image.min.js';
 import api from "../serverApi.ts";
 import { getUserAuth } from '../handlers/userAuth.ts';
+import { config } from '../config.ts';
 
-const NewPost: React.FC = () => {
+type Props = {
+  open: boolean;
+  onClose: () => void;
+  onPostCreated?: () => void;
+};
+
+const NewPostModal: React.FC<Props> = ({ open, onClose, onPostCreated }) => {
   const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
-  const navigate = useNavigate();
   const auth = getUserAuth();
+  const [error, setError] = useState<string | null>(null);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -25,25 +37,48 @@ const NewPost: React.FC = () => {
         content,
       });
 
-      navigate('/feed'); // Redirect to feed after successful post creation
+      onClose();
+      onPostCreated?.(); // Refresh feed if needed
     } catch (error) {
-      console.error('Error creating post:', error);
+      setError('Error creating post: ' + error);
     }
   };
 
   return (
-    <Container component="main" maxWidth="md">
-      <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', mt: 8 }}>
-        <Typography component="h1" variant="h4" gutterBottom>
+    <Modal open={open} onClose={onClose}>
+      <Container
+        maxWidth="md"
+        sx={{
+          mt: 10,
+          backgroundColor: 'background.paper',
+          borderRadius: 2,
+          p: 4,
+          width: '40%',
+          overflowY: 'auto',
+          height: '80vh',
+          color: 'text.primary',
+        }}
+      >
+        <Typography variant="h5" gutterBottom color="text.primary">
           Create New Post
         </Typography>
-        <form onSubmit={handleSubmit} style={{ width: '90vh', overflowY: 'scroll', height: '60vh', marginTop: '1rem' }}>
+        <form onSubmit={handleSubmit}>
           <input
             type="text"
             placeholder="Title"
             value={title}
             onChange={(e) => setTitle(e.target.value)}
-            style={{ width: '100%', marginBottom: '1rem', padding: '10px', fontSize: '16px' }}
+            style={{ 
+              width: '100%', 
+              marginBottom: '1rem', 
+              padding: '10px', 
+              fontSize: '16px',
+              backgroundColor: 'transparent',
+              color: 'inherit',
+              border: '1px solid',
+              borderColor: 'divider',
+              borderRadius: '4px',
+            }}
             required
           />
           <FroalaEditor
@@ -94,33 +129,37 @@ const NewPost: React.FC = () => {
                     editor.image.insert(imageUrl, null, null, editor.image.get());
                   })
                   .catch(error => {
-                    console.error('Error uploading image:', error);
+                    setError('Error uploading image: ' + error);
                   });
 
                   return false; // Prevent default upload
                 },
                 'image.error': function (error: any, response: any) {
-                  console.error('Image upload error:', error, response);
+                  setError('Image upload error: ' + error + ', response: ' + response);
                 }
               }
             }}
           />
-          <Button type="submit" fullWidth variant="contained" color="primary" sx={{ mt: 3, mb: 2 }}>
+          <Button type="submit" fullWidth variant="contained" color="primary" sx={{ mt: 3}}>
             Submit
           </Button>
-          <Button
-            fullWidth
-            variant="outlined"
-            color="secondary"
-            onClick={() => navigate('/feed')}
-            sx={{ mt: 2 }}
-          >
-            Back to Feed
+          <Button fullWidth onClick={onClose} sx={{ mt: 1 }}>
+            Cancel
           </Button>
         </form>
-      </Box>
-    </Container>
+        <Snackbar
+              open={!!error}
+              autoHideDuration={6000}
+              onClose={() => setError(null)}
+              anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
+            >
+              <Alert severity="error" onClose={() => setError(null)}>
+                {error}
+              </Alert>
+        </Snackbar>
+      </Container>
+    </Modal>
   );
 };
 
-export default NewPost;
+export default NewPostModal;
