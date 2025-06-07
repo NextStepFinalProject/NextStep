@@ -11,9 +11,9 @@ import FroalaEditor from 'react-froala-wysiwyg';
 import 'froala-editor/css/froala_style.min.css';
 import 'froala-editor/css/froala_editor.pkgd.min.css';
 import 'froala-editor/js/plugins/image.min.js';
-import { config } from '../config.ts';
 import api from "../serverApi.ts";
 import { getUserAuth } from '../handlers/userAuth.ts';
+import { config } from '../config.ts';
 
 type Props = {
   open: boolean;
@@ -24,45 +24,17 @@ type Props = {
 const NewPostModal: React.FC<Props> = ({ open, onClose, onPostCreated }) => {
   const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
-  const [images, setImages] = useState<File[]>([]); // Store images locally
   const auth = getUserAuth();
   const [error, setError] = useState<string | null>(null);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    // Upload images to the server
-    const uploadedImages: { [placeholder: string]: string } = {};
-    for (const image of images) {
-      const formData = new FormData();
-      formData.append('file', image);
-
-      const response = await api.post(`/resource/image`, formData, {
-        headers: {
-          'Content-Type': 'multipart/form-data',
-          'Authorization': `Bearer ${auth.accessToken}`,
-        },
-      });
-
-      // Map the placeholder to the actual URL
-      const imageUrl = `${config.app.backend_url()}/resources/images/${response.data}`;
-      uploadedImages[image.name] = imageUrl;
-    }
-
-    // Replace placeholders in the content with actual URLs
-    let updatedContent = content;
-    Object.keys(uploadedImages).forEach((placeholder) => {
-      updatedContent = updatedContent.replace(placeholder, uploadedImages[placeholder]);
-    });
-
     try {
+      // Submit the post with the content (images are already uploaded and URLs are in place)
       await api.post(`/post`, {
         title,
-        content: updatedContent,
-      }, {
-        headers: {
-          Authorization: `Bearer ${auth.accessToken}`,
-        },
+        content,
       });
 
       onClose();
@@ -103,37 +75,61 @@ const NewPostModal: React.FC<Props> = ({ open, onClose, onPostCreated }) => {
             model={content}
             onModelChange={setContent}
             config={{
-              imageUpload: true,
-              imageUploadParam: 'file',
-              imageUploadMethod: 'POST',
-              charCounterCount: false,
               placeholderText: "Edit Your Content Here!",
-              toolbarButtons: ["bold", "italic", "underline", "insertImage", "insertLink", "paragraphFormat"],
-              pluginsEnabled: ["image"],
-              imageUploadRemoteUrls: true,
+              charCounterCount: false,
+              toolbarButtons: [
+                "bold",
+                "italic",
+                "underline",
+                "insertImage",
+                "insertLink",
+                "paragraphFormat",
+                "alert",
+              ],
+              imageUploadURL: `${config.app.backend_url()}/resource/image`,
+              imageUploadParams: {
+                Authorization: `Bearer ${auth.accessToken}`
+              },
+              imageUploadMethod: 'POST',
+              imageMaxSize: 5 * 1024 * 1024, // 5MB
               imageAllowedTypes: ['jpeg', 'jpg', 'png', 'gif'],
               events: {
-                "image.beforeUpload": async function (fileList: File[]) {
+                'image.beforeUpload': function (files: File[]) {
                   const editor = this as any;
-                  const firstFile = fileList[0];
+                  const file = files[0];
+                  
+                  // Create FormData
+                  const formData = new FormData();
+                  formData.append('file', file);
 
-                  if (firstFile) {
-                    // Generate a placeholder for the image
-                    const placeholder = `[[image-${firstFile.name}]]`;
+                  // Upload the image
+                  fetch(`${config.app.backend_url()}/resource/image`, {
+                    method: 'POST',
+                    headers: {
+                      'Authorization': `Bearer ${auth.accessToken}`
+                    },
+                    body: formData
+                  })
+                  .then(response => response.text())
+                  .then(imageId => {
+                    // Construct the full image URL
+                    const imageUrl = `${config.app.backend_url()}/resource/image/${imageId}`;
+                    // Insert the uploaded image
+                    editor.image.insert(imageUrl, null, null, editor.image.get());
+                  })
+                  .catch(error => {
+                    setError('Error uploading image: ' + error);
+                  });
 
-                    // Insert the placeholder into the editor
-                    editor.image.insert(placeholder, null, null, editor.image.get());
-
-                    // Store the image locally
-                    setImages((prevImages) => [...prevImages, firstFile]);
-                  }
-
-                  return false; // Prevent Froala's default upload mechanism
+                  return false; // Prevent default upload
                 },
-              },
+                'image.error': function (error: any, response: any) {
+                  setError('Image upload error: ' + error + ', response: ' + response);
+                }
+              }
             }}
           />
-          <Button type="submit" fullWidth variant="contained" color="primary" sx={{ mt: 2 }}>
+          <Button type="submit" fullWidth variant="contained" color="primary" sx={{ mt: 3}}>
             Submit
           </Button>
           <Button fullWidth onClick={onClose} sx={{ mt: 1 }}>
@@ -149,7 +145,7 @@ const NewPostModal: React.FC<Props> = ({ open, onClose, onPostCreated }) => {
               <Alert severity="error" onClose={() => setError(null)}>
                 {error}
               </Alert>
-            </Snackbar>
+        </Snackbar>
       </Container>
     </Modal>
   );
