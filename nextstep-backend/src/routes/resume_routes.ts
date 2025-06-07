@@ -10,7 +10,7 @@ const router = express.Router();
 
 router.get('/score/:filename', Resume.getResumeScore);
 
-router.get('/streamScore/:filename', Resume.getStreamResumeScore);
+router.get('/streamScore/:filename', (req: Request, res: Response) => Resume.getStreamResumeScore(req as CustomRequest, res));
 
 router.get('/templates', Resume.getTemplates);
 
@@ -20,6 +20,8 @@ router.post('/parseResume',  upload.single('resume'), (req: Request, res: Respon
 
 // TODO - Use it in the frontend after the parse and upload resume
 router.get('/resumeData/:version', (req: Request, res: Response) => Resume.getResumeData(req as CustomRequest, res))
+
+router.get('/', (req: Request, res: Response) => Resume.getResume(req as CustomRequest, res))
 
 
 export default router; 

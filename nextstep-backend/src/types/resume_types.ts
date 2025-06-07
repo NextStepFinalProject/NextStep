@@ -7,6 +7,10 @@ export interface ParsedResume {
     roleMatch: string;
     experience: string[];
     education?: string[];
+    jobDescription?: string;
+    feedback?: string;
+    score?: number;
+    fileName?: string;
 }
 
 export interface ResumeDocument extends Document {

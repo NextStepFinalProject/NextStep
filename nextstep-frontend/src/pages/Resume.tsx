@@ -181,6 +181,7 @@ const GeneratedWordPreview: React.FC<{ base64Content: string }> = ({ base64Conte
 const Resume: React.FC = () => {
   const [activeStep, setActiveStep] = useState(0);
   const [file, setFile] = useState<File | null>(null);
+  const [fileName, setFileName] = useState<string>(''); 
   const [jobDescription, setJobDescription] = useState('');
   const [feedback, setFeedback] = useState('');
   const [score, setScore] = useState<number | null>(null);
@@ -216,6 +217,26 @@ const Resume: React.FC = () => {
     fetchTemplates();
   }, []);
 
+    // Fetch resume data on mount
+    useEffect(() => {
+      const fetchResumeData = async () => {
+        try {
+          const response = await api.get('/resume');
+          if (response.data && response.data.parsedData) {
+            const parsedData = response.data.parsedData;
+            setJobDescription(parsedData.jobDescription || parsedData.aboutMe);
+            setFileName(parsedData.fileName || '');
+            parsedData.feedback && setFeedback(parsedData.feedback);
+            parsedData.score && setScore(parsedData.score);
+          }
+
+        } catch (err) {
+          console.error('Failed to fetch resume data:', err);
+        }
+      };
+      fetchResumeData();
+    }, []);
+    
   const uploadResume = async (formData: FormData) => {
     const response = await api.post('/resource/resume', formData, {
       headers: {
@@ -228,6 +249,7 @@ const Resume: React.FC = () => {
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     if (event.target.files && event.target.files[0]) {
       setFile(event.target.files[0]);
+      setFileName(event.target.files[0].name);
       setError('');
     }
   };
@@ -237,7 +259,7 @@ const Resume: React.FC = () => {
   };
 
   const handleSubmit = async () => {
-    if (!file) {
+    if (!fileName) {
       setError('Please select a file');
       return;
     }
@@ -248,11 +270,17 @@ const Resume: React.FC = () => {
     setError('');
 
     try {
-      const formData = new FormData();
-      formData.append('file', file);
+      var filename = '';
+      if (file) {
+        const formData = new FormData();
+        formData.append('file', file);
 
-      const filename = await uploadResume(formData);
-
+        filename = await uploadResume(formData);
+      }
+      else {
+        const resume = await api.get('/resume');
+        filename = resume.data.rawContentLink.split('/').pop() || '';
+      }
       const token = localStorage.getItem(config.localStorageKeys.userAuth) 
         ? JSON.parse(localStorage.getItem(config.localStorageKeys.userAuth)!).accessToken 
         : '';
@@ -269,7 +297,8 @@ const Resume: React.FC = () => {
             setScore(data.score);
             eventSource.close();
             setLoading(false);
-            setActiveStep(1); // Move to next step after scoring
+            data.fullText && setFeedback(data.fullText);
+            // setActiveStep(1); // Move to next step after scoring
           } else if (data.chunk) {
             setFeedback(prev => prev + data.chunk);
           }
@@ -462,8 +491,8 @@ const Resume: React.FC = () => {
               />
 
               <UploadBox onClick={handleUploadClick}>
-                {file ? (
-                  <Typography>{file.name}</Typography>
+                {fileName ? (
+                  <Typography>{fileName}</Typography>
                 ) : (
                   <Typography>Click to upload your resume</Typography>
                 )}
@@ -479,7 +508,7 @@ const Resume: React.FC = () => {
             <Button
               variant="contained"
               onClick={handleSubmit}
-              disabled={loading || !file}
+              disabled={loading || !fileName}
               sx={{ mb: 3 }}
             >
               {loading ? 'Analyzing...' : 'Analyze Resume'}
@@ -727,4 +756,4 @@ const Resume: React.FC = () => {
   );
 };
 
-export default Resume; 
+export default Resume;
