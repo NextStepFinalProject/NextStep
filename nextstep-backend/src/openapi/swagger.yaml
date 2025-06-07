@@ -710,14 +710,24 @@ paths:
         '400':
           description: Bad request
           content:
-            text/plain:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    description: Error message indicating the specific issue
+                    example: "File too large"
               examples:
                 fileTooLarge:
-                  value: "File too large"
+                  value:
+                    message: "File too large"
                 invalidFileType:
-                  value: "Invalid file type. Only images are allowed: /jpeg|jpg|png|gif/"
+                  value:
+                    message: "Invalid file type. Only images are allowed: /jpeg|jpg|png|gif/"
                 noFileUploaded:
-                  value: "No file uploaded"
+                  value:
+                    message: "No file uploaded"
         '404':
           description: User not found
         '500':
@@ -751,14 +761,24 @@ paths:
         '400':
           description: Bad request
           content:
-            text/plain:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    description: Error message indicating the specific issue
+                    example: "File too large"
               examples:
                 fileTooLarge:
-                  value: "File too large"
+                  value:
+                    message: "File too large"
                 invalidFileType:
-                  value: "Invalid file type. Only images are allowed: /jpeg|jpg|png|gif/"
+                  value:
+                    message: "Invalid file type. Only images are allowed: /jpeg|jpg|png|gif/"
                 noFileUploaded:
-                  value: "No file uploaded"
+                  value:
+                    message: "No file uploaded"
         '500':
           description: Internal server error
 
@@ -816,14 +836,24 @@ paths:
         '400':
           description: Bad request
           content:
-            text/plain:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    description: Error message indicating the specific issue
+                    example: "File too large"
               examples:
                 fileTooLarge:
-                  value: "File too large"
+                  value:
+                    message: "File too large"
                 invalidFileType:
-                  value: "Invalid file type. Only PDF, DOC, DOCX and TXT/TEXT files are allowed"
+                  value:
+                    message: "Invalid file type. Only PDF, DOC, DOCX and TXT/TEXT files are allowed"
                 noFileUploaded:
-                  value: "No file uploaded"
+                  value:
+                    message: "No file uploaded"
         '401':
           description: Unauthorized
         '500':
@@ -1282,6 +1312,7 @@ paths:
         - Quizzes
       summary: Generate a quiz for a certain subject.
       description: Generate a quiz for a certain subject. The quiz is generated based on our real-world quizzes database.
+                   In the subject field, the SPECIALTY_ tags are optional, and can be used to specify the specialty of the quiz.
       security:
         - BearerAuth: []
       requestBody:
@@ -1295,8 +1326,9 @@ paths:
               properties:
                 subject:
                   type: string
-                  description: The subject of the quiz to be generated (e.g., "Java Spring Boot Microservices")
-                  example: "Java Spring Boot Microservices"
+                  description: The subject of the quiz to be generated (e.g., "Java Spring Boot Microservices") or (e.g., "Java Spring Boot Microservices SPECIALTY_CODE SPECIALTY_DESIGN SPECIALTY_TECHNOLOGIES")
+                  example: "Java Spring Boot Microservices SPECIALTY_CODE SPECIALTY_DESIGN SPECIALTY_TECHNOLOGIES"
+                  note: The SPECIALTY_ tags are optional, and can be used to specify the specialty of the quiz.
       responses:
         '200':
           description: A generated quiz custom-tailored for the targeted subject.
@@ -1595,6 +1627,7 @@ components:
         - answer_list
         - keywords
         - interviewer_mindset
+        - specialty_tags
       properties:
         _id:
           type: string
@@ -1652,6 +1685,12 @@ components:
           type: string
           description: A description of the soft skills, characteristics, and professional attributes an interviewer looks for.
           example: "מחפשים מועמד עם סקרנות טכנולוגית גבוהה, יכולת פתרון בעיות יצירתית, תקשורת ברורה ותמציתית, וגישה פרואקטיבית לשיתוף פעולה בצוות."
+        specialty_tags:
+          type: array
+          description: Additional relevant technical or conceptual keywords that the user might find useful for preparation.
+          items:
+            type: string
+          example: ["Code", "Design", "Technologies"]
 
     AnsweredQuiz:
       type: object
@@ -1668,6 +1707,7 @@ components:
         - answer_list
         - keywords
         - interviewer_mindset
+        - specialty_tags
       properties:
         _id:
           type: string
@@ -1731,6 +1771,12 @@ components:
           type: string
           description: A description of the soft skills, characteristics, and professional attributes an interviewer looks for.
           example: "מחפשים מועמד עם סקרנות טכנולוגית גבוהה, יכולת פתרון בעיות יצירתית, תקשורת ברורה ותמציתית, וגישה פרואקטיבית לשיתוף פעולה בצוות."
+        specialty_tags:
+          type: array
+          description: Additional relevant technical or conceptual keywords that the user might find useful for preparation.
+          items:
+            type: string
+          example: ["Code", "Design", "Technologies"]
 
     GradedQuiz:
       type: object

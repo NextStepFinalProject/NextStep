@@ -40,6 +40,10 @@ export const getUserById = async (id: string): Promise<UserData | null> => {
 
 
 export const updateUserById = async (id: string, updateData: Partial<UserData>): Promise<UserData | null> => {
+    if (updateData.password) {
+        const salt = config.token.salt();
+        updateData.password = await bcrypt.hash(updateData.password, salt);
+    }
     const user = await UserModel.findByIdAndUpdate(id, updateData, { new: true }).exec();
     return user ? userToUserData(user) : null;
 };
@@ -49,7 +53,7 @@ export const deleteUserById = async (id: string): Promise<UserData | null> => {
     return user ? userToUserData(user) : null;
 };
 
-export const registerUser = async (username: string, password: string, email: string, authProvider: string): Promise<UserData> => {
+export const registerUser = async (username: string, password: string, email: string, authProvider: string = "local"): Promise<UserData> => {
     let hashedPassword: string = '';
     // If registering with a password (local registration)
     if (password && authProvider === 'local') {
@@ -102,14 +106,14 @@ export const loginUserGoogle = async (email: string, authProvider: string, name:
     return {...tokens, userId: user.id, username: user.username, imageFilename: user.imageFilename}
 }
 
-export const loginUser = async (email: string, password: string, authProvider?: string): Promise<{ accessToken: string, refreshToken: string, userId: string, username: string, imageFilename?: string } | null> => {
+export const loginUser = async (email: string, password: string, authProvider: string = "local"): Promise<{ accessToken: string, refreshToken: string, userId: string, username: string, imageFilename?: string } | null> => {
     const user = await getIUserByEmail(email);
     if (!user) {
         return null;
     }
      // Local login (with password)
      if (authProvider === 'local') {
-        if ((await bcrypt.compare(password, user.password))) {
+        if (!(await bcrypt.compare(password, user.password))) {
             return null;
         }
      }

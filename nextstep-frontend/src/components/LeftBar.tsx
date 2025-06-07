@@ -1,6 +1,6 @@
-import React, { useRef, useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { Box, Drawer, List, ListItem, ListItemIcon, ListItemText, Tooltip, Divider, useTheme as useMuiTheme, ListItemButton } from '@mui/material';
+import { Box, Drawer, List, ListItem, ListItemIcon, ListItemText, Tooltip, Divider, ListItemButton } from '@mui/material';
 import { Home, Person, Message, Logout, DocumentScannerTwoTone, Feed, Quiz, LightMode, DarkMode } from '@mui/icons-material';
 import { getUserAuth, removeUserAuth } from "../handlers/userAuth.ts";
 import api from "../serverApi.ts";
@@ -13,7 +13,6 @@ const LeftBar: React.FC = () => {
   const location = useLocation();
   const [collapsed, setCollapsed] = useState(true);
   const { isDarkMode, toggleTheme } = useTheme();
-  const muiTheme = useMuiTheme();
 
   useEffect(() => {
     const handleResize = () => {
@@ -45,11 +44,11 @@ const LeftBar: React.FC = () => {
 
   const menuItems = [
     { text: 'Dashboard', icon: <Home />, path: '/main-dashboard' },
-    { text: 'Feed', icon: <Feed />, path: '/feed' },
-    { text: 'Profile', icon: <Person />, path: '/profile' },
-    { text: 'Chat', icon: <Message />, path: '/chat' },
     { text: 'Resume', icon: <DocumentScannerTwoTone />, path: '/resume' },
     { text: 'Quiz', icon: <Quiz />, path: '/quiz' },
+    { text: 'Feed', icon: <Feed />, path: '/feed' },
+    { text: 'Chat', icon: <Message />, path: '/chat' },
+    { text: 'Profile', icon: <Person />, path: '/profile' },
   ];
 
   return (

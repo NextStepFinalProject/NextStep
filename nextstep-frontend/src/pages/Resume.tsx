@@ -196,7 +196,7 @@ const Resume: React.FC = () => {
 
   useEffect(() => {
     if (feedbackEndRef.current) {
-      feedbackEndRef.current.scrollIntoView({ behavior: 'smooth' });
+      feedbackEndRef.current.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
     }
   }, [feedback]);
 
@@ -285,8 +285,14 @@ const Resume: React.FC = () => {
         setLoading(false);
       };
 
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'An error occurred');
+    } catch (err: any) {
+      if (err.response && err.response.status === 400 &&
+          err.response.data && err.response.data &&
+          err.response.data.message) {
+        setError(err.response.data.message);
+      } else {
+        setError(err instanceof Error ? err.message : 'An error occurred');
+      }
       setLoading(false);
     }
   };

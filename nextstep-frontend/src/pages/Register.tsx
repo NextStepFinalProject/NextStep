@@ -12,7 +12,6 @@ import {
   IconButton,
   useTheme,
   useMediaQuery,
-  Grid,
   Alert,
 } from '@mui/material';
 import { motion } from 'framer-motion';
@@ -50,7 +49,7 @@ const Register: React.FC = () => {
       return;
     }
     try {
-      const response = await axios.post(`${config.app.backend_url()}/auth/register`, {
+      await axios.post(`${config.app.backend_url()}/auth/register`, {
         username: formData.username,
         email: formData.email,
         password: formData.password,
@@ -62,7 +61,12 @@ const Register: React.FC = () => {
       }, 4000);
     } catch (error) {
       const err = error as any;
-      if (err.response && err.response.data) {
+      if (err.response && err.response.status === 400 &&
+        err.response.data && err.response.data.errors &&
+        err.response.data.errors[0] &&
+        err.response.data.errors[0].message) {
+        setError(err.response.data.errors[0].message);
+      } else if (err.response && err.response.data) {
         setError(err.response.data.message);
       } else {
         setError('An error occurred. Please try again.');

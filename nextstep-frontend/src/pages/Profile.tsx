@@ -75,11 +75,15 @@ const Profile: React.FC = () => {
           setSuccess(false);
           window.location.reload();
         }, 3000);
+      }
+    } catch (err: any) {
+      if (err.response && err.response.status === 400 &&
+        err.response.data && err.response.data &&
+        err.response.data.message) {
+        setError(err.response.data.message);
       } else {
         setError('Error uploading image. Please try again.');
       }
-    } catch (err) {
-      setError('Error uploading image. Please try again.');
     }
   };
 
@@ -98,8 +102,15 @@ const Profile: React.FC = () => {
         setSuccess(false);
         window.location.reload();
       }, 2000);
-    } catch (err) {
-      setError('Error updating profile. Please try again.');
+    } catch (err: any) {
+      if (err.response && err.response.status === 400 &&
+        err.response.data && err.response.data.errors &&
+        err.response.data.errors[0] &&
+        err.response.data.errors[0].message) {
+        setError(err.response.data.errors[0].message);
+      } else {
+        setError('Error updating profile. Please try again.');
+      }
     }
   };
 

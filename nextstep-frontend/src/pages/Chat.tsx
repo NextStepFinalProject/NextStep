@@ -13,9 +13,7 @@ import {
   TextField, 
   Button, 
   Typography,
-  useTheme,
   Paper,
-  Divider
 } from '@mui/material';
 import { Send as SendIcon } from '@mui/icons-material';
 import DividedList from '../components/DividedList';
@@ -27,11 +25,10 @@ const Chat: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isConnected, setIsConnected] = useState(false);
-  const theme = useTheme();
 
   const usersMetadataCacheRef = useRef(new Set<LoginResponse>());
   const socketRef = useRef<Socket | null>(null);
-  const userAuthRef = useRef<LoginResponse | null>(null);
+  const userAuthRef =  useRef(JSON.parse(localStorage.getItem(config.localStorageKeys.userAuth) as string) as LoginResponse);
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
   const reconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
@@ -77,7 +74,7 @@ const Chat: React.FC = () => {
         setIsLoading(false);
       });
 
-      socketRef.current.on('connect_error', (err) => {
+      socketRef.current.on('connect_error', (_) => {
         setError('Connection error. Please try again.');
         setIsConnected(false);
         setIsLoading(false);
@@ -159,7 +156,7 @@ const Chat: React.FC = () => {
 
   useEffect(() => {
     if (messagesEndRef.current) {
-      messagesEndRef.current.scrollIntoView({ behavior: 'smooth' });
+      messagesEndRef.current.scrollIntoView({ behavior: 'smooth', block: 'end' });
     }
   }, [room.messages]);
 
@@ -321,10 +318,10 @@ const Chat: React.FC = () => {
                   p: 2,
                   borderRadius: 2,
                   maxWidth: '80%',
-                  ml: m?.userId === userAuthRef.current?.id ? 'auto' : 0,
-                  mr: m?.userId === userAuthRef.current?.id ? 0 : 'auto',
-                  bgcolor: m?.userId === userAuthRef.current?.id ? 'primary.main' : 'background.paper',
-                  color: m?.userId === userAuthRef.current?.id ? 'primary.contrastText' : 'text.primary',
+                  ml: m?.userId === userAuthRef.current?.userId ? 'auto' : 0,
+                  mr: m?.userId === userAuthRef.current?.userId ? 0 : 'auto',
+                  bgcolor: m?.userId === userAuthRef.current?.userId ? 'primary.main' : 'background.paper',
+                  color: m?.userId === userAuthRef.current?.userId ? 'primary.contrastText' : 'text.primary',
                   boxShadow: '0 2px 8px rgba(0, 0, 0, 0.05)',
                   transition: 'all 0.3s ease',
                   '&:hover': {
@@ -337,17 +334,17 @@ const Chat: React.FC = () => {
                   <Typography
                     variant="subtitle2"
                     sx={{
-                      color: m?.userId === userAuthRef.current?.id ? 'inherit' : 'primary.main',
+                      color: m?.userId === userAuthRef.current?.userId ? 'inherit' : 'primary.main',
                       fontWeight: 600,
                     }}
                     className="message-user"
                   >
-                    {Array.from(usersMetadataCacheRef.current).find(u => u.id === m?.userId)?.email}
+                    {Array.from(usersMetadataCacheRef.current).find(u => u.userId === m?.userId)?.email}
                   </Typography>
                   <Typography
                     variant="caption"
                     sx={{
-                      color: m?.userId === userAuthRef.current?.id ? 'inherit' : 'text.secondary',
+                      color: m?.userId === userAuthRef.current?.userId ? 'inherit' : 'text.secondary',
                       opacity: 0.8,
                     }}
                     className="message-time"
@@ -442,7 +439,7 @@ const Chat: React.FC = () => {
           </Box>
         </Box>
         <DividedList 
-          onlineUsers={onlineUsers} 
+          onlineUsers={onlineUsers.map(user => ({ id: user.id, email: user.email }))} 
           onUserClick={onUserClick}
           disabled={!isConnected}
         />
