@@ -50,15 +50,16 @@ const NewPostModal: React.FC<Props> = ({ open, onClose, onPostCreated }) => {
         maxWidth="md"
         sx={{
           mt: 10,
-          backgroundColor: 'white',
+          backgroundColor: 'background.paper',
           borderRadius: 2,
           p: 4,
           width: '40%',
           overflowY: 'auto',
           height: '80vh',
+          color: 'text.primary',
         }}
       >
-        <Typography variant="h5" gutterBottom>
+        <Typography variant="h5" gutterBottom color="text.primary">
           Create New Post
         </Typography>
         <form onSubmit={handleSubmit}>
@@ -67,7 +68,17 @@ const NewPostModal: React.FC<Props> = ({ open, onClose, onPostCreated }) => {
             placeholder="Title"
             value={title}
             onChange={(e) => setTitle(e.target.value)}
-            style={{ width: '100%', marginBottom: '1rem', padding: '10px', fontSize: '16px' }}
+            style={{ 
+              width: '100%', 
+              marginBottom: '1rem', 
+              padding: '10px', 
+              fontSize: '16px',
+              backgroundColor: 'transparent',
+              color: 'inherit',
+              border: '1px solid',
+              borderColor: 'divider',
+              borderRadius: '4px',
+            }}
             required
           />
           <FroalaEditor
