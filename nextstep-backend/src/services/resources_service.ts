@@ -123,4 +123,32 @@ const uploadResume = (req: MulterRequest): Promise<string> => {
     });
 };
 
-export { uploadImage, uploadResume };
+const getResumePath = (filename: string): string => {
+    const resumesDirectoryPath = config.resources.resumesDirectoryPath();
+    const resumePath = path.resolve(resumesDirectoryPath, filename);
+
+    if (!fs.existsSync(resumePath)) {
+        throw new TypeError('Resume not found');
+    }
+
+    return resumePath;
+}
+
+const getResumeBuffer = (filename: string): Buffer => {
+    const resumePath = getResumePath(filename);
+
+    try {
+        return fs.readFileSync(resumePath);
+    } catch (error: any) {
+        throw new Error(`Failed to read resume file: ${error.message}`);
+    }
+}
+
+const resumeExists = (filename: string): boolean => {
+    const resumesDirectoryPath = config.resources.resumesDirectoryPath();
+    const resumePath = path.resolve(resumesDirectoryPath, filename);
+    return fs.existsSync(resumePath);
+};
+
+
+export { uploadImage, uploadResume, getResumeBuffer, resumeExists };
