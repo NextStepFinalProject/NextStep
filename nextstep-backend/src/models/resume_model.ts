@@ -7,11 +7,11 @@ const ResumeSchema = new Schema({
     rawContentLink: { type: String, required: true },
     parsedData: {
         type: {
+            fileName: { type: String, required: false },
             aboutMe: { type: String, required: false },
             skills: { type: [String], required: false },
             roleMatch: { type: String, required: false },
             experience: { type: [String], required: false }
-
         },
         required: false
     },

@@ -343,7 +343,7 @@ const getLatestResumeByUser = async (ownerId: string): Promise<number> => {
 };
 
 
-const saveParsedResume = async (parsedData: ParsedResume, ownerId: string, resumeRawLink: string): Promise<ResumeData> => {
+const saveParsedResume = async (parsedData: ParsedResume, ownerId: string, resumeRawLink: string, filename: string): Promise<ResumeData> => {
     const lastVersion = await getLatestResumeByUser(ownerId);
     const newVersion = lastVersion + 1;
 
@@ -352,6 +352,7 @@ const saveParsedResume = async (parsedData: ParsedResume, ownerId: string, resum
         version: newVersion,
         rawContentLink: resumeRawLink,
         parsedData: {
+            fileName: filename,
             aboutMe: parsedData.aboutMe,
             skills: parsedData.skills,
             roleMatch: parsedData.roleMatch,

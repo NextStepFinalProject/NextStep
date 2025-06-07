@@ -21,5 +21,7 @@ router.post('/parseResume',  upload.single('resume'), (req: Request, res: Respon
 // TODO - Use it in the frontend after the parse and upload resume
 router.get('/resumeData/:version', (req: Request, res: Response) => Resume.getResumeData(req as CustomRequest, res))
 
+router.get('/', (req: Request, res: Response) => Resume.getResume(req as CustomRequest, res))
+
 
 export default router; 

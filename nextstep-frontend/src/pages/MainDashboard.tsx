@@ -57,7 +57,7 @@ const MainDashboard: React.FC = () => {
   const [useOAuth, setUseOAuth] = useState(true);
   const [showAuthOptions, setShowAuthOptions] = useState(false);
 
-  // AI-resume state
+  // resume state
   const [parsing, setParsing] = useState(false);
   const [resumeExperience, setResumeExperience] = useState<string[]>([]);
   const [roleMatch, setRoleMatch] = useState<string>('');
@@ -99,6 +99,19 @@ const MainDashboard: React.FC = () => {
         }
       })();
     }
+  }, []);
+
+  // Fetch resume data on mount
+  useEffect(() => {
+    const fetchResumeData = async () => {
+      try {
+        const response = await api.get('/resume');
+        setResumeFileName(response.data.parsedData.fileName || '');
+      } catch (err) {
+        console.error('Failed to fetch resume data:', err);
+      }
+    };
+    fetchResumeData();
   }, []);
 
   const mergeRepoLanguages = async (fetchedRepos: typeof repos) => {
@@ -158,11 +171,11 @@ const MainDashboard: React.FC = () => {
     const form = new FormData();
     form.append('file', file);
     try {
-      const uplaodedResume = await uploadResume(form);
+      const uploadedResume = await uploadResume(form);
 
       const res = await api.post('/resume/parseResume',
           {
-            resumefileName: uplaodedResume,
+            resumefileName: uploadedResume, originfilename: file.name,
             }, {
         headers: { 'Content-Type': 'multipart/form-data' },
       });

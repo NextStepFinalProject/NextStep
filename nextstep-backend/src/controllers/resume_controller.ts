@@ -108,7 +108,7 @@ const parseResume = async (req: CustomRequest, res: Response) => {
 
       const resumeFilename = req.body.resumefileName;
       const parsed = await parseResumeFields(getResumeBuffer(req.body.resumefileName), resumeFilename);
-      const resumeData = await saveParsedResume(parsed, req.user.id, resumeFilename);
+      const resumeData = await saveParsedResume(parsed, req.user.id, resumeFilename, req.body.originfilename);
 
       return res.status(200).json(parsed);
     } catch (err: any) {
@@ -116,6 +116,23 @@ const parseResume = async (req: CustomRequest, res: Response) => {
       return handleError(err, res);
     }
   };
+
+const getResume = async (req: CustomRequest, res: Response) => {
+    try {
+        const ownerId = req.user.id;
+        const resume = await getResumeByOwner(ownerId);
+
+        if (!resume) {
+            return res.status(404).json({ error: 'Resume not found' });
+        }
+
+        return res.status(200).json(resume);
+    } catch (error) {
+        console.error('Error retrieving resume:', error);
+        return handleError(error, res);
+    }
+}
+
 
 const getResumeData = async (req: CustomRequest, res: Response) => {
     try {
@@ -133,4 +150,4 @@ const getResumeData = async (req: CustomRequest, res: Response) => {
 
 export default { parseResume, getResumeScore,
     getStreamResumeScore, getTemplates,
-    generateResume, getResumeData };
+    generateResume, getResumeData, getResume };
