@@ -218,14 +218,14 @@ const Feed: React.FC = () => {
                 <Avatar src={profileImages[auth.userId] || defaultProfileImage} sx={{ mr: 2 }} />
                 <Box
                   sx={{
-                    backgroundColor: '#f0f2f5',
+                    backgroundColor: 'background.paper',
                     borderRadius: '20px',
                     px: 2,
                     py: 1,
                     flexGrow: 1,
                   }}
                 >
-                  <Typography color="text.secondary">What's on your mind{', ' + auth.username || 'User'}?</Typography>
+                  <Typography color="text.primary" sx={{ opacity: 0.7 }}>What's on your mind{', ' + auth.username || 'User'}?</Typography>
                 </Box>
               </Box>
               <Box sx={{ display: 'flex', justifyContent: 'space-around', mt: 2 }}>

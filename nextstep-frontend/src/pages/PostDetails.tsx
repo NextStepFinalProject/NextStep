@@ -237,7 +237,7 @@ const PostDetails: React.FC = () => {
           <Typography color="error">{error}</Typography>
         ) : (
           post && (
-            <Paper sx={{ p: 4, width: '100%', height: '70vh', overflowY: 'auto', }}>
+            <Paper sx={{ p: 4, width: '100%' }}>
               <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
                 <Avatar
                   src={profileImage}
