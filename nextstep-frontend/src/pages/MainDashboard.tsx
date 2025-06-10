@@ -57,7 +57,7 @@ const MainDashboard: React.FC = () => {
   const [useOAuth, setUseOAuth] = useState(true);
   const [showAuthOptions, setShowAuthOptions] = useState(false);
 
-  // AI-resume state
+  // resume state
   const [parsing, setParsing] = useState(false);
   const [resumeExperience, setResumeExperience] = useState<string[]>([]);
   const [roleMatch, setRoleMatch] = useState<string>('');
@@ -101,6 +101,21 @@ const MainDashboard: React.FC = () => {
     }
   }, []);
 
+  // Fetch resume data on mount
+  useEffect(() => {
+    const fetchResumeData = async () => {
+      try {
+        const response = await api.get('/resume');
+        setResumeFileName(response.data.parsedData.fileName || '');
+        setResumeExperience(response.data.parsedData.experience || []);
+        setRoleMatch(response.data.parsedData.roleMatch || '');
+      } catch (err) {
+        console.error('Failed to fetch resume data:', err);
+      }
+    };
+    fetchResumeData();
+  }, []);
+
   const mergeRepoLanguages = async (fetchedRepos: typeof repos) => {
     const langSet = new Set(skills);
     for (const repo of fetchedRepos) {
@@ -141,15 +156,30 @@ const MainDashboard: React.FC = () => {
 
   // Upload & parse resume
   const handleResumeUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+
+    const uploadResume = async (formData: FormData) => {
+      const response = await api.post('/resource/resume', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
+      return response.data;
+    };
+
     const file = e.target.files?.[0];
     if (!file) return;
     setResumeFileName(file.name);
     setParsing(true);
     const form = new FormData();
-    form.append('resume', file);
+    form.append('file', file);
     try {
-      const res = await api.post('/resume/parseResume', form, {
-        headers: { 'Content-Type': 'multipart/form-data' }
+      const uploadedResume = await uploadResume(form);
+
+      const res = await api.post('/resume/parseResume',
+          {
+            resumefileName: uploadedResume, originfilename: file.name,
+            }, {
+        headers: { 'Content-Type': 'multipart/form-data' },
       });
       const { aboutMe: aiAbout, skills: aiSkills, roleMatch: aiRole, experience: aiExp } = res.data;
       setAboutMe(aiAbout);

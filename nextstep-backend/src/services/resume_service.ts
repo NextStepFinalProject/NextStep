@@ -1,104 +1,28 @@
 import { config } from '../config/config';
 import path from 'path';
 import fs from 'fs';
-import axios from 'axios';
 import { chatWithAI, streamChatWithAI } from './chat_api_service';
 import mammoth from 'mammoth';
 import pdfParse from 'pdf-parse';
 import AdmZip from 'adm-zip';
 import { DOMParser, XMLSerializer } from 'xmldom';
+import {ParsedResume, ResumeData} from 'types/resume_types';
+import {createResumeExtractionPrompt, createResumeModificationPrompt, feedbackTemplate, SYSTEM_TEMPLATE} from "../utils/resume_handlers/resume_AI_handler";
+import { parseDocument } from '../utils/resume_handlers/resume_files_handler';
+import {ResumeModel} from "../models/resume_model";
+import {Document} from 'mongoose';
 
-export interface ParsedResume {
-    aboutMe: string;
-    skills:    string[];
-    roleMatch: string;
-    experience:string[];
-    education?: string[];
-}
 
-const SYSTEM_TEMPLATE = `You are a very experienced ATS (Application Tracking System) bot with a deep understanding named Bob the Resume builder.
-You will review resumes with or without job descriptions.
-You are an expert in resume evaluation and provide constructive feedback with dynamic evaluation.
-You should also provide an improvement table, taking into account:
-- Content (Medium priority)
-- Keyword matching (High priority)
-- Hard skills (High priority)
-- Soft skills (High priority)
-- Overall presentation (Low priority)`;
 
-const feedbackTemplate = (resumeText: string, jdText: string) => `
-Resume Feedback Report
-Here is the resume you provided:
-${resumeText}
-And the job description:
-${jdText}
 
-Create the Improvement Table in relevance to the resume and give the consideration and suggestion for each section strictly following 
-the pattern as below and don't just out this guided pattern :
-| Area          | Consideration                                                   | Status | Suggestions |
-| ------------- | --------------------------------------------------------------- | ------ | ----------- |
-| Content       | Measurable Results: At least 5 specific achievements or impact. |  Low   |             |
-|               | Words to avoid: Negative phrases or clichés.                    |        |             |
-| Keywords      | Hard Skills: Presence and frequency of hard skills.             |  High  |             |
-|               | Soft Skills: Presence and frequency of soft skills.             |        |             |
-| Presentation  | Education Match: Does the resume list a degree that matches the job requirements? |  High   |             |
-
-Strengths:
-List the strengths of the resume here.
-
-Detailed Feedback:
-Provide detailed feedback on the resume's content, structure, grammar, and relevance to the job description.
-
-Suggestions:
-Provide actionable suggestions for improvement, including specific keywords to include and skills to highlight.
-
-Based on your analysis, provide a numerical score between 0-100 that represents the overall quality and match of the resume.
-The score should be provided at the end of your response in the format: "SCORE: X" where X is the numerical score.
-`;
 
 const FEEDBACK_ERROR_MESSAGE = 'The Chat AI feature is turned off. Could not score your resume.';
 
-const parseDocument = async (filePath: string): Promise<string> => {
-    const ext = path.extname(filePath).toLowerCase();
-    
-    try {
-        switch (ext) {
-            case '.pdf':
-                return await parsePdf(filePath);
-            case '.docx':
-            case '.doc':
-                return await parseWord(filePath);
-            case '.txt':
-            case '.text':
-                return fs.readFileSync(filePath, 'utf-8');
-            default:
-                throw new Error(`Unsupported file format: ${ext}`);
-        }
-    } catch (error: any) {
-        console.error(`Error parsing document ${filePath}:`, error);
-        throw new Error(`Failed to parse document: ${error.message}`);
-    }
-};
 
-const parsePdf = async (filePath: string): Promise<string> => {
-    try {
-        const dataBuffer = fs.readFileSync(filePath);
-        const data = await pdfParse(dataBuffer);
-        return data.text;
-    } catch (error: any) {
-        console.error('Error parsing PDF:', error);
-        throw new Error('Failed to parse PDF document');
-    }
-};
-
-const parseWord = async (filePath: string): Promise<string> => {
-    try {
-        const result = await mammoth.extractRawText({ path: filePath });
-        return result.value;
-    } catch (error: any) {
-        console.error('Error parsing Word document:', error);
-        throw new Error('Failed to parse Word document');
-    }
+const resumeToResumeData = async (resume: Document<unknown, {}, any> & any): Promise<ResumeData> => {
+    // The mongoose schema's toJSON transform already handles basic conversion
+    // You could add additional fields here if needed in the future
+    return resume.toJSON();
 };
 
 const scoreResume = async (resumePath: string, jobDescription?: string): Promise<{ score: number; feedback: string }> => {
@@ -134,7 +58,7 @@ const streamScoreResume = async (
     resumePath: string,
     jobDescription: string | undefined,
     onChunk: (chunk: string) => void
-): Promise<number> => {
+): Promise<[number, string]> => {
     try {
         const resumeText = await parseDocument(resumePath);
         if (resumeText.trim() == '') {
@@ -164,7 +88,7 @@ const streamScoreResume = async (
             onChunk(FEEDBACK_ERROR_MESSAGE);
         }
 
-        return finalScore;
+        return [finalScore, fullResponse];
     } catch (error: any) {
         if (error instanceof TypeError) {
             console.error('TypeError while streaming resume score:', error);
@@ -295,36 +219,11 @@ Content: ${content}`;
         }).join('\n\n');
 
         // Prepare the prompt for AI to modify the content
-        const prompt = `You are a resume expert. Please modify the following resume content based on the feedback and job description.
-        
-Current Resume Content:
-${readableContent}
-
-Feedback:
-${feedback}
-
-Job Description:
-${jobDescription}
-
-IMPORTANT: You must return your response in the following EXACT JSON format. Do not include any other text or explanation:
-
-[
-  {
-    "paragraphIndex": 0,
-    "text": "First paragraph content here"
-  }
-]
-
-Rules:
-1. Return ONLY the JSON array, nothing else
-2. Each paragraph must maintain its original structure
-3. The text content should be updated based on the feedback while preserving formatting
-4. Maintain the same number of paragraphs as the original
-5. Do not include any markdown, formatting, or additional text`;
+        const prompt = createResumeModificationPrompt(readableContent, feedback, jobDescription);
 
         // Get the modified content from AI
         const modifiedContent = await chatWithAI(SYSTEM_TEMPLATE, [prompt]);
-        console.log('AI Response:', modifiedContent); // Debug log
+        console.debug('AI Response:', modifiedContent); // Debug log
         
         let modifiedParagraphs;
         try {
@@ -416,23 +315,11 @@ const parseResumeFields = async (
     }
   
     // 2) Build the extraction prompt
-    const prompt = `
-  Extract from this resume the following fields as JSON:
-    • "aboutMe": a 1–2 sentence self-summary.
-    • "skills": an array of technical skills.
-    • "roleMatch": one-sentence best-fit role suggestion.
-    • "experience": an array of 3–5 bullet points of key achievements.
+    const prompt = createResumeExtractionPrompt(text);
   
-  Resume text:
-  ---
-  ${text}
-  ---
-    Respond with a single JSON object and nothing else. The json object should begin directly with parentheses and have the following structure: {"a": "value", "b": "value", ...}
-  `;
-  
-    // 3) Call your Chat AI
+    // 3) Call Chat AI
     const aiResponse = await chatWithAI(
-      SYSTEM_TEMPLATE,     // you can reuse your existing SYSTEM_TEMPLATE or define a new one
+      SYSTEM_TEMPLATE,
       [prompt]
     );
   
@@ -441,4 +328,96 @@ const parseResumeFields = async (
     return parsed;
   };
 
-export { scoreResume, streamScoreResume, getResumeTemplates, generateImprovedResume, parseResumeFields };
+
+const getLatestResumeByUser = async (ownerId: string): Promise<number> => {
+    try {
+        const latestResume = await ResumeModel.findOne({ owner: ownerId })
+            .sort({ version: -1 })
+            .exec();
+
+        return latestResume ? latestResume.version : 0; // Return version number or 0 if no resume exists
+    } catch (error) {
+        console.error('Error finding latest resume:', error);
+        throw new Error('Failed to retrieve latest resume');
+    }
+};
+
+
+const saveParsedResume = async (parsedData: ParsedResume, ownerId: string, resumeRawLink: string, filename: string): Promise<ResumeData> => {
+    const lastVersion = await getLatestResumeByUser(ownerId);
+    const newVersion = lastVersion + 1;
+
+    const newResume = new ResumeModel({
+        owner: ownerId,
+        version: newVersion,
+        rawContentLink: resumeRawLink,
+        parsedData: {
+            fileName: filename,
+            aboutMe: parsedData.aboutMe,
+            skills: parsedData.skills,
+            roleMatch: parsedData.roleMatch,
+            experience: parsedData.experience
+        }
+    });
+
+    const savedResume = await newResume.save();
+    return resumeToResumeData(savedResume);
+};
+
+const updateResume = async (ownerId: string, jobDescription: string, feedback?: string, score?: number, filename?: string): Promise<void> => {
+    try {
+        const resume = await getResumeByOwner(ownerId);
+        if (!resume) {
+            throw new Error(`Resume not found`);
+        }
+        const parsedData = resume.parsedData as ParsedResume; // Ensure parsedData is of type ParsedResume
+        if (jobDescription !== parsedData.jobDescription) {
+            resume.parsedData = {
+                ...parsedData,
+                jobDescription: jobDescription || parsedData.jobDescription,
+                feedback: feedback || parsedData.feedback || '',
+                score: score || parsedData.score || 0,
+                fileName: parsedData.fileName || filename || ''
+            };
+            resume.markModified('parsedData');
+            await resume.save();
+            
+        }
+    }
+    catch (error) {
+            console.error('Error updating resume:', error);
+            throw new Error(`Failed to update resume`);
+        }
+}
+
+const getResumeByOwner = async (ownerId: string, version?: number) => {
+    try {
+        let query: {owner: string, version?: number} = {
+            owner: ownerId,
+        };
+
+        // If version is specified, add it to the query
+        if (version !== undefined) {
+            query = { ...query, version };
+        }
+
+        const resume = await ResumeModel.findOne(query)
+            .sort(version === undefined ? { version: -1 } : {}) // Sort by version descending only if no specific version requested
+            .exec();
+
+        if (!resume) {
+            throw new Error(version !== undefined
+                ? `Resume version ${version} not found for user ${ownerId}`
+                : `No resume found for user ${ownerId}`);
+        }
+
+        return resume;
+    } catch (error) {
+        console.error('Error retrieving resume:', error);
+        throw error;
+    }
+};
+
+export { scoreResume, streamScoreResume,
+    getResumeTemplates, generateImprovedResume, parseResumeFields,
+    saveParsedResume, getResumeByOwner, updateResume, };
