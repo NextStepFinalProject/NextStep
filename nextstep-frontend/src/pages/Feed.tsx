@@ -79,6 +79,19 @@ const Feed: React.FC = () => {
     setPostIdToDelete(null);
   };
 
+  // useEffect(() => {
+  //     const fetchResumeData = async () => {
+  //       try {
+  //         const resumeData = await api.get('/resume');
+  //         const resume = await api.get(`/resource/resume/${resumeData.data.rawContentLink}`);
+  //         console.log("a");
+  //       } catch (err) {
+  //         console.error('Failed to fetch resume data:', err);
+  //       }
+  //     };
+  //     fetchResumeData();
+  //   }, []);
+
   const fetchProfileImage = async (imageFilename: string | null) => {
     try {
       if (!imageFilename) {
