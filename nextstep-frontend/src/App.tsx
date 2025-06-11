@@ -7,7 +7,6 @@ import './App.css';
 import Feed from './pages/Feed';
 import Footer from './components/Footer';
 import RequireAuth from './hoc/RequireAuth';
-import NewPost from './pages/NewPost';
 import PostDetails from './pages/PostDetails';
 import Chat from './pages/Chat';
 import Resume from './pages/Resume';
@@ -74,7 +73,6 @@ const App: React.FC = () => {
                         <Routes>
                           <Route path="/feed" element={<RequireAuth><Layout className="feed"><Feed /></Layout></RequireAuth>} />
                           <Route path="/profile" element={<RequireAuth><Layout className="profile"><Profile /></Layout></RequireAuth>} />
-                          <Route path="/new-post" element={<RequireAuth><Layout className="new-post"><NewPost /></Layout></RequireAuth>} />
                           <Route path="/post/:postId" element={<RequireAuth><Layout className="post-details"><PostDetails /></Layout></RequireAuth>} />
                           <Route path="/chat" element={<RequireAuth><Layout className="chat"><Chat /></Layout></RequireAuth>} />
                           <Route path="/resume" element={<RequireAuth><Layout className="resume"><Resume /></Layout></RequireAuth>} />
