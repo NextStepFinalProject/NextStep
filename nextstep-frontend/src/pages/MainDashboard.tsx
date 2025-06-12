@@ -289,7 +289,7 @@ const MainDashboard: React.FC = () => {
                 mb: 1,
               }}
             >
-              Welcome to NextStep
+              NextStep
             </Typography>
             <Typography variant="h6" color="text.secondary" sx={{ mb: 3 }}>
               Your personalized career development dashboard
@@ -351,6 +351,7 @@ const MainDashboard: React.FC = () => {
                       transform: "translateY(-4px)",
                       boxShadow: `0 12px 48px ${alpha(theme.palette.common.black, 0.15)}`,
                     },
+                    // flexDirection: "column",
                   }}
                 >
                   <CardContent sx={{ p: 4 }}>
@@ -447,83 +448,9 @@ const MainDashboard: React.FC = () => {
               </motion.div>
 
               {/* Role and Skills Row */}
-              <Grid container spacing={3}>
-                {/* Desired Role */}
-                <Grid item xs={12} md={6}>
-                  <motion.div
-                    initial={{ opacity: 0, x: -20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ duration: 0.6, delay: 0.2 }}
-                  >
-                    <Card
-                      sx={{
-                        height: "100%",
-                        background: `linear-gradient(145deg, ${alpha(theme.palette.background.paper, 0.9)}, ${alpha(theme.palette.background.paper, 0.7)})`,
-                        backdropFilter: "blur(20px)",
-                        border: `1px solid ${alpha(theme.palette.divider, 0.1)}`,
-                        boxShadow: `0 8px 32px ${alpha(theme.palette.common.black, 0.1)}`,
-                        transition: "all 0.3s ease",
-                        "&:hover": {
-                          transform: "translateY(-4px)",
-                          boxShadow: `0 12px 48px ${alpha(theme.palette.common.black, 0.15)}`,
-                        },
-                      }}
-                    >
-                      <CardContent sx={{ p: 3 }}>
-                        <Box sx={{ display: "flex", alignItems: "center", mb: 3 }}>
-                          <Avatar
-                            sx={{
-                              bgcolor: alpha(theme.palette.secondary.main, 0.1),
-                              color: theme.palette.secondary.main,
-                              mr: 2,
-                              width: 48,
-                              height: 48,
-                            }}
-                          >
-                            <WorkIcon />
-                          </Avatar>
-                          <Box>
-                            <Typography variant="h6" fontWeight={600}>
-                              Target Role
-                            </Typography>
-                            <Typography variant="body2" color="text.secondary">
-                              What's your dream job?
-                            </Typography>
-                          </Box>
-                        </Box>
-                        <Autocomplete
-                          freeSolo
-                          options={roles}
-                          value={selectedRole}
-                          onInputChange={(_, val) => setSelectedRole(val)}
-                          renderInput={(params) => (
-                            <TextField
-                              {...params}
-                              variant="outlined"
-                              placeholder="Select or type a role"
-                              sx={{
-                                "& .MuiOutlinedInput-root": {
-                                  borderRadius: 2,
-                                  backgroundColor: alpha(theme.palette.background.default, 0.5),
-                                  "&:hover": {
-                                    backgroundColor: alpha(theme.palette.background.default, 0.7),
-                                  },
-                                  "&.Mui-focused": {
-                                    backgroundColor: alpha(theme.palette.background.default, 0.8),
-                                    boxShadow: `0 0 0 2px ${alpha(theme.palette.secondary.main, 0.2)}`,
-                                  },
-                                },
-                              }}
-                            />
-                          )}
-                        />
-                      </CardContent>
-                    </Card>
-                  </motion.div>
-                </Grid>
-
+              <Grid container >
                 {/* Skills */}
-                <Grid item xs={12} md={6}>
+                <Grid item xs={12} md={6} paddingRight={2}>
                   <motion.div
                     initial={{ opacity: 0, x: 20 }}
                     animate={{ opacity: 1, x: 0 }}
@@ -639,14 +566,88 @@ const MainDashboard: React.FC = () => {
                     </Card>
                   </motion.div>
                 </Grid>
+
+                {/* Desired Role */}
+                <Grid item xs={12} md={6}>
+                  <motion.div
+                    initial={{ opacity: 0, x: -20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ duration: 0.6, delay: 0.2 }}
+                  >
+                    <Card
+                      sx={{
+                        height: "100%",
+                        background: `linear-gradient(145deg, ${alpha(theme.palette.background.paper, 0.9)}, ${alpha(theme.palette.background.paper, 0.7)})`,
+                        backdropFilter: "blur(20px)",
+                        border: `1px solid ${alpha(theme.palette.divider, 0.1)}`,
+                        boxShadow: `0 8px 32px ${alpha(theme.palette.common.black, 0.1)}`,
+                        transition: "all 0.3s ease",
+                        "&:hover": {
+                          transform: "translateY(-4px)",
+                          boxShadow: `0 12px 48px ${alpha(theme.palette.common.black, 0.15)}`,
+                        },
+                      }}
+                    >
+                      <CardContent sx={{ p: 3  }}>
+                        <Box sx={{ display: "flex", alignItems: "center", mb: 3 }}>
+                          <Avatar
+                            sx={{
+                              bgcolor: alpha(theme.palette.secondary.main, 0.1),
+                              color: theme.palette.secondary.main,
+                              mr: 2,
+                              width: 48,
+                              height: 48,
+                            }}
+                          >
+                            <WorkIcon />
+                          </Avatar>
+                          <Box>
+                            <Typography variant="h6" fontWeight={600}>
+                              Target Role
+                            </Typography>
+                            <Typography variant="body2" color="text.secondary">
+                              What's your dream job?
+                            </Typography>
+                          </Box>
+                        </Box>
+                        <Autocomplete
+                          freeSolo
+                          options={roles}
+                          value={selectedRole}
+                          onInputChange={(_, val) => setSelectedRole(val)}
+                          renderInput={(params) => (
+                            <TextField
+                              {...params}
+                              variant="outlined"
+                              placeholder="Select or type a role"
+                              sx={{
+                                "& .MuiOutlinedInput-root": {
+                                  borderRadius: 2,
+                                  backgroundColor: alpha(theme.palette.background.default, 0.5),
+                                  "&:hover": {
+                                    backgroundColor: alpha(theme.palette.background.default, 0.7),
+                                  },
+                                  "&.Mui-focused": {
+                                    backgroundColor: alpha(theme.palette.background.default, 0.8),
+                                    boxShadow: `0 0 0 2px ${alpha(theme.palette.secondary.main, 0.2)}`,
+                                  },
+                                },
+                              }}
+                            />
+                          )}
+                        />
+                      </CardContent>
+                    </Card>
+                  </motion.div>
+                </Grid>
               </Grid>
 
               {/* AI Insights Row */}
               {(roleMatch || resumeExperience.length > 0) && (
-                <Grid container spacing={3}>
+                <Grid container>
                   {/* Suggested Role Match */}
                   {roleMatch && (
-                    <Grid item xs={12} md={6}>
+                    <Grid item xs={12} md={6} paddingRight={2}>
                       <motion.div
                         initial={{ opacity: 0, y: 20 }}
                         animate={{ opacity: 1, y: 0 }}

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Box, Typography, Button, Grid, CircularProgress, IconButton, TextField, MenuItem, Select, FormControl, InputLabel, Dialog, DialogTitle, DialogContent, DialogActions, Chip, Stack } from '@mui/material';
+import { Box, Typography, Button, Grid, CircularProgress, IconButton, TextField, MenuItem, Select, FormControl, InputLabel, Dialog, DialogTitle, DialogContent, DialogActions, Chip, Stack, CardContent, Card, useTheme } from '@mui/material';
 import { ExpandLess, LinkedIn, Settings } from '@mui/icons-material';
 
 interface Job {
@@ -46,6 +46,7 @@ const LinkedinJobs: React.FC<LinkedinJobsProps> = ({
     experienceLevel: 'all',
     skills: skills.slice(0, 3), // Limit to first 3 skills
   });
+  const theme = useTheme()
 
   const [selectedJob, setSelectedJob] = useState<Job | null>(null);
   const [jobDetails, setJobDetails] = useState<any>(null);
@@ -75,7 +76,20 @@ const LinkedinJobs: React.FC<LinkedinJobsProps> = ({
   };
 
   return (
-    <Box sx={{ bgcolor: 'background.paper', p: 3, borderRadius: 2, boxShadow: 1, mt: 4 }}>
+    <Card
+  sx={{
+    background: `linear-gradient(145deg, ${theme.palette.background.paper}E6, ${theme.palette.background.paper}BD)`,
+    backdropFilter: 'blur(20px)',
+    border: `1px solid ${theme.palette.divider}`,
+    boxShadow: `0 8px 32px ${theme.palette.mode === 'light' ? '#00000011' : '#00000033'}`,
+    transition: 'all 0.3s ease',
+    "&:hover": {
+      transform: "translateY(-4px)",
+      boxShadow: `0 12px 48px ${theme.palette.mode === 'light' ? '#00000022' : '#00000044'}`,
+    },
+  }}
+>
+  <CardContent sx={{ p: 3 }}>
       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
         <Box sx={{ display: 'flex', alignItems: 'center', flex: 1 }}>
           <LinkedIn sx={{ color: '#0077b5' }} />
@@ -309,7 +323,8 @@ const LinkedinJobs: React.FC<LinkedinJobsProps> = ({
           </Dialog>
         </>
       )}
-    </Box>
+      </CardContent>
+      </Card>
   );
 };
 
