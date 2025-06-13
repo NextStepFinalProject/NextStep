@@ -277,10 +277,14 @@ const MainDashboard: React.FC = () => {
               variant="h3"
               sx={{
                 fontWeight: 800,
-                background: `linear-gradient(135deg, ${theme.palette.primary.main}, ${theme.palette.secondary.main})`,
+                display: "inline",
+                background: theme.palette.mode === "dark"
+                  ? "linear-gradient(45deg, #60a5fa 30%, #34d399 90%)"
+                  : "linear-gradient(45deg, #3b82f6 30%, #10b981 90%)",
                 backgroundClip: "text",
                 WebkitBackgroundClip: "text",
                 color: "transparent",
+                WebkitTextFillColor: "transparent",
                 mb: 1,
               }}
             >
