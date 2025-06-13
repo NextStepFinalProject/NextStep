@@ -30,7 +30,6 @@ import {
   Person as PersonIcon,
   Work as WorkIcon,
   Build as BuildIcon,
-  DocumentScannerTwoTone,
   LightbulbSharp,
   Grading,
   Add as AddIcon,
@@ -38,11 +37,7 @@ import {
   Star,
   Code,
   Business,
-  UploadFileRounded,
-  UploadRounded,
-  CheckCircleOutline,
   CheckCircle,
-  ArticleOutlined,
   InsertDriveFile,
 } from "@mui/icons-material"
 import { connectToGitHub, initiateGitHubOAuth, fetchRepoLanguages, handleGitHubOAuth } from "../handlers/githubAuth"
