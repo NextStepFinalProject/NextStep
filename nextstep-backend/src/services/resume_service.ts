@@ -16,6 +16,21 @@ export interface ParsedResume {
     education?: string[];
 }
 
+interface ResumeSection {
+    name: string;
+    content: string;
+    formatting: {
+        style: string;
+        fontSize: string;
+        isBold: boolean;
+        isItalic: boolean;
+    };
+}
+
+interface ResumeContent {
+    sections: ResumeSection[];
+}
+
 const SYSTEM_TEMPLATE = `You are a very experienced ATS (Application Tracking System) bot with a deep understanding named Bob the Resume builder.
 You will review resumes with or without job descriptions.
 You are an expert in resume evaluation and provide constructive feedback with dynamic evaluation.
@@ -26,12 +41,29 @@ You should also provide an improvement table, taking into account:
 - Soft skills (High priority)
 - Overall presentation (Low priority)`;
 
-const feedbackTemplate = (resumeText: string, jdText: string) => `
+// Utility function to encode text for JSON
+const encodeTextForJson = (text: string): string => {
+    return text
+        .replace(/\\/g, '\\\\')  // Escape backslashes first
+        .replace(/'/g, "\\'")    // Escape single quotes
+        .replace(/"/g, '\\"')    // Escape double quotes
+        .replace(/\n/g, '\\n')   // Escape newlines
+        .replace(/\r/g, '\\r')   // Escape carriage returns
+        .replace(/\t/g, '\\t');  // Escape tabs
+};
+
+const feedbackTemplate = (resumeText: string, jdText: string) => {
+    // Encode quotes in both resume text and job description
+    const encodedResumeText = encodeTextForJson(resumeText);
+    const encodedJdText = encodeTextForJson(jdText);
+
+    // Create the template with encoded text
+    const template = `
 Resume Feedback Report
 Here is the resume you provided:
-${resumeText}
+${encodedResumeText}
 And the job description:
-${jdText}
+${encodedJdText}
 
 Create the Improvement Table in relevance to the resume and give the consideration and suggestion for each section strictly following 
 the pattern as below and don't just out this guided pattern :
@@ -55,6 +87,9 @@ Provide actionable suggestions for improvement, including specific keywords to i
 Based on your analysis, provide a numerical score between 0-100 that represents the overall quality and match of the resume.
 The score should be provided at the end of your response in the format: "SCORE: X" where X is the numerical score.
 `;
+
+    return encodeTextForJson(template);
+};
 
 const FEEDBACK_ERROR_MESSAGE = 'The Chat AI feature is turned off. Could not score your resume.';
 
@@ -107,7 +142,12 @@ const scoreResume = async (resumePath: string, jobDescription?: string): Promise
         if (resumeText.trim() == '') {
             throw new TypeError('Could not parse the resume file');
         }
-        const prompt = feedbackTemplate(resumeText, jobDescription || 'No job description provided.');
+
+        // Escape quotes in resume text and job description
+        const escapedResumeText = resumeText.replace(/'/g, "\\'").replace(/"/g, '\\"');
+        const escapedJobDescription = (jobDescription || 'No job description provided.').replace(/'/g, "\\'").replace(/"/g, '\\"');
+        
+        const prompt = feedbackTemplate(escapedResumeText, escapedJobDescription);
 
         let feedback = FEEDBACK_ERROR_MESSAGE;
         if (config.chatAi.turned_on()) {
@@ -140,7 +180,12 @@ const streamScoreResume = async (
         if (resumeText.trim() == '') {
             throw new TypeError('Could not parse the resume file');
         }
-        const prompt = feedbackTemplate(resumeText, jobDescription || 'No job description provided.');
+
+        // Escape quotes in resume text and job description
+        const escapedResumeText = resumeText.replace(/'/g, "\\'").replace(/"/g, '\\"');
+        const escapedJobDescription = (jobDescription || 'No job description provided.').replace(/'/g, "\\'").replace(/"/g, '\\"');
+        
+        const prompt = feedbackTemplate(escapedResumeText, escapedJobDescription);
         
         let fullResponse = '';
         let finalScore = 0;
@@ -223,169 +268,127 @@ function splitString(str: string, parts: number): string[] {
 
 const generateImprovedResume = async (
     feedback: string,
-    jobDescription: string,
-    templateName: string
+    jobDescription: string
 ): Promise<{ content: string; type: string }> => {
     try {
         const templatesDir = config.assets.resumeTemplatesDirectoryPath();
-        const templatePath = path.join(templatesDir, templateName);
-        
-        if (!fs.existsSync(templatePath)) {
-            throw new Error(`Template ${templateName} not found`);
+        if (!fs.existsSync(templatesDir)) {
+            throw new Error('Resume templates directory not found');
         }
 
-        // Only handle DOCX files for now
-        if (!templateName.toLowerCase().endsWith('.docx')) {
-            throw new Error('Only DOCX templates are currently supported');
+        // Get all DOCX templates
+        let templateFiles = fs.readdirSync(templatesDir)
+            .filter(file => file.toLowerCase().endsWith('.docx'));
+
+        if (templateFiles.length === 0) {
+            throw new Error('No DOCX templates found in the templates directory');
         }
 
-        // Read and unzip the DOCX template
-        const zip = new AdmZip(templatePath);
-        const documentXml = zip.getEntry('word/document.xml');
-        if (!documentXml) {
-            throw new Error('Could not find document.xml in the template');
-        }
+        // Encode the feedback and job description
+        const encodedFeedback = encodeTextForJson(feedback);
+        const encodedJobDescription = encodeTextForJson(jobDescription);
 
-        // Parse the XML content
-        const parser = new DOMParser();
-        const xmlDoc = parser.parseFromString(documentXml.getData().toString(), 'text/xml');
+        // Process each template one by one
+        let bestTemplate = null;
+        let bestScore = 0;
 
-        // Extract the content structure with full XML context
-        const paragraphs = xmlDoc.getElementsByTagName('w:p');
-        const contentStructure = [];
-        
-        for (let i = 0; i < paragraphs.length; i++) {
-            const paragraph = paragraphs[i];
-            const runs = paragraph.getElementsByTagName('w:r');
-            const paragraphContent = [];
+        templateFiles = [templateFiles[0]]
+        for (const templateFile of templateFiles) {
+            const templatePath = path.join(templatesDir, templateFile);
+            const content = fs.readFileSync(templatePath);
+            const base64Content = content.toString('base64');
+
+            // Prepare the prompt for AI to analyze this template
+            const prompt = `Create an improved resume based on this feedback and template. Return ONLY a JSON object with this exact structure:
+{
+  "docx": "base64_encoded_docx_content",
+  "score": number // 0-100 score
+}
+
+Feedback: ${encodedFeedback}
+Job Description: ${encodedJobDescription}
+Template: ${templateFile}
+
+Formatting Requirements:
+1. Professional fonts and sizes
+2. Clear section headers
+3. Proper spacing and margins
+4. Bullet points for achievements
+5. Consistent styling throughout
+6. Include: Summary, Experience, Education, Skills sections
+7. Focus on achievements and metrics
+8. Optimize for the job description
+
+IMPORTANT: 
+- Keep the response under 14900 characters total
+- The base64 content must not be truncated.
+- Return ONLY the JSON object, no other text`;
+
+            // Get the new resume content from AI
+            const aiResponse = await chatWithAI(SYSTEM_TEMPLATE, [prompt]);
             
-            // Get paragraph properties
-            const pPr = paragraph.getElementsByTagName('w:pPr')[0];
-            const paragraphStyle = pPr ? pPr.toString().replace(/"/g, '\\"') : '';
-            
-            for (let j = 0; j < runs.length; j++) {
-                const run = runs[j];
-                const text = run.getElementsByTagName('w:t')[0];
-                if (text) {
-                    // Get run properties
-                    const rPr = run.getElementsByTagName('w:rPr')[0];
-                    const runStyle = rPr ? rPr.toString().replace(/"/g, '\\"') : '';
+            try {
+                // First check if the response starts with an error message
+                if (aiResponse.trim().startsWith('Sorry') || aiResponse.trim().startsWith('Error')) {
+                    console.warn(`Skipping template ${templateFile} due to AI service error: ${aiResponse.trim()}`);
+                    continue;
+                }
+
+                // Try to find JSON content within the response
+                const jsonMatch = aiResponse.match(/\{[\s\S]*\}/);
+                if (!jsonMatch) {
+                    console.warn(`Skipping template ${templateFile} due to invalid JSON response`);
+                    continue;
+                }
+
+                let response;
+                try {
+                    // First try parsing the exact JSON match
+                    response = JSON.parse(jsonMatch[0]);
+                } catch (parseError) {
+                    // If that fails, try cleaning the response more thoroughly
+                    const cleanedResponse = jsonMatch[0]
+                        .replace(/^```json\s*/, '')
+                        .replace(/```\s*$/, '')
+                        .replace(/\n/g, ' ')
+                        .replace(/\r/g, '')
+                        .replace(/\t/g, ' ')
+                        .replace(/\s+/g, ' ')
+                        .replace(/([{,]\s*)([a-zA-Z0-9_]+)(\s*:)/g, '$1"$2"$3') // Ensure property names are quoted
+                        .replace(/(:\s*)([^",\{\}\[\]\s][^",\{\}\[\]]*?)(\s*[,\}])/g, '$1"$2"$3'); // Ensure string values are quoted
                     
-                    paragraphContent.push({
-                        text: text.textContent,
-                        style: runStyle
-                    });
+                    try {
+                        response = JSON.parse(cleanedResponse);
+                    } catch (secondParseError) {
+                        console.warn(`Failed to parse JSON response for template ${templateFile}:`, secondParseError);
+                        console.warn('Original response:', jsonMatch[0]);
+                        console.warn('Cleaned response:', cleanedResponse);
+                        continue;
+                    }
                 }
-            }
-            
-            if (paragraphContent.length > 0) {
-                contentStructure.push({
-                    type: 'paragraph',
-                    content: paragraphContent,
-                    style: paragraphStyle
-                });
+                
+                if (!response.docx || typeof response.docx !== 'string' || typeof response.score !== 'number') {
+                    console.warn(`Skipping template ${templateFile} due to invalid response format`);
+                    continue;
+                }
+
+                // Update best template if this one has a higher score
+                if (response.score > bestScore) {
+                    bestScore = response.score;
+                    bestTemplate = response.docx;
+                }
+            } catch (error: any) {
+                console.warn(`Error processing template ${templateFile}:`, error);
+                continue;
             }
         }
 
-        // Convert structure to readable text for AI while preserving context
-        const readableContent = contentStructure.map((para, index) => {
-            const content = para.content.map(run => run.text).join('');
-            return `[Paragraph ${index + 1}]
-Content: ${content}`;
-        }).join('\n\n');
-
-        // Prepare the prompt for AI to modify the content
-        const prompt = `You are a resume expert. Please modify the following resume content based on the feedback and job description.
-        
-Current Resume Content:
-${readableContent}
-
-Feedback:
-${feedback}
-
-Job Description:
-${jobDescription}
-
-IMPORTANT: You must return your response in the following EXACT JSON format. Do not include any other text or explanation:
-
-[
-  {
-    "paragraphIndex": 0,
-    "text": "First paragraph content here"
-  }
-]
-
-Rules:
-1. Return ONLY the JSON array, nothing else
-2. Each paragraph must maintain its original structure
-3. The text content should be updated based on the feedback while preserving formatting
-4. Maintain the same number of paragraphs as the original
-5. Do not include any markdown, formatting, or additional text`;
-
-        // Get the modified content from AI
-        const modifiedContent = await chatWithAI(SYSTEM_TEMPLATE, [prompt]);
-        console.log('AI Response:', modifiedContent); // Debug log
-        
-        let modifiedParagraphs;
-        try {
-            // Clean the response to ensure it's valid JSON
-            const cleanedResponse = modifiedContent.trim()
-                .replace(/^```json\s*/, '')
-                .replace(/```\s*$/, '')
-                .replace(/^\[/, '[')
-                .replace(/\]$/, ']')
-                .replace(/\n/g, ' ') // Remove newlines that might break JSON
-                .replace(/\r/g, '')  // Remove carriage returns
-                .replace(/\t/g, ' ') // Replace tabs with spaces
-                .replace(/\s+/g, ' '); // Normalize whitespace
-            
-            modifiedParagraphs = JSON.parse(cleanedResponse);
-            
-            // Validate the structure
-            if (!Array.isArray(modifiedParagraphs)) {
-                throw new Error('Response is not an array');
-            }
-            
-            for (const para of modifiedParagraphs) {
-                if (!para.text || typeof para.text !== 'string') {
-                    throw new Error('Invalid paragraph structure: missing or invalid text property');
-                }
-            }
-            
-        } catch (error: any) {
-            console.error('Error parsing AI response:', error);
-            console.error('Raw AI response:', modifiedContent);
-            throw new Error(`Failed to parse AI response: ${error.message}`);
+        if (!bestTemplate) {
+            throw new Error('Failed to generate an improved resume from any template');
         }
-
-        // Update the document with modified content while preserving structure
-        for (let i = 0; i < paragraphs.length && i < modifiedParagraphs.length; i++) {
-            const paragraph = paragraphs[i];
-            const modifiedParagraph = modifiedParagraphs[i];
-            const runs = paragraph.getElementsByTagName('w:r');
-            
-            // Update the first run's text content while preserving its style
-            if (runs.length > 0) {
-                const firstRun = runs[0];
-                const text = firstRun.getElementsByTagName('w:t')[0];
-                if (text) {
-                    text.textContent = modifiedParagraph.text;
-                }
-            }
-        }
-
-        // Serialize the modified XML
-        const serializer = new XMLSerializer();
-        const modifiedXml = serializer.serializeToString(xmlDoc);
-
-        // Update the document.xml in the zip
-        zip.updateFile('word/document.xml', Buffer.from(modifiedXml));
-
-        // Get the modified DOCX as a buffer
-        const modifiedDocxBuffer = zip.toBuffer();
 
         return {
-            content: modifiedDocxBuffer.toString('base64'),
+            content: bestTemplate,
             type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
         };
     } catch (error: any) {

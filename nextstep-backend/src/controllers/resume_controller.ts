@@ -80,13 +80,13 @@ const getTemplates = async (req: Request, res: Response) => {
 
 const generateResume = async (req: Request, res: Response) => {
     try {
-        const { feedback, jobDescription, templateName } = req.body;
+        const { feedback, jobDescription } = req.body;
         
-        if (!feedback || !jobDescription || !templateName) {
+        if (!feedback || !jobDescription) {
             return res.status(400).json({ error: 'Missing required fields' });
         }
 
-        const result = await generateImprovedResume(feedback, jobDescription, templateName);
+        const result = await generateImprovedResume(feedback, jobDescription);
         return res.status(200).json(result);
     } catch (error) {
         handleError(error, res);

@@ -1025,7 +1025,8 @@ paths:
     post:
       tags:
         - Resume
-      summary: Generate an improved resume based on a resume template, feedback and job description
+      summary: Generate an improved resume based on feedback and job description
+      description: Analyzes all available resume templates to create a new improved resume that incorporates best practices and addresses the feedback points.
       security:
         - BearerAuth: []
       requestBody:
@@ -1037,7 +1038,6 @@ paths:
               required:
                 - feedback
                 - jobDescription
-                - templateName
               properties:
                 feedback:
                   type: string
@@ -1045,9 +1045,6 @@ paths:
                 jobDescription:
                   type: string
                   description: The job description used for scoring the resume
-                templateName:
-                  type: string
-                  description: The name of the template to use for generating the improved resume
       responses:
         '200':
           description: The generated improved resume
@@ -1063,7 +1060,6 @@ paths:
                     type: string
                     description: MIME type of the generated resume file
                     enum:
-                      - application/msword
                       - application/vnd.openxmlformats-officedocument.wordprocessingml.document
         '400':
           description: Bad request - Missing required fields
@@ -1077,16 +1073,6 @@ paths:
                     description: Error message indicating missing fields
         '401':
           description: Unauthorized - Missing or invalid authentication token
-        '404':
-          description: Template not found
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  error:
-                    type: string
-                    description: Error message indicating template not found
         '500':
           description: Internal server error
 
