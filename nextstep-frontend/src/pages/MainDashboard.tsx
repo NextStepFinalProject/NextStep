@@ -39,11 +39,13 @@ import {
   Business,
   CheckCircle,
   InsertDriveFile,
+  Delete,
 } from "@mui/icons-material"
 import { connectToGitHub, initiateGitHubOAuth, fetchRepoLanguages, handleGitHubOAuth } from "../handlers/githubAuth"
 import api from "../serverApi"
 import LinkedinJobs from "../components/LinkedinJobs"
 import { motion } from "framer-motion"
+import { getUserAuth } from "../handlers/userAuth"
 
 const roles = [
   "Software Engineer",
@@ -72,7 +74,7 @@ const skillsList = [
 ]
 
 const MainDashboard: React.FC = () => {
-  const theme = useTheme()
+  const theme = useTheme();
   const [aboutMe, setAboutMe] = useState(() => localStorage.getItem("aboutMe") || "")
   const [skills, setSkills] = useState<string[]>(() => JSON.parse(localStorage.getItem("skills") || "[]"))
   const [newSkill, setNewSkill] = useState("")
@@ -87,6 +89,9 @@ const MainDashboard: React.FC = () => {
   const [roleMatch, setRoleMatch] = useState<string>("")
   const [resumeFileName, setResumeFileName] = useState<string>("")
 
+  // Profile image state
+  const [image, setImage] = useState<string | null>(null)
+  
   // Skills toggle
   const [showAllSkills, setShowAllSkills] = useState(false)
   const SKILL_DISPLAY_LIMIT = 4
@@ -186,6 +191,22 @@ const MainDashboard: React.FC = () => {
     }
   }
 
+   useEffect(() => {
+      const fetchProfileImage = async () => {
+        try {
+          const response = await api.get(`/resource/image/${getUserAuth().imageFilename}`, {
+            responseType: 'blob',
+          });
+          const imageUrl = URL.createObjectURL(response.data as Blob);
+          setImage(imageUrl);
+        } catch (error) {
+          console.log('Error fetching profile image.');
+          setImage(null);
+        }
+      };
+     getUserAuth().imageFilename && fetchProfileImage();
+    }, []);
+
   // Upload & parse resume
   const handleResumeUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
 
@@ -266,6 +287,10 @@ const MainDashboard: React.FC = () => {
   }
 
   const profileCompletion = calculateProfileCompletion()
+
+  const handleRemoveAllSkills = () => {
+    setSkills([]);
+  };
 
   return (
     <Box sx={{ minHeight: "100vh", py: 4 }}>
@@ -357,7 +382,7 @@ const MainDashboard: React.FC = () => {
                     {/* Upload Section */}
                     <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 3 }}>
                       <Box sx={{ display: "flex", alignItems: "center" }}>
-                        <Avatar
+                        { !image ? <Avatar
                           sx={{
                             bgcolor: alpha(theme.palette.primary.main, 0.1),
                             color: theme.palette.primary.main,
@@ -367,7 +392,10 @@ const MainDashboard: React.FC = () => {
                           }}
                         >
                           <PersonIcon sx={{ fontSize: 28 }} />
-                        </Avatar>
+                        </Avatar> : 
+                        <Avatar src={image} alt="Profile" style={{ width: 56, height: 56, marginTop: '16px', objectFit: 'cover', margin:7 }} />
+
+                        }
                         <Box>
                           <Typography variant="h5" fontWeight={700} sx={{ mb: 0.5 }}>
                             About Me
@@ -463,6 +491,7 @@ const MainDashboard: React.FC = () => {
                         border: `1px solid ${alpha(theme.palette.divider, 0.1)}`,
                         boxShadow: `0 8px 32px ${alpha(theme.palette.common.black, 0.1)}`,
                         transition: "all 0.3s ease",
+                        position: 'relative', // Add position relative
                         "&:hover": {
                           transform: "translateY(-4px)",
                           boxShadow: `0 12px 48px ${alpha(theme.palette.common.black, 0.15)}`,
@@ -491,7 +520,11 @@ const MainDashboard: React.FC = () => {
                             </Typography>
                           </Box>
                         </Box>
-
+                        <Tooltip title="Remove all skills" arrow>
+                          <Button size="small" onClick={handleRemoveAllSkills} sx={{ mb: 2, position: 'absolute', top: 8, right: 8 }}>
+                            <Delete/>
+                          </Button>
+                        </Tooltip>
                         <Stack direction="row" spacing={1} sx={{ flexWrap: "wrap", mb: 2, gap: 1 }}>
                           {(showAllSkills ? skills : skills.slice(0, SKILL_DISPLAY_LIMIT)).map((skill, index) => (
                             <Chip

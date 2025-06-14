@@ -149,11 +149,6 @@ const Feed: React.FC = () => {
     setSavedPosts((prev) => (prev.includes(postId) ? prev.filter((id) => id !== postId) : [...prev, postId]))
   }
 
-  const formatContent = (content: string) => {
-    // Strip HTML tags for preview
-    const strippedContent = content.replace(/<[^>]*>?/gm, "")
-    return strippedContent.length > 150 ? strippedContent.substring(0, 150) + "..." : strippedContent
-  }
 
   const formatDate = (dateString: string) => {
     if (!dateString) return ""

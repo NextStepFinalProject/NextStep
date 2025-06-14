@@ -45,10 +45,7 @@ const NewPostModal: React.FC<NewPostModalProps> = ({ open, onClose, onPostCreate
   const [content, setContent] = useState<string>("")
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [resumeData, setResumeData] = useState<any>(null)
   const [resumeFile, setResumeFile] = useState<File | null>(null)
-  const [isLoadingResume, setIsLoadingResume] = useState(false)
-  const fileInputRef = useRef<HTMLInputElement>(null)
   const editorRef = useRef<any>(null)
   const auth = getUserAuth();
   const [mountedEditor, setMountedEditor] = useState(false)
@@ -148,7 +145,6 @@ const NewPostModal: React.FC<NewPostModalProps> = ({ open, onClose, onPostCreate
       setTitle("")
       setContent("<p> I wanted to share.... </p>")
       setError(null)
-      setResumeData(null)
       setResumeFile(null)
     }
   }, [open, withResume])
@@ -174,7 +170,6 @@ const NewPostModal: React.FC<NewPostModalProps> = ({ open, onClose, onPostCreate
 
   const fetchResumeData = async () => {
     try {
-      setIsLoadingResume(true)
       const resumeResponse = await api.get("/resume")
 
       if (resumeResponse.data && resumeResponse.data.rawContentLink) {
@@ -187,7 +182,6 @@ const NewPostModal: React.FC<NewPostModalProps> = ({ open, onClose, onPostCreate
           type: "application/pdf",
         })
 
-        setResumeData(resumeResponse.data)
         setResumeFile(resumeFileObj)
       } else {
         setError("No resume found. Please upload a resume first.")
@@ -195,46 +189,6 @@ const NewPostModal: React.FC<NewPostModalProps> = ({ open, onClose, onPostCreate
     } catch (err) {
       console.error("Failed to fetch resume data:", err)
       setError("Failed to load resume. Please try again later.")
-    } finally {
-      setIsLoadingResume(false)
-    }
-  }
-
-  const handleFroalaImageUpload = async (file: File) => {
-    try {
-      const formData = new FormData()
-      formData.append("file", file)
-
-      const response = await api.post("/resource/image", formData, {
-        headers: {
-          "Content-Type": "multipart/form-data",
-          Authorization: `Bearer ${auth.accessToken}`,
-        },
-      })
-
-      return JSON.stringify({ link: response.data.url })
-    } catch (error) {
-      console.error("Error uploading image:", error)
-      throw error
-    }
-  }
-
-  const handleFroalaFileUpload = async (file: File) => {
-    try {
-      const formData = new FormData()
-      formData.append("file", file)
-
-      const response = await api.post("/resource/file", formData, {
-        headers: {
-          "Content-Type": "multipart/form-data",
-          Authorization: `Bearer ${auth.accessToken}`,
-        },
-      })
-
-      return JSON.stringify({ link: response.data.url, name: file.name })
-    } catch (error) {
-      console.error("Error uploading file:", error)
-      throw error
     }
   }
 
