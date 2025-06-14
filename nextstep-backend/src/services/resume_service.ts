@@ -260,12 +260,6 @@ const getResumeTemplates = async (): Promise<{ name: string; content: string; ty
     }
 };
 
-// Helper to split a string into N parts
-function splitString(str: string, parts: number): string[] {
-    const len = Math.ceil(str.length / parts);
-    return Array.from({ length: parts }, (_, i) => str.slice(i * len, (i + 1) * len));
-}
-
 const generateImprovedResume = async (
     feedback: string,
     jobDescription: string
@@ -284,10 +278,6 @@ const generateImprovedResume = async (
             throw new Error('No DOCX templates found in the templates directory');
         }
 
-        // Encode the feedback and job description
-        const encodedFeedback = encodeTextForJson(feedback);
-        const encodedJobDescription = encodeTextForJson(jobDescription);
-
         // Process each template one by one
         let bestTemplate = null;
         let bestScore = 0;
@@ -295,19 +285,21 @@ const generateImprovedResume = async (
         templateFiles = [templateFiles[0]]
         for (const templateFile of templateFiles) {
             const templatePath = path.join(templatesDir, templateFile);
-            const content = fs.readFileSync(templatePath);
-            const base64Content = content.toString('base64');
-
+            
+            // Read and extract DOCX content
+            const zip = new AdmZip(templatePath);
+            const documentXml = zip.readAsText('word/document.xml');
+            
             // Prepare the prompt for AI to analyze this template
-            const prompt = `Create an improved resume based on this feedback and template. Return ONLY a JSON object with this exact structure:
+            const prompt = `Create an improved resume based on this feedback and template. Implement the feedback improvements into the docx word document template. Return ONLY a JSON object with this exact structure:
 {
-  "docx": "base64_encoded_docx_content",
+  "docx": "modified_docx_xml_content",
   "score": number // 0-100 score
 }
 
-Feedback: ${encodedFeedback}
-Job Description: ${encodedJobDescription}
-Template: ${templateFile}
+Feedback: ${feedback}
+Job Description: ${jobDescription}
+Template XML: ${documentXml}
 
 Formatting Requirements:
 1. Professional fonts and sizes
@@ -321,8 +313,9 @@ Formatting Requirements:
 
 IMPORTANT: 
 - Keep the response under 14900 characters total
-- The base64 content must not be truncated.
-- Return ONLY the JSON object, no other text`;
+- Return ONLY the JSON object, no other text
+- Modify the XML content to implement the improvements
+- Maintain valid XML structure`;
 
             // Get the new resume content from AI
             const aiResponse = await chatWithAI(SYSTEM_TEMPLATE, [prompt]);
@@ -343,28 +336,11 @@ IMPORTANT:
 
                 let response;
                 try {
-                    // First try parsing the exact JSON match
                     response = JSON.parse(jsonMatch[0]);
-                } catch (parseError) {
-                    // If that fails, try cleaning the response more thoroughly
-                    const cleanedResponse = jsonMatch[0]
-                        .replace(/^```json\s*/, '')
-                        .replace(/```\s*$/, '')
-                        .replace(/\n/g, ' ')
-                        .replace(/\r/g, '')
-                        .replace(/\t/g, ' ')
-                        .replace(/\s+/g, ' ')
-                        .replace(/([{,]\s*)([a-zA-Z0-9_]+)(\s*:)/g, '$1"$2"$3') // Ensure property names are quoted
-                        .replace(/(:\s*)([^",\{\}\[\]\s][^",\{\}\[\]]*?)(\s*[,\}])/g, '$1"$2"$3'); // Ensure string values are quoted
-                    
-                    try {
-                        response = JSON.parse(cleanedResponse);
-                    } catch (secondParseError) {
-                        console.warn(`Failed to parse JSON response for template ${templateFile}:`, secondParseError);
-                        console.warn('Original response:', jsonMatch[0]);
-                        console.warn('Cleaned response:', cleanedResponse);
-                        continue;
-                    }
+                } catch (error) {
+                    console.warn(`Failed to parse JSON response for template ${templateFile}:`, error);
+                    console.warn('Response:', response);
+                    continue;
                 }
                 
                 if (!response.docx || typeof response.docx !== 'string' || typeof response.score !== 'number') {
@@ -372,10 +348,17 @@ IMPORTANT:
                     continue;
                 }
 
+                // Create a new DOCX with the modified XML
+                const newZip = new AdmZip(templatePath);
+                newZip.updateFile('word/document.xml', Buffer.from(response.docx, 'utf8'));
+                
+                // Get the modified DOCX content
+                const modifiedDocx = newZip.toBuffer();
+
                 // Update best template if this one has a higher score
                 if (response.score > bestScore) {
                     bestScore = response.score;
-                    bestTemplate = response.docx;
+                    bestTemplate = modifiedDocx.toString('base64');
                 }
             } catch (error: any) {
                 console.warn(`Error processing template ${templateFile}:`, error);
