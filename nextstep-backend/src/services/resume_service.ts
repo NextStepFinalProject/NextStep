@@ -260,9 +260,10 @@ const getResumeTemplates = async (): Promise<{ name: string; content: string; ty
     }
 };
 
-const generateImprovedResume = async (
+const streamGenerateImprovedResume = async (
     feedback: string,
-    jobDescription: string
+    jobDescription: string,
+    onChunk?: (chunk: string) => void
 ): Promise<{ content: string; type: string }> => {
     try {
         const templatesDir = config.assets.resumeTemplatesDirectoryPath();
@@ -315,34 +316,43 @@ IMPORTANT:
 - Return ONLY the JSON object, no other text
 - Modify the XML content to implement the improvements
 - Maintain valid XML structure
-- DO NOT enocde anything in base64. Use textual content only.`;
+- DO NOT encode anything in base64. Use textual content only.`;
 
-            // Get the new resume content from AI
-            const aiResponse = await chatWithAI(SYSTEM_TEMPLATE, [prompt]);
-            
+            // Get the new resume content from AI using streaming
+            let fullResponse = '';
+            let response: any = null;
+
+            if (config.chatAi.turned_on()) {
+                await streamChatWithAI(
+                    SYSTEM_TEMPLATE,
+                    [prompt],
+                    (chunk) => {
+                        fullResponse += chunk;
+                        if (onChunk) {
+                            onChunk(chunk);
+                        }
+                        
+                        // Try to parse the accumulated response
+                        try {
+                            const jsonMatch = fullResponse.match(/\{[\s\S]*\}/);
+                            if (jsonMatch) {
+                                response = JSON.parse(jsonMatch[0]);
+                            }
+                        } catch (error) {
+                            // Ignore parsing errors during streaming
+                        }
+                    }
+                );
+            } else {
+                throw new Error('Chat AI feature is turned off');
+            }
+
             try {
-                // First check if the response starts with an error message
-                if (aiResponse.trim().startsWith('Sorry') || aiResponse.trim().startsWith('Error')) {
-                    console.warn(`Skipping template ${templateFile} due to AI service error: ${aiResponse.trim()}`);
-                    continue;
-                }
-
-                // Try to find JSON content within the response
-                const jsonMatch = aiResponse.match(/\{[\s\S]*\}/);
-                if (!jsonMatch) {
+                if (!response) {
                     console.warn(`Skipping template ${templateFile} due to invalid JSON response`);
                     continue;
                 }
 
-                let response;
-                try {
-                    response = JSON.parse(jsonMatch[0]);
-                } catch (error) {
-                    console.warn(`Failed to parse JSON response for template ${templateFile}:`, error);
-                    console.warn('Response:', response);
-                    continue;
-                }
-                
                 if (!response.docx || typeof response.docx !== 'string' || typeof response.score !== 'number') {
                     console.warn(`Skipping template ${templateFile} due to invalid response format`);
                     continue;
@@ -427,4 +437,4 @@ const parseResumeFields = async (
     return parsed;
   };
 
-export { scoreResume, streamScoreResume, getResumeTemplates, generateImprovedResume, parseResumeFields };
+export { scoreResume, streamScoreResume, getResumeTemplates, streamGenerateImprovedResume, parseResumeFields };
