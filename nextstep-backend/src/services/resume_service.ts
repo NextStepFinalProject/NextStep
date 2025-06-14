@@ -282,7 +282,7 @@ const generateImprovedResume = async (
         let bestTemplate = null;
         let bestScore = 0;
 
-        templateFiles = [templateFiles[0]]
+        templateFiles = [templateFiles[1]]
         for (const templateFile of templateFiles) {
             const templatePath = path.join(templatesDir, templateFile);
             
@@ -293,7 +293,7 @@ const generateImprovedResume = async (
             // Prepare the prompt for AI to analyze this template
             const prompt = `Create an improved resume based on this feedback and template. Implement the feedback improvements into the docx word document template. Return ONLY a JSON object with this exact structure:
 {
-  "docx": "modified_docx_xml_content",
+  "docx": "modified_docx_textual_xml_content",
   "score": number // 0-100 score
 }
 
@@ -312,10 +312,10 @@ Formatting Requirements:
 8. Optimize for the job description
 
 IMPORTANT: 
-- Keep the response under 14900 characters total
 - Return ONLY the JSON object, no other text
 - Modify the XML content to implement the improvements
-- Maintain valid XML structure`;
+- Maintain valid XML structure
+- DO NOT enocde anything in base64. Use textual content only.`;
 
             // Get the new resume content from AI
             const aiResponse = await chatWithAI(SYSTEM_TEMPLATE, [prompt]);
