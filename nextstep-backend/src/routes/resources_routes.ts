@@ -7,8 +7,10 @@ const router = express.Router();
 router.post('/image/user', (req: Request, res: Response) => Resource.createUserImageResource(req as CustomRequest, res));
 
 router.post('/image', Resource.createImageResource);
+router.post('/file', Resource.createFileResource);
 
 router.get('/image/:filename', Resource.getImageResource);
+router.get('/file/:filename', Resource.getFileResource);
 
 router.post('/resume', Resource.createResumeResource);
 
