@@ -1,165 +1,415 @@
-import React, { useState } from 'react';
+"use client"
+
+import type React from "react"
+import { useState, useEffect, useRef } from "react"
 import {
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  TextField,
   Button,
+  Box,
   Typography,
-  Container,
-  Modal,
-  Snackbar,
+  CircularProgress,
+  IconButton,
   Alert,
-} from '@mui/material';
-import FroalaEditor from 'react-froala-wysiwyg';
-import 'froala-editor/css/froala_style.min.css';
-import 'froala-editor/css/froala_editor.pkgd.min.css';
-import 'froala-editor/js/plugins/image.min.js';
-import api from "../serverApi.ts";
-import { getUserAuth } from '../handlers/userAuth.ts';
-import { config } from '../config.ts';
+  useTheme,
+  alpha,
+} from "@mui/material"
+import { Close } from "@mui/icons-material"
+import api from "../serverApi"
+import { getUserAuth } from "../handlers/userAuth"
+// Import Froala Editor components and styles
+import FroalaEditorComponent from "react-froala-wysiwyg"
+import "froala-editor/css/froala_style.min.css"
+import "froala-editor/css/froala_editor.pkgd.min.css"
+import "froala-editor/js/plugins/image.min.js"
+import "froala-editor/js/plugins/link.min.js"
+import "froala-editor/js/plugins/lists.min.js"
+import "froala-editor/js/plugins/paragraph_format.min.js"
+import "froala-editor/js/plugins/table.min.js"
+import "froala-editor/js/plugins/file.min.js"
+import { config } from "../config"
 
-type Props = {
-  open: boolean;
-  onClose: () => void;
-  onPostCreated?: () => void;
-};
+interface NewPostModalProps {
+  open: boolean
+  onClose: () => void
+  onPostCreated: () => void
+  withResume?: boolean
+}
 
-const NewPostModal: React.FC<Props> = ({ open, onClose, onPostCreated }) => {
-  const [title, setTitle] = useState('');
-  const [content, setContent] = useState('');
+const NewPostModal: React.FC<NewPostModalProps> = ({ open, onClose, onPostCreated, withResume = false }) => {
+  const theme = useTheme()
+  const [title, setTitle] = useState("")
+  const [content, setContent] = useState<string>("")
+  const [isSubmitting, setIsSubmitting] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const [resumeData, setResumeData] = useState<any>(null)
+  const [resumeFile, setResumeFile] = useState<File | null>(null)
+  const [isLoadingResume, setIsLoadingResume] = useState(false)
+  const fileInputRef = useRef<HTMLInputElement>(null)
+  const editorRef = useRef<any>(null)
   const auth = getUserAuth();
-  const [error, setError] = useState<string | null>(null);
+  const [mountedEditor, setMountedEditor] = useState(false)
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  useEffect(() => {
+    if (open) {
+      const timeout = setTimeout(() => {
+        setMountedEditor(true)
+      }, 100) // let the DOM settle
+      return () => clearTimeout(timeout)
+    } else {
+      setMountedEditor(false)
+    }
+  }, [open])
 
+  // Froala editor configuration
+  const editorConfig = {
+    placeholderText: "Write your post content here...",
+    charCounterCount: true,
+    toolbarButtons: [
+      "bold", "italic", "underline", "strikeThrough", "|",
+      "paragraphFormat", "align", "formatOL", "formatUL", "|",
+      "insertLink", "insertImage", "insertFile", "insertTable", "|",
+      "html",
+    ],
+    heightMin: 200,
+    imageAllowedTypes: ['jpeg', 'jpg', 'png', 'gif'],
+    fileAllowedTypes: ['*'],
+    imageMaxSize: 5 * 1024 * 1024,
+    fileMaxSize: 10 * 1024 * 1024,
+    events: {
+      'image.beforeUpload': function (files: File[]) {
+        const editor = this as any;
+        const file = files[0];
+  
+        const formData = new FormData();
+        formData.append("file", file);
+  
+        fetch(`${config.app.backend_url()}/resource/image`, {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${auth.accessToken}`,
+          },
+          body: formData,
+        })
+          .then(res => res.text()) // assuming backend returns just the image ID
+          .then(imageId => {
+            const imageUrl = `${config.app.backend_url()}/resource/image/${imageId}`;
+            editor.image.insert(imageUrl, null, null, editor.image.get());
+          })
+          .catch(err => {
+            console.error("Image upload error:", err);
+            setError("Failed to upload image.");
+          });
+  
+        return false;
+      },
+  
+      'file.beforeUpload': function (files: File[]) {
+        const editor = this as any;
+        const file = files[0];
+  
+        const formData = new FormData();
+        formData.append("file", file);
+  
+        fetch(`${config.app.backend_url()}/resource/file`, {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${auth.accessToken}`,
+          },
+          body: formData,
+        })
+          .then(res => res.json())
+          .then(({ url, name }) => {
+            const html = `<a class="fr-file" href="${url}" target="_blank">${name || file.name}</a>`;
+            editor.html.insert(html);
+          })
+          .catch(err => {
+            console.error("File upload error:", err);
+            setError("Failed to upload file.");
+          });
+  
+        return false;
+      },
+    },
+  };
+  
+  // Fetch resume data when opening in resume mode
+  useEffect(() => {
+    if (open && withResume) {
+      fetchResumeData()
+      setTitle("My Professional Resume")
+      setContent("<p>I wanted to share my professional resume with the community.</p>")
+      setError(null)
+    }
+    else if (open) {
+      setTitle("")
+      setContent("<p> I wanted to share.... </p>")
+      setError(null)
+      setResumeData(null)
+      setResumeFile(null)
+    }
+  }, [open, withResume])
+
+  // Reset form when modal is opened
+  // useEffect(() => {
+  //   if (open) {
+  //     setTitle(withResume ? "My Professional Resume" : "")
+  //     setContent(withResume ? "<p>I wanted to share my professional resume with the community.</p>" : "")
+  //     setError(null)
+  //   }
+  // }, [open, withResume])
+
+  // Clean up when component unmounts
+  useEffect(() => {
+    return () => {
+      // Clean up any resources if needed
+      if (resumeFile) {
+        URL.revokeObjectURL(URL.createObjectURL(resumeFile))
+      }
+    }
+  }, [resumeFile])
+
+  const fetchResumeData = async () => {
     try {
-      // Submit the post with the content (images are already uploaded and URLs are in place)
-      await api.post(`/post`, {
-        title,
-        content,
-      });
+      setIsLoadingResume(true)
+      const resumeResponse = await api.get("/resume")
 
-      onClose();
-      onPostCreated?.(); // Refresh feed if needed
+      if (resumeResponse.data && resumeResponse.data.rawContentLink) {
+        const resumeFileResponse = await api.get(`/resource/resume/${resumeResponse.data.rawContentLink}`, {
+          responseType: "blob",
+        })
+
+        const resumeBlob = new Blob([resumeFileResponse.data], { type: "application/pdf" })
+        const resumeFileObj = new File([resumeBlob], `${resumeResponse.data.parsedData.fileName}`, {
+          type: "application/pdf",
+        })
+
+        setResumeData(resumeResponse.data)
+        setResumeFile(resumeFileObj)
+      } else {
+        setError("No resume found. Please upload a resume first.")
+      }
+    } catch (err) {
+      console.error("Failed to fetch resume data:", err)
+      setError("Failed to load resume. Please try again later.")
+    } finally {
+      setIsLoadingResume(false)
+    }
+  }
+
+  const handleFroalaImageUpload = async (file: File) => {
+    try {
+      const formData = new FormData()
+      formData.append("file", file)
+
+      const response = await api.post("/resource/image", formData, {
+        headers: {
+          "Content-Type": "multipart/form-data",
+          Authorization: `Bearer ${auth.accessToken}`,
+        },
+      })
+
+      return JSON.stringify({ link: response.data.url })
     } catch (error) {
-      setError('Error creating post: ' + error);
+      console.error("Error uploading image:", error)
+      throw error
+    }
+  }
+
+  const handleFroalaFileUpload = async (file: File) => {
+    try {
+      const formData = new FormData()
+      formData.append("file", file)
+
+      const response = await api.post("/resource/file", formData, {
+        headers: {
+          "Content-Type": "multipart/form-data",
+          Authorization: `Bearer ${auth.accessToken}`,
+        },
+      })
+
+      return JSON.stringify({ link: response.data.url, name: file.name })
+    } catch (error) {
+      console.error("Error uploading file:", error)
+      throw error
+    }
+  }
+
+  const insertResumeIntoEditor = async () => {
+    if (!resumeFile || !editorRef.current?.editor) return;
+  
+    try {
+      const formData = new FormData();
+      formData.append("file", resumeFile);
+  
+      const response = await api.post("/resource/file", formData, {
+        headers: {
+          "Content-Type": "multipart/form-data",
+          Authorization: `Bearer ${auth.accessToken}`,
+        },
+      });
+  
+      // const fileUrl = response.data;
+      const fileName = resumeFile.name;
+      
+      const fileUrl = `${config.app.backend_url()}/resource/file/${response.data}`;
+
+      const resumeHtml = `<p><a href="${fileUrl}" class="fr-file" title="${fileName}">📄 ${fileName}</a></p>`;
+      editorRef.current.editor.html.insert(resumeHtml);
+    } catch (error) {
+      console.error("Failed to upload resume:", error);
+      setError("Failed to upload resume file.");
     }
   };
+  
+
+  const handleSubmit = async () => {
+    if (!title.trim()) {
+      setError("Please enter a title for your post")
+      return
+    }
+
+    if (!content.trim()) {
+      setError("Please enter content for your post")
+      return
+    }
+
+    try {
+      setIsSubmitting(true)
+      setError(null)
+
+      // Create the post with content that includes embedded files
+      await api.post(
+        "/post",
+        { title, content },
+        {
+          headers: {
+            Authorization: `Bearer ${auth.accessToken}`,
+          },
+        },
+      )
+
+      onPostCreated()
+      onClose()
+    } catch (err) {
+      console.error("Failed to create post:", err)
+      setError("Failed to create post. Please try again later.")
+    } finally {
+      setIsSubmitting(false)
+    }
+  }
+
+  const handleContentChange = (content: string) => {
+    setContent(content)
+  }
+
+  useEffect(() => {
+    if (open && withResume && resumeFile) {
+      insertResumeIntoEditor()
+    }
+  }, [open, withResume, resumeFile])
 
   return (
-    <Modal open={open} onClose={onClose}>
-      <Container
-        maxWidth="md"
-        sx={{
-          mt: 10,
-          backgroundColor: 'background.paper',
+    <Dialog
+      open={open}
+      onClose={onClose}
+      fullWidth
+      maxWidth="md"
+      PaperProps={{
+        sx: {
           borderRadius: 2,
-          p: 4,
-          width: '40%',
-          overflowY: 'auto',
-          height: '80vh',
-          color: 'text.primary',
+          boxShadow: "0 8px 32px rgba(0, 0, 0, 0.2)",
+        },
+      }}
+    >
+      <DialogTitle
+        sx={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          borderBottom: `1px solid ${alpha(theme.palette.divider, 0.1)}`,
+          pb: 1,
         }}
       >
-        <Typography variant="h5" gutterBottom color="text.primary">
-          Create New Post
+        <Typography variant="h6" component="div" sx={{ fontWeight: 600 }}>
+          {withResume ? "Share Your Resume" : "Create New Post"}
         </Typography>
-        <form onSubmit={handleSubmit}>
-          <input
-            type="text"
-            placeholder="Title"
-            value={title}
-            onChange={(e) => setTitle(e.target.value)}
-            style={{ 
-              width: '100%', 
-              marginBottom: '1rem', 
-              padding: '10px', 
-              fontSize: '16px',
-              backgroundColor: 'transparent',
-              color: 'inherit',
-              border: '1px solid',
-              borderColor: 'divider',
-              borderRadius: '4px',
-            }}
-            required
-          />
-          <FroalaEditor
-            tag="textarea"
-            model={content}
-            onModelChange={setContent}
-            config={{
-              placeholderText: "Edit Your Content Here!",
-              charCounterCount: false,
-              toolbarButtons: [
-                "bold",
-                "italic",
-                "underline",
-                "insertImage",
-                "insertLink",
-                "paragraphFormat",
-                "alert",
-              ],
-              imageUploadURL: `${config.app.backend_url()}/resource/image`,
-              imageUploadParams: {
-                Authorization: `Bearer ${auth.accessToken}`
-              },
-              imageUploadMethod: 'POST',
-              imageMaxSize: 5 * 1024 * 1024, // 5MB
-              imageAllowedTypes: ['jpeg', 'jpg', 'png', 'gif'],
-              events: {
-                'image.beforeUpload': function (files: File[]) {
-                  const editor = this as any;
-                  const file = files[0];
-                  
-                  // Create FormData
-                  const formData = new FormData();
-                  formData.append('file', file);
+        <IconButton edge="end" color="inherit" onClick={onClose} aria-label="close">
+          <Close />
+        </IconButton>
+      </DialogTitle>
 
-                  // Upload the image
-                  fetch(`${config.app.backend_url()}/resource/image`, {
-                    method: 'POST',
-                    headers: {
-                      'Authorization': `Bearer ${auth.accessToken}`
-                    },
-                    body: formData
-                  })
-                  .then(response => response.text())
-                  .then(imageId => {
-                    // Construct the full image URL
-                    const imageUrl = `${config.app.backend_url()}/resource/image/${imageId}`;
-                    // Insert the uploaded image
-                    editor.image.insert(imageUrl, null, null, editor.image.get());
-                  })
-                  .catch(error => {
-                    setError('Error uploading image: ' + error);
-                  });
+      <DialogContent sx={{ pt: 3 }}>
+        {error && (
+          <Alert severity="error" sx={{ mb: 2 }}>
+            {error}
+          </Alert>
+        )}
 
-                  return false; // Prevent default upload
-                },
-                'image.error': function (error: any, response: any) {
-                  setError('Image upload error: ' + error + ', response: ' + response);
-                }
-              }
-            }}
-          />
-          <Button type="submit" fullWidth variant="contained" color="primary" sx={{ mt: 3}}>
-            Submit
-          </Button>
-          <Button fullWidth onClick={onClose} sx={{ mt: 1 }}>
-            Cancel
-          </Button>
-        </form>
-        <Snackbar
-              open={!!error}
-              autoHideDuration={6000}
-              onClose={() => setError(null)}
-              anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
-            >
-              <Alert severity="error" onClose={() => setError(null)}>
-                {error}
-              </Alert>
-        </Snackbar>
-      </Container>
-    </Modal>
-  );
-};
+        <TextField
+          autoFocus
+          margin="dense"
+          id="post-title"
+          label="Title"
+          type="text"
+          fullWidth
+          variant="outlined"
+          value={title}
+          onChange={(e) => setTitle(e.target.value)}
+          sx={{ mb: 2 }}
+        />
 
-export default NewPostModal;
+        <Box sx={{ mb: 3 }}>
+          {open && mountedEditor && content && (
+            <FroalaEditorComponent
+              ref={editorRef}
+              tag="textarea"
+              config={editorConfig}
+              model={content}
+              onModelChange={handleContentChange}
+            />
+          )}
+        </Box>
+      </DialogContent>
+
+      <DialogActions sx={{ px: 3, pb: 3 }}>
+        <Button
+          onClick={onClose}
+          variant="outlined"
+          sx={{
+            borderRadius: "10px",
+            textTransform: "none",
+            fontWeight: 500,
+          }}
+        >
+          Cancel
+        </Button>
+        <Button
+          onClick={handleSubmit}
+          variant="contained"
+          disabled={isSubmitting}
+          sx={{
+            borderRadius: "10px",
+            textTransform: "none",
+            fontWeight: 500,
+            ml: 1,
+          }}
+        >
+          {isSubmitting ? (
+            <>
+              <CircularProgress size={16} sx={{ mr: 1 }} />
+              Posting...
+            </>
+          ) : (
+            "Post"
+          )}
+        </Button>
+      </DialogActions>
+    </Dialog>
+  )
+}
+
+export default NewPostModal

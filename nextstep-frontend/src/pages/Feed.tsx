@@ -35,9 +35,9 @@ import {
   Delete,
   Bookmark,
   BookmarkBorder,
-  Image as ImageIcon,
   Article,
   Send,
+  Description,
 } from "@mui/icons-material"
 import type { Post } from "../models/Post.tsx"
 import api from "../serverApi.ts"
@@ -61,6 +61,7 @@ const Feed: React.FC = () => {
   const [currentPage, setCurrentPage] = useState(1)
   const [totalPages, setTotalPages] = useState(1)
   const [showNewPostModal, setShowNewPostModal] = useState(false)
+  const [showResumePostModal, setShowResumePostModal] = useState(false)
   const [savedPosts, setSavedPosts] = useState<string[]>([])
 
   const auth = getUserAuth()
@@ -70,8 +71,7 @@ const Feed: React.FC = () => {
   }
 
   const handleShareResume = () => {
-    // Placeholder for resume sharing functionality
-    console.log("Share resume clicked")
+    setShowResumePostModal(true)
   }
 
   const handleDeletePost = async () => {
@@ -380,7 +380,7 @@ const Feed: React.FC = () => {
 
           <Button
             onClick={handleShareResume}
-            startIcon={<ImageIcon />}
+            startIcon={<Description />}
             sx={{
               textTransform: "none",
               borderRadius: "10px",
@@ -433,10 +433,19 @@ const Feed: React.FC = () => {
         />
       </Box>
 
+      {/* Regular post creation modal */}
       <NewPostModal
         open={showNewPostModal}
         onClose={() => setShowNewPostModal(false)}
         onPostCreated={() => loadPosts(currentPage)}
+      />
+
+      {/* Resume sharing modal */}
+      <NewPostModal
+        open={showResumePostModal}
+        onClose={() => setShowResumePostModal(false)}
+        onPostCreated={() => loadPosts(currentPage)}
+        withResume={true}
       />
 
       <Box sx={{ width: "100%", mb: 4 }}>
@@ -579,6 +588,7 @@ const Feed: React.FC = () => {
                     {post.title}
                   </Typography>
                   <Box
+                  
                     sx={{
                       mb: 2,
                       lineHeight: 1.6,
