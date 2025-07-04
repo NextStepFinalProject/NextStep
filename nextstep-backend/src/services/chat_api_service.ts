@@ -59,7 +59,12 @@ export const streamChatWithAI = async (
         try {
             while (true) {
                 const { done, value } = await reader.read();
-                if (done) break;
+                if (done) {
+                    if (response.status !== 200) {
+                        throw new Error(buffer);
+                    }
+                    break;
+                }
 
                 // Append new chunk to buffer
                 buffer += decoder.decode(value, { stream: true });
