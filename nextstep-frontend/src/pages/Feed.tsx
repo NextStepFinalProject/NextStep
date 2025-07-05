@@ -107,6 +107,9 @@ const Feed: React.FC = () => {
       if (!imageFilename) {
         return defaultProfileImage
       }
+      if (imageFilename.startsWith("https://")) {
+        return imageFilename
+      }
       const response = await api.get(`/resource/image/${imageFilename}`, {
         responseType: "blob",
       })

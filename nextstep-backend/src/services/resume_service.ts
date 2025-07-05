@@ -406,8 +406,10 @@ const getResumeByOwner = async (ownerId: string, version?: number) => {
             .exec();
 
         if (!resume) {
-            version !== undefined && throw new Error(`Resume version ${version} not found for user ${ownerId}`);
-            return;
+            if (version !== undefined) {
+                throw new Error(`Resume version ${version} not found for user ${ownerId}`);
+            }
+            console.log(`No resume found for user ${ownerId}`);
         }
 
         return resume;
