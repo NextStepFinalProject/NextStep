@@ -33,14 +33,18 @@ const createFilesStorage = () => {
             fileSize: config.resources.fileMaxSize()
         },
         fileFilter: (req, file, cb) => {
-            const allowedTypes = /pdf|docx|docs/;
-            const extname = allowedTypes.test(path.extname(file.originalname).toLowerCase());
-            const mimetype = allowedTypes.test(file.mimetype);
-
-            if (extname && mimetype) {
+            const allowedExts  = ['.pdf', '.doc', '.docx', '.docs'];
+            const allowedMimes = [
+            'application/pdf',
+            'application/msword',
+            'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+            ];
+            const ext  = path.extname(file.originalname).toLowerCase();
+            const mime = file.mimetype;
+            if (allowedExts.includes(ext) && allowedMimes.includes(mime)) {
                 return cb(null, true);
             } else {
-                return cb(new TypeError(`Invalid file type. Only images are allowed: ${allowedTypes}`));
+                return cb(new TypeError(`Invalid file type (${mime}). Allowed: ${allowedExts.join(', ')}`));
             }
         }
     });

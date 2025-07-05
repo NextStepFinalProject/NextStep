@@ -118,9 +118,10 @@ const NewPostModal: React.FC<NewPostModalProps> = ({ open, onClose, onPostCreate
           },
           body: formData,
         })
-          .then(res => res.json())
-          .then(({ url, name }) => {
-            const html = `<a class="fr-file" href="${url}" target="_blank">${name || file.name}</a>`;
+          .then(res => res.text())
+          .then((filename) => {
+            const fileUrl = `${config.app.backend_url()}/resource/file/${filename}`;
+            const html = `<a class="fr-file" href="${fileUrl}" target="_blank">${file.name}</a>`;
             editor.html.insert(html);
           })
           .catch(err => {
