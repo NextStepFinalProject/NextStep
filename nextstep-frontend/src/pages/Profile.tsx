@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Container, Typography, Box, Button, Alert, TextField, Collapse } from '@mui/material';
 import { ExpandMore, ExpandLess } from '@mui/icons-material';
-import {getUserAuth} from "../handlers/userAuth.ts";
+import {getUserAuth, setUserAuth} from "../handlers/userAuth.ts";
 import api from "../serverApi.ts";
 import {UserProfile} from "../models/UserProfile.ts";
 import defaultProfileImage from '../../assets/defaultProfileImage.jpg';
@@ -36,6 +36,7 @@ const Profile: React.FC = () => {
       const response = await api.get(`/user/${getUserAuth().userId}`);
       const userProfile = response.data as UserProfile;
       // setProfile(userProfile);
+      setUserAuth({...auth, imageFilename: userProfile.imageFilename})
       setUserName(userProfile.username);
       setEmail(userProfile.email);
       return userProfile;
@@ -67,7 +68,6 @@ const Profile: React.FC = () => {
         },
       });
 
-      // setUserAuth({...auth, imageFilename: (response.data as LoginResponse).imageFilename})
       if (response.status === 201) {
         setSuccess(true);
         setError('');

@@ -15,6 +15,8 @@ export const config = {
         refresh_token_secret: () => process.env.REFRESH_TOKEN_SECRET || 'secret'
     },
     resources: {
+        filesDirectoryPath: () => 'resources/files',
+        fileMaxSize: () => 10 * 1024 * 1024, // Max file size: 10MB
         imagesDirectoryPath: () => 'resources/images',
         imageMaxSize: () => 10 * 1024 * 1024, // Max file size: 10MB
         resumesDirectoryPath: () => 'resources/resumes',
