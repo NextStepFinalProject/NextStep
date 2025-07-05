@@ -12,7 +12,7 @@ import {
   CardMedia,
   CardContent,
 } from '@mui/material';
-import { styled } from '@mui/material/styles';
+import { styled, useTheme } from '@mui/material/styles';
 import { config } from '../config';
 import api from '../serverApi';
 import ReactMarkdown from 'react-markdown';
@@ -194,6 +194,7 @@ const Resume: React.FC = () => {
   const [generatedResume, setGeneratedResume] = useState<{ content: string; type: string } | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const feedbackEndRef = useRef<HTMLDivElement>(null);
+  const theme = useTheme()
 
   useEffect(() => {
     if (feedbackEndRef.current) {
@@ -517,7 +518,7 @@ const Resume: React.FC = () => {
             {loading && <CircularProgress />}
 
             {feedback && (
-              <Box sx={{ mb: 3, width: '100%' }}>
+              <Box sx={{ mb: 3, width: '100%', color: theme.palette.mode === "dark" ? 'white': 'default'}}>
                 <Typography variant="h6" gutterBottom>
                   Analysis Feedback:
                 </Typography>
