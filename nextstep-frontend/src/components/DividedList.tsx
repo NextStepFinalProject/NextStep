@@ -75,7 +75,7 @@ const DividedList: React.FC<DividedListProps> = ({ onlineUsers, onUserClick, dis
                 />
               </ListItemAvatar>
               <ListItemText
-                primary={user.username || user.email}
+                primary={`${user.username} (${user.email})`}
                 primaryTypographyProps={{
                   fontSize: '0.875rem',
                   fontWeight: selectedUserId === user.id ? 600 : 400,
