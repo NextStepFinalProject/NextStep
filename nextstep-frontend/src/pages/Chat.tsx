@@ -161,6 +161,17 @@ const Chat: React.FC = () => {
     }
   }, [room.messages]);
 
+  // Type guard for users with valid id and email
+  function isValidUser(user: LoginResponse): user is LoginResponse & { id: string; email: string } {
+    return Boolean(user.id && user.email);
+  }
+
+  // Helper to get display name by userId
+  const getUserDisplayName = (userId: string) => {
+    const user = onlineUsers.find(u => u.id === userId);
+    return user?.username || user?.email || 'Unknown User';
+  };
+
   if (isLoading) {
     return (
       <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
@@ -340,7 +351,7 @@ const Chat: React.FC = () => {
                     }}
                     className="message-user"
                   >
-                    {Array.from(usersMetadataCacheRef.current).find(u => u.userId === m?.userId)?.email}
+                    {getUserDisplayName(m?.userId)}
                   </Typography>
                   <Typography
                     variant="caption"
@@ -440,8 +451,13 @@ const Chat: React.FC = () => {
           </Box>
         </Box>
         <DividedList 
-          onlineUsers={onlineUsers.map(user => ({ id: user.id, email: user.email }))} 
-          onUserClick={onUserClick}
+          onlineUsers={onlineUsers.filter(isValidUser).map(user => ({ id: user.id, username: user.username, email: user.email }))} 
+          onUserClick={(user) => {
+            const fullUser = onlineUsers.find(u => u.id === user.id);
+            if (fullUser) {
+              onUserClick(fullUser);
+            }
+          }}
           disabled={!isConnected}
           selectedUserId={selectedUserId}
         />

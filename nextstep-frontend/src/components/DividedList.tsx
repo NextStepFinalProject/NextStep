@@ -11,12 +11,13 @@ import {
 
 interface User {
   id: string;
+  username?: string;
   email: string;
 }
 
 interface DividedListProps {
-  onlineUsers: { id: string, email: string }[];
-  onUserClick: (user: { id: string, email: string }) => void;
+  onlineUsers: { id: string, username?: string, email: string }[];
+  onUserClick: (user: { id: string, username?: string, email: string }) => void;
   disabled?: boolean;
   selectedUserId?: string | null;
 }
@@ -74,7 +75,7 @@ const DividedList: React.FC<DividedListProps> = ({ onlineUsers, onUserClick, dis
                 />
               </ListItemAvatar>
               <ListItemText
-                primary={user.email}
+                primary={user.username || user.email}
                 primaryTypographyProps={{
                   fontSize: '0.875rem',
                   fontWeight: selectedUserId === user.id ? 600 : 400,
