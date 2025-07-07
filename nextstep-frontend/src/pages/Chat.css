@@ -96,3 +96,8 @@
 .online-users {
     margin-top: 10px;
 }
+
+.divided-list-item.selected {
+    font-weight: bold;
+    border-radius: 20px;
+}
