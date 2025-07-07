@@ -25,6 +25,7 @@ const Chat: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isConnected, setIsConnected] = useState(false);
+  const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
 
   const usersMetadataCacheRef = useRef(new Set<LoginResponse>());
   const socketRef = useRef<Socket | null>(null);
@@ -138,13 +139,13 @@ const Chat: React.FC = () => {
 
   const onUserClick = async (user: LoginResponse) => {
     if (!userAuthRef.current) return;
-
+    setSelectedUserId(user.id!);
     try {
       setIsLoading(true);
       const response = await axios.get<Room>(`${config.app.backend_url()}/room/user/${user.id}`, {
         headers: { Authorization: `Bearer ${userAuthRef.current.accessToken}` }
       });
-      
+
       setRoom(response.data);
       socketRef.current?.emit(config.socketMethods.enterRoom, response.data._id);
     } catch (err) {
@@ -442,6 +443,7 @@ const Chat: React.FC = () => {
           onlineUsers={onlineUsers.map(user => ({ id: user.id, email: user.email }))} 
           onUserClick={onUserClick}
           disabled={!isConnected}
+          selectedUserId={selectedUserId}
         />
       </Paper>
     </Box>
