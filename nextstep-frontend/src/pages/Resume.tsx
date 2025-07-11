@@ -32,8 +32,10 @@ const FeedbackContainer = styled(Box)(({ theme }) => ({
   backgroundColor: theme.palette.background.paper,
   borderRadius: theme.shape.borderRadius,
   textAlign: 'left',
+  color: theme.palette.text.primary,
   '& pre': {
-    backgroundColor: theme.palette.grey[100],
+    backgroundColor: theme.palette.mode === 'dark' ? theme.palette.grey[800] : theme.palette.grey[100],
+    color: theme.palette.text.primary,
     padding: theme.spacing(2),
     borderRadius: theme.shape.borderRadius,
     overflowX: 'auto',
@@ -48,19 +50,23 @@ const FeedbackContainer = styled(Box)(({ theme }) => ({
     border: `1px solid ${theme.palette.divider}`,
     padding: theme.spacing(1.5),
     textAlign: 'left',
+    color: theme.palette.text.primary,
   },
   '& th': {
-    backgroundColor: theme.palette.grey[100],
+    backgroundColor: theme.palette.mode === 'dark' ? theme.palette.grey[800] : theme.palette.grey[100],
+    color: theme.palette.text.primary,
   },
   '& h1, & h2, & h3, & h4, & h5, & h6': {
     textAlign: 'left',
     marginTop: theme.spacing(3),
     marginBottom: theme.spacing(2),
+    color: theme.palette.text.primary,
   },
   '& p': {
     textAlign: 'left',
     marginBottom: theme.spacing(2),
     lineHeight: 1.6,
+    color: theme.palette.text.primary,
   },
   '& ul, & ol': {
     marginLeft: theme.spacing(4),
@@ -68,13 +74,28 @@ const FeedbackContainer = styled(Box)(({ theme }) => ({
   },
   '& li': {
     marginBottom: theme.spacing(1),
+    color: theme.palette.text.primary,
   },
   '& blockquote': {
     borderLeft: `4px solid ${theme.palette.primary.main}`,
     margin: theme.spacing(2, 0),
     padding: theme.spacing(2),
-    backgroundColor: theme.palette.grey[50],
+    backgroundColor: theme.palette.mode === 'dark' ? theme.palette.grey[900] : theme.palette.grey[50],
     borderRadius: theme.shape.borderRadius,
+    color: theme.palette.text.primary,
+  },
+  '& code': {
+    backgroundColor: theme.palette.mode === 'dark' ? theme.palette.grey[800] : theme.palette.grey[100],
+    color: theme.palette.text.primary,
+    padding: theme.spacing(0.5, 1),
+    borderRadius: theme.shape.borderRadius,
+    fontSize: '0.875em',
+  },
+  '& strong, & b': {
+    color: theme.palette.text.primary,
+  },
+  '& em, & i': {
+    color: theme.palette.text.primary,
   },
 }));
 
