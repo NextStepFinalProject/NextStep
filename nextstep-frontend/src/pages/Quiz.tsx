@@ -1,8 +1,5 @@
-"use client"
-
-import type React from "react"
-import { useState } from "react"
-import { useSearchParams } from "react-router-dom"
+import React, { useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import {
   Container,
   Box,
@@ -13,6 +10,7 @@ import {
   IconButton,
   Tooltip,
   Paper,
+  Slider,
   Stack,
   Chip,
   Divider,
@@ -21,14 +19,7 @@ import {
   FormGroup,
   FormControlLabel,
   Checkbox,
-  useTheme,
-  alpha,
-  Card,
-  CardContent,
-  LinearProgress,
-  Fade,
-  Zoom,
-} from "@mui/material"
+} from '@mui/material';
 import {
   Visibility,
   VisibilityOff,
@@ -38,876 +29,645 @@ import {
   ForumOutlined as ForumOutlinedIcon,
   BusinessOutlined as BusinessOutlinedIcon,
   LocalOfferOutlined as LocalOfferOutlinedIcon,
-  Quiz as QuizIcon,
-  Psychology,
-  EmojiEvents,
-  AutoAwesome,
-  Refresh,
-} from "@mui/icons-material"
-import api from "../serverApi"
-import { config } from "../config"
+} from '@mui/icons-material';
+import SchoolIcon from '@mui/icons-material/School'; // Import graduation hat icon
+import api from '../serverApi';
+import { config } from '../config';
 
-/* ------------------------------------------------------------------ */
-/* ---------------- Interfaces that drive API / state ---------------- */
-/* ------------------------------------------------------------------ */
-
+// Define interfaces for the API response schemas
 interface QuizGenerationResponse {
-  _id: string
-  title: string
-  tags: string[]
-  content: string
-  job_role: string
-  company_name_en: string
-  company_name_he: string
-  process_details: string
-  question_list: string[]
-  answer_list: string[]
-  keywords: string[]
-  interviewer_mindset: string
-  specialty_tags: string[]
+  _id: string;
+  title: string;
+  tags: string[];
+  content: string;
+  job_role: string;
+  company_name_en: string;
+  company_name_he: string;
+  process_details: string;
+  question_list: string[];
+  answer_list: string[];
+  keywords: string[];
+  interviewer_mindset: string;
+  specialty_tags: string[];
 }
 
 interface UserAnsweredQuiz {
-  _id: string
-  title: string
-  tags: string[]
-  content: string
-  job_role: string
-  company_name_en: string
-  company_name_he: string
-  process_details: string
-  question_list: string[]
-  answer_list: string[]
-  user_answer_list: string[]
-  keywords: string[]
-  interviewer_mindset: string
-  specialty_tags: string[]
+  _id: string;
+  title: string;
+  tags: string[];
+  content: string;
+  job_role: string;
+  company_name_en: string;
+  company_name_he: string;
+  process_details: string;
+  question_list: string[];
+  answer_list: string[];
+  user_answer_list: string[];
+  keywords: string[];
+  interviewer_mindset: string;
+  specialty_tags: string[];
 }
 
 interface GradedAnswer {
-  question: string
-  user_answer: string
-  grade: number
-  tip: string
+  question: string;
+  user_answer: string;
+  grade: number;
+  tip: string;
 }
 
 interface QuizGradingResponse {
-  graded_answers: GradedAnswer[]
-  final_quiz_grade: number
-  final_summary_tip: string
+  graded_answers: GradedAnswer[];
+  final_quiz_grade: number;
+  final_summary_tip: string;
 }
 
-/* ---------------- Combined local state ---------------- */
-
+// Internal state structure for the quiz, combining generated and graded data
 interface QuizStateQuestion {
-  originalQuestion: string
-  userAnswer: string
-  correctAnswer?: string
-  grade?: number
-  tip?: string
+  originalQuestion: string;
+  userAnswer: string;
+  correctAnswer?: string;
+  grade?: number;
+  tip?: string;
 }
 
 interface QuizState {
-  _id: string
-  subject: string
-  questions: QuizStateQuestion[]
-  finalGrade?: number
-  finalTip?: string
-  title?: string
-  tags?: string[]
-  content?: string
-  jobRole?: string
-  companyNameEn?: string
-  processDetails?: string
-  keywords?: string[]
-  interviewerMindset?: string
-  answer_list?: string[]
-  specialty_tags?: string[]
+  _id: string;
+  subject: string;
+  questions: QuizStateQuestion[];
+  finalGrade?: number;
+  finalTip?: string;
+  // --- Additional fields from QuizGenerationResponse for display ---
+  title?: string;
+  tags?: string[];
+  content?: string;
+  jobRole?: string;
+  companyNameEn?: string;
+  processDetails?: string;
+  keywords?: string[];
+  interviewerMindset?: string;
+  answer_list?: string[]; // Store the original answer list for display after grading
+  specialty_tags?: string[]; // Add specialty tags to the state
 }
 
-/* ================================================================== */
-/* =============================== UI =============================== */
-/* ================================================================== */
-
 const Quiz: React.FC = () => {
-  const theme = useTheme()
-  const [searchParams] = useSearchParams()
-
-  /* ------------------------ Local state ------------------------ */
-  const [subject, setSubject] = useState<string>(searchParams.get("subject") || "")
-  const [selectedSpecialties, setSelectedSpecialties] = useState({
+  const [searchParams] = useSearchParams();
+  const [subject, setSubject] = useState<string>(searchParams.get('subject') || '');
+  const [selectedSpecialties, setSelectedSpecialties] = useState<{
+    code: boolean;
+    design: boolean;
+    technologies: boolean;
+  }>({
     code: false,
     design: false,
     technologies: false,
-  })
-  const [quiz, setQuiz] = useState<QuizState | null>(null)
-  const [loading, setLoading] = useState(false)
-  const [showAnswer, setShowAnswer] = useState<{ [idx: number]: boolean }>({})
-  const [quizSubmitted, setQuizSubmitted] = useState(false)
+  });
+  const [quiz, setQuiz] = useState<QuizState | null>(null);
+  const [loading, setLoading] = useState<boolean>(false);
+  const [showAnswer, setShowAnswer] = useState<{ [key: number]: boolean }>({});
+  const [quizSubmitted, setQuizSubmitted] = useState<boolean>(false);
 
-  /* --------------------- Helpers for colors / emojis --------------------- */
-  const getGradeColor = (grade: number) => {
-    if (grade >= 90) return theme.palette.success.main
-    if (grade >= 70) return theme.palette.warning.main
-    return theme.palette.error.main
-  }
-  const getGradeEmoji = (grade: number) => {
-    if (grade >= 90) return "🏆"
-    if (grade >= 80) return "🎉"
-    if (grade >= 70) return "👍"
-    if (grade >= 60) return "📚"
-    return "💪"
-  }
-
-  /* ------------------------------------------------------------------ */
-  /* -------------------------- Generate quiz ------------------------- */
-  /* ------------------------------------------------------------------ */
   const handleGenerateQuiz = async () => {
-    if (!subject.trim()) return
-    setLoading(true)
-    setQuiz(null)
-    setQuizSubmitted(false)
-    setShowAnswer({})
+    if (!subject.trim()) return;
+    setLoading(true);
+    setQuiz(null);
+    setQuizSubmitted(false);
+    setShowAnswer({});
 
-    let fullSubject = subject
-    if (selectedSpecialties.code) fullSubject += " SPECIALTY_CODE"
-    if (selectedSpecialties.design) fullSubject += " SPECIALTY_DESIGN"
-    if (selectedSpecialties.technologies) fullSubject += " SPECIALTY_TECHNOLOGIES"
+    // Build the full subject with specialties
+    let fullSubject = subject;
+    if (selectedSpecialties.code) fullSubject += ' SPECIALTY_CODE';
+    if (selectedSpecialties.design) fullSubject += ' SPECIALTY_DESIGN';
+    if (selectedSpecialties.technologies) fullSubject += ' SPECIALTY_TECHNOLOGIES';
 
     try {
-      const { data } = await api.post<QuizGenerationResponse>(
-        `${config.app.backend_url()}/quiz/generate`,
-        { subject: fullSubject }
-      )
+      const response = await api.post<QuizGenerationResponse>(`${config.app.backend_url()}/quiz/generate`, { subject: fullSubject });
 
-      if (!data?.question_list || !data?.answer_list)
-        throw new Error("Invalid quiz data received from server")
+      // Validate the response data
+      if (!response.data || !response.data.question_list || !response.data.answer_list) {
+        throw new Error('Invalid quiz data received from server');
+      }
 
-      const generatedQuestions = data.question_list.map((q, idx) => ({
+      const generatedQuestions: QuizStateQuestion[] = response.data.question_list.map((q: string, idx: number) => ({
         originalQuestion: q,
-        userAnswer: "",
-        correctAnswer: data.answer_list[idx],
-      }))
+        userAnswer: '',
+        correctAnswer: response.data.answer_list[idx], // Populate correct answer immediately
+      }));
 
       setQuiz({
-        _id: data._id,
-        subject,
+        _id: response.data._id,
+        subject: subject,
         questions: generatedQuestions,
-        title: data.title,
-        tags: data.tags,
-        content: data.content,
-        jobRole: data.job_role,
-        companyNameEn: data.company_name_en,
-        processDetails: data.process_details,
-        keywords: data.keywords,
-        interviewerMindset: data.interviewer_mindset,
-        answer_list: data.answer_list,
-        specialty_tags: data.specialty_tags,
-      })
-    } catch (err: any) {
-      console.error("Error generating quiz:", err)
-      let msg = "Failed to generate quiz. "
-      msg += err.response?.data?.message || err.message || "Please try again."
-      alert(msg)
+        title: response.data.title,
+        tags: response.data.tags,
+        content: response.data.content,
+        jobRole: response.data.job_role,
+        companyNameEn: response.data.company_name_en,
+        processDetails: response.data.process_details,
+        keywords: response.data.keywords,
+        interviewerMindset: response.data.interviewer_mindset,
+        answer_list: response.data.answer_list,
+        specialty_tags: response.data.specialty_tags,
+      });
+
+    } catch (error: any) {
+      console.error('Error generating quiz:', error);
+      let errorMessage = 'Failed to generate quiz. ';
+      
+      if (error.response?.data?.message) {
+        // Server returned an error message
+        errorMessage += error.response.data.message;
+      } else if (error.message) {
+        // Other error with message
+        errorMessage += error.message;
+      } else {
+        // Generic error
+        errorMessage += 'Please try again.';
+      }
+
+      // Show error in a more user-friendly way
+      alert(errorMessage);
+      
+      // Reset loading state
+      setLoading(false);
+      return;
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
 
-  /* -------------------------- Answer editing ------------------------- */
-  const handleUserAnswerChange = (idx: number, val: string) => {
-    if (!quiz) return
-    const updated = [...quiz.questions]
-    updated[idx].userAnswer = val
-    setQuiz({ ...quiz, questions: updated })
-  }
+  const handleUserAnswerChange = (index: number, answer: string) => {
+    if (quiz) {
+      const updatedQuestions = [...quiz.questions];
+      updatedQuestions[index].userAnswer = answer;
+      setQuiz({ ...quiz, questions: updatedQuestions });
+    }
+  };
 
-  const handleToggleAnswerVisibility = (idx: number) =>
-    setShowAnswer((prev) => ({ ...prev, [idx]: !prev[idx] }))
+  const handleToggleAnswerVisibility = (index: number) => {
+    setShowAnswer(prev => ({
+      ...prev,
+      [index]: !prev[index],
+    }));
+  };
 
-  /* ------------------------------------------------------------------ */
-  /* ---------------------------- Submit ----------------------------- */
-  /* ------------------------------------------------------------------ */
   const handleSubmitQuiz = async () => {
-    if (!quiz || quizSubmitted) return
-    setLoading(true)
+    if (!quiz || quizSubmitted) return;
+    setLoading(true);
 
-    const payload: UserAnsweredQuiz = {
+    const answeredQuizData: UserAnsweredQuiz = {
       _id: quiz._id,
-      title: quiz.title || "",
+      title: quiz.title || '',
       tags: quiz.tags || [],
-      content: quiz.content || "",
-      job_role: quiz.jobRole || "",
-      company_name_en: quiz.companyNameEn || "",
-      company_name_he: "",
-      process_details: quiz.processDetails || "",
-      question_list: quiz.questions.map((q) => q.originalQuestion),
+      content: quiz.content || '',
+      job_role: quiz.jobRole || '',
+      company_name_en: quiz.companyNameEn || '',
+      company_name_he: '',
+      process_details: quiz.processDetails || '',
+      question_list: quiz.questions.map(q => q.originalQuestion),
       answer_list: quiz.answer_list || [],
-      user_answer_list: quiz.questions.map((q) => q.userAnswer),
+      user_answer_list: quiz.questions.map(q => q.userAnswer),
       keywords: quiz.keywords || [],
-      interviewer_mindset: quiz.interviewerMindset || "",
+      interviewer_mindset: quiz.interviewerMindset || '',
       specialty_tags: quiz.specialty_tags || [],
-    }
+    };
 
     try {
-      const { data } = await api.post<QuizGradingResponse>(
-        `${config.app.backend_url()}/quiz/grade`,
-        payload
-      )
+      const response = await api.post<QuizGradingResponse>(`${config.app.backend_url()}/quiz/grade`, answeredQuizData);
 
-      const updatedQuestions = quiz.questions.map((q) => {
-        const graded = data.graded_answers.find((ga) => ga.question === q.originalQuestion)
-        return { ...q, grade: graded?.grade, tip: graded?.tip }
-      })
+      const gradedQuizData = response.data;
+      const updatedQuestions = quiz.questions.map((q, _) => {
+        const gradedAnswer = gradedQuizData.graded_answers.find(ga => ga.question === q.originalQuestion);
+        return {
+          ...q,
+          grade: gradedAnswer?.grade,
+          tip: gradedAnswer?.tip,
+          // correctAnswer is already present from generation
+        };
+      });
 
       setQuiz({
         ...quiz,
         questions: updatedQuestions,
-        finalGrade: data.final_quiz_grade,
-        finalTip: data.final_summary_tip,
-      })
-      setQuizSubmitted(true)
-      const autoShow: { [idx: number]: boolean } = {}
-      updatedQuestions.forEach((_, i) => (autoShow[i] = true))
-      setShowAnswer(autoShow)
-    } catch (err) {
-      console.error("Error submitting quiz:", err)
-      alert("Failed to submit quiz for grading. Please try again.")
+        finalGrade: gradedQuizData.final_quiz_grade,
+        finalTip: gradedQuizData.final_summary_tip,
+      });
+      setQuizSubmitted(true);
+
+      // After submission, automatically show all correct answers and grades
+      const initialShowAnswer: { [key: number]: boolean } = {};
+      updatedQuestions.forEach((_, index) => {
+        initialShowAnswer[index] = true;
+      });
+      setShowAnswer(initialShowAnswer);
+
+    } catch (error) {
+      console.error('Error submitting quiz:', error);
+      alert('Failed to submit quiz for grading. Please try again.');
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
 
-  /* -------------------------- Misc helpers -------------------------- */
-  const handleEditSubject = (txt: string) => {
-    setSubject(txt)
-    setQuiz(null)
-  }
+  const handleEditSubject = (newSubject: string) => {
+    setSubject(newSubject);
+    setQuiz(null); // Reset the quiz to allow generating a new one with the updated subject
+  };
 
-  /* ================================================================== */
-  /* ============================ RENDER ============================== */
-  /* ================================================================== */
   return (
-    <Box
-      sx={{
-        minHeight: "100vh",
-        background:
-          theme.palette.mode === "dark"
-            ? "linear-gradient(135deg,rgb(127, 127, 147) 0%,rgb(30, 67, 62) 50%,rgb(50, 164, 190) 100%)"
-            : "linear-gradient(135deg,rgb(241, 242, 248) 0%,rgb(244, 242, 245) 50%,rgb(242, 251, 253) 100%)",
-      }}
-    >
-      <Container maxWidth="lg" sx={{ py: 4 }}>
-        {/* --------------------------- Header --------------------------- */}
-        <Fade in timeout={800}>
-          <Paper
-            elevation={0}
+    <Container maxWidth="md" sx={{ py: 4 }}>
+      <Typography variant="h4" component="h1" gutterBottom align="center" sx={{ position: 'relative' }}>
+        Quiz Generator &{' '}
+        <Box sx={{ display: 'inline-block', position: 'relative' }}>
+          <SchoolIcon
             sx={{
-              p: 4,
-              mb: 4,
-              borderRadius: 4,
-              background: alpha(theme.palette.background.paper, 0.95),
-              backdropFilter: "blur(20px)",
-              border: `1px solid ${alpha(theme.palette.divider, 0.1)}`,
-              textAlign: "center",
+              position: 'absolute',
+              top: '-10px',
+              left: '110%',
+              size: 'large',
+              transform: 'translateX(-50%) rotate(30deg)',
+              fontSize: 30,
+              color: 'primary.main',
             }}
-          >
-            <Box sx={{ display: "flex", justifyContent: "center", mb: 2 }}>
-              <Psychology sx={{ fontSize: 48, color: theme.palette.primary.main, mr: 2 }} />
-              <Typography variant="h4" component="h1">
-                Quiz Generator
-              </Typography>
-              <AutoAwesome sx={{ fontSize: 48, color: theme.palette.secondary.main, ml: 2 }} />
-            </Box>
-            <Typography variant="h6" color="text.secondary" sx={{ maxWidth: 600, mx: "auto" }}>
-              Generate personalized quizzes with AI-powered grading and detailed feedback
-            </Typography>
-          </Paper>
-        </Fade>
+          />
+          Grader
+        </Box>
+      </Typography>
 
-        {/* --------------------- Subject input (no quiz) -------------------- */}
-        {!quiz && (
-          <Zoom in timeout={600}>
-            <Card
-              sx={{
-                mb: 4,
-                borderRadius: 3,
-                background: alpha(theme.palette.background.paper, 0.95),
-                backdropFilter: "blur(20px)",
-                border: `1px solid ${alpha(theme.palette.divider, 0.1)}`,
-                boxShadow: "0 8px 32px rgba(0,0,0,0.1)",
-              }}
-            >
-              <CardContent sx={{ p: 4 }}>
-                <Box sx={{ display: "flex", alignItems: "center", mb: 3 }}>
-                  <QuizIcon sx={{ fontSize: 32, color: theme.palette.primary.main, mr: 2 }} />
-                  <Typography variant="h5" sx={{ fontWeight: 600 }}>
-                    Create Your Quiz
-                  </Typography>
-                </Box>
-
-                {/* ------------------ Subject field ------------------ */}
-                <TextField
-                  fullWidth
-                  label="Quiz Subject"
-                  placeholder="e.g., Java Spring Boot Microservices, React Hooks, Machine Learning"
-                  variant="outlined"
-                  value={subject}
-                  onChange={(e) => setSubject(e.target.value)}
-                  onKeyDown={(e) => e.key === "Enter" && handleGenerateQuiz()}
-                  sx={{
-                    mb: 3,
-                    "& .MuiOutlinedInput-root": { borderRadius: 2, fontSize: "1.1rem" },
-                  }}
+      {/* Subject Input */}
+      {!quiz && (
+        <Box sx={{ mb: 4 }}>
+          <TextField
+            fullWidth
+            label="Quiz Subject"
+            placeholder="e.g., Java Spring Boot Microservices, React Hooks, Quantum Physics"
+            variant="outlined"
+            value={subject}
+            onChange={e => setSubject(e.target.value)}
+            onKeyDown={e => e.key === 'Enter' && handleGenerateQuiz()}
+            sx={{ mb: 2 }}
+          />
+          
+          {/* Specialty Selection */}
+          <Typography variant="subtitle2" sx={{ mb: 1, color: 'text.secondary' }}>
+            Select Specialties (Optional):
+          </Typography>
+          <FormGroup row sx={{ mb: 2 }}>
+            <FormControlLabel
+              control={
+                <Checkbox
+                  checked={selectedSpecialties.code}
+                  onChange={(e) => setSelectedSpecialties(prev => ({ ...prev, code: e.target.checked }))}
                 />
+              }
+              label="Code"
+            />
+            <FormControlLabel
+              control={
+                <Checkbox
+                  checked={selectedSpecialties.design}
+                  onChange={(e) => setSelectedSpecialties(prev => ({ ...prev, design: e.target.checked }))}
+                />
+              }
+              label="Design"
+            />
+            <FormControlLabel
+              control={
+                <Checkbox
+                  checked={selectedSpecialties.technologies}
+                  onChange={(e) => setSelectedSpecialties(prev => ({ ...prev, technologies: e.target.checked }))}
+                />
+              }
+              label="Technologies"
+            />
+          </FormGroup>
 
-                {/* -------------- Specialization checkboxes -------------- */}
-                <Box sx={{ mb: 3 }}>
-                  <Typography variant="subtitle1" sx={{ mb: 2, fontWeight: 600 }}>
-                    Specialization Focus (Optional):
+          <Button
+            variant="contained"
+            onClick={handleGenerateQuiz}
+            disabled={loading || !subject.trim()}
+            fullWidth
+          >
+            {loading ? <CircularProgress size={24} /> : 'Generate Quiz'}
+          </Button>
+        </Box>
+      )}
+
+      {/* Generated Quiz Display */}
+      {quiz && (
+        <Box sx={{ p: 3, bgcolor: 'background.paper', borderRadius: 2, boxShadow: 1 }}>
+          <Typography variant="h5" gutterBottom align="center" sx={{ mb: 3 }}>
+            Quiz on: 
+            <TextField
+              value={subject}
+              onChange={(e) => handleEditSubject(e.target.value)}
+              variant="outlined"
+              size="small"
+              sx={{ ml: 2, width: '50%' }}
+            />
+          </Typography>
+
+          {/* --- Enhanced Display of Quiz Metadata --- */}
+          <Paper elevation={2} sx={{ p: 3, mb: 4, bgcolor: 'background.default', borderRadius: 2 }}>
+            <Grid container spacing={2}>
+              {quiz.title && (
+                <Grid item xs={12}>
+                  <Typography variant="h6" color="primary" sx={{ mb: 1 }}>
+                    <InfoOutlinedIcon sx={{ verticalAlign: 'middle', mr: 1 }} />
+                    Quiz Title: {quiz.title}
                   </Typography>
-                  <FormGroup row>
-                    {([
-                      ["code", "💻 Code"],
-                      ["design", "🎨 Design"],
-                      ["technologies", "⚡ Technologies"],
-                    ] as const).map(([key, label]) => (
-                      <FormControlLabel
-                        key={key}
-                        control={
-                          <Checkbox
-                            checked={(selectedSpecialties as any)[key]}
-                            onChange={(e) =>
-                              setSelectedSpecialties((prev) => ({ ...prev, [key]: e.target.checked }))
-                            }
-                            sx={{ "& .MuiSvgIcon-root": { fontSize: 24 } }}
-                          />
-                        }
-                        label={<Typography sx={{ fontSize: "1rem", fontWeight: 500 }}>{label}</Typography>}
+                </Grid>
+              )}
+
+              {quiz.jobRole && (
+                <Grid item xs={12} sm={6}>
+                  <Typography variant="body1" color="text.secondary">
+                    <WorkOutlineIcon sx={{ verticalAlign: 'middle', mr: 0.5 }} />
+                    Job Role: <strong>{quiz.jobRole}</strong>
+                  </Typography>
+                </Grid>
+              )}
+
+              {quiz.companyNameEn && (
+                <Grid item xs={12} sm={6}>
+                  <Typography variant="body1" color="text.secondary">
+                    <BusinessOutlinedIcon sx={{ verticalAlign: 'middle', mr: 0.5 }} />
+                    Company: <strong>{quiz.companyNameEn}</strong>
+                  </Typography>
+                </Grid>
+              )}
+
+              {quiz.tags && quiz.tags.length > 0 && (
+                <Grid item xs={12}>
+                  <Typography variant="body2" sx={{ mb: 1 }}>
+                    <LocalOfferOutlinedIcon sx={{ verticalAlign: 'middle', mr: 0.5 }} />
+                    Tags:
+                  </Typography>
+                  <Stack direction="row" flexWrap="wrap" spacing={1}>
+                    {quiz.tags.map((tag, i) => (
+                      <Chip key={i} label={tag} size="small" variant="outlined" color="primary" />
+                    ))}
+                  </Stack>
+                </Grid>
+              )}
+
+              {quiz.specialty_tags && quiz.specialty_tags.length > 0 && (
+                <Grid item xs={12}>
+                  <Typography variant="body2" sx={{ mb: 1 }}>
+                    <LocalOfferOutlinedIcon sx={{ verticalAlign: 'middle', mr: 0.5 }} />
+                    Specialties:
+                  </Typography>
+                  <Stack direction="row" flexWrap="wrap" spacing={1}>
+                    {quiz.specialty_tags.map((specialty, i) => (
+                      <Chip 
+                        key={i} 
+                        label={specialty.replace('SPECIALTY_', '')} 
+                        size="small" 
+                        variant="outlined" 
+                        sx={{
+                          borderColor: 'warning.main',
+                          color: 'warning.dark',
+                          '&:hover': {
+                            backgroundColor: 'warning.light',
+                            borderColor: 'warning.dark',
+                          }
+                        }}
                       />
                     ))}
-                  </FormGroup>
-                </Box>
+                  </Stack>
+                </Grid>
+              )}
 
-                {/* ------------------- Generate button ------------------- */}
-                <Button
-                  variant="contained"
-                  onClick={handleGenerateQuiz}
-                  disabled={loading || !subject.trim()}
-                  fullWidth
-                  size="large"
-                  sx={{
-                    py: 1.5,
-                    borderRadius: 2,
-                    fontSize: "1.1rem",
-                    fontWeight: 600,
-                    background: `linear-gradient(45deg, ${theme.palette.primary.main}, ${theme.palette.secondary.main})`,
-                    "&:hover": {
-                      background: `linear-gradient(45deg, ${theme.palette.primary.dark}, ${theme.palette.secondary.dark})`,
-                    },
-                  }}
-                >
-                  {loading ? (
-                    <Box sx={{ display: "flex", alignItems: "center" }}>
-                      <CircularProgress size={24} sx={{ mr: 2, color: "white" }} />
-                      Generating Quiz...
-                    </Box>
-                  ) : (
-                    <Box sx={{ display: "flex", alignItems: "center" }}>
-                      <AutoAwesome sx={{ mr: 1 }} />
-                      Generate Quiz
-                    </Box>
-                  )}
-                </Button>
-              </CardContent>
-            </Card>
-          </Zoom>
-        )}
-
-        {/* ----------------------- Quiz display ----------------------- */}
-        {quiz && (
-          <Fade in timeout={800}>
-            <Card
-              sx={{
-                borderRadius: 3,
-                background: alpha(theme.palette.background.paper, 0.95),
-                backdropFilter: "blur(20px)",
-                border: `1px solid ${alpha(theme.palette.divider, 0.1)}`,
-                boxShadow: "0 8px 32px rgba(0,0,0,0.1)",
-              }}
-            >
-              <CardContent sx={{ p: 4 }}>
-                {/* --------------- Editable title ---------------- */}
-                <Box sx={{ textAlign: "center", mb: 4 }}>
-                  <Typography variant="h4" sx={{ fontWeight: 700, mb: 2 }}>
-                    Quiz: {subject}
+              {quiz.keywords && quiz.keywords.length > 0 && (
+                <Grid item xs={12}>
+                  <Typography variant="body2" sx={{ mb: 1 }}>
+                    <LocalOfferOutlinedIcon sx={{ verticalAlign: 'middle', mr: 0.5 }} />
+                    Keywords:
                   </Typography>
-                  <TextField
-                    value={subject}
-                    onChange={(e) => handleEditSubject(e.target.value)}
-                    variant="outlined"
-                    size="small"
-                    sx={{ "& .MuiOutlinedInput-root": { borderRadius: 2 } }}
-                  />
-                </Box>
+                  <Stack direction="row" flexWrap="wrap" spacing={1}>
+                    {quiz.keywords.map((keyword, i) => (
+                      <Chip key={i} label={keyword} size="small" variant="outlined" color="secondary" />
+                    ))}
+                  </Stack>
+                </Grid>
+              )}
 
-                {/* ----------------- Metadata block ---------------- */}
-                <Paper
-                  elevation={0}
-                  sx={{
-                    p: 3,
-                    mb: 4,
-                    borderRadius: 2,
-                    background: alpha(theme.palette.background.default, 0.5),
-                    border: `1px solid ${alpha(theme.palette.divider, 0.1)}`,
-                  }}
-                >
-                  <Grid container spacing={3}>
-                    {/* ----- title ----- */}
-                    {quiz.title && (
-                      <Grid item xs={12}>
-                        <Box sx={{ display: "flex", alignItems: "center", mb: 2 }}>
-                          <InfoOutlinedIcon sx={{ color: theme.palette.primary.main, mr: 1 }} />
-                          <Typography variant="h6" sx={{ fontWeight: 600 }}>
-                            {quiz.title}
-                          </Typography>
-                        </Box>
-                      </Grid>
-                    )}
-
-                    {/* ----- role / company ----- */}
-                    {(quiz.jobRole || quiz.companyNameEn) && (
-                      <Grid item xs={12}>
-                        <Grid container spacing={2}>
-                          {quiz.jobRole && (
-                            <Grid item xs={12} sm={6}>
-                              <Box sx={{ display: "flex", alignItems: "center" }}>
-                                <WorkOutlineIcon sx={{ color: theme.palette.info.main, mr: 1 }} />
-                                <Typography variant="body1">
-                                  <strong>Role:</strong> {quiz.jobRole}
-                                </Typography>
-                              </Box>
-                            </Grid>
-                          )}
-                          {quiz.companyNameEn && (
-                            <Grid item xs={12} sm={6}>
-                              <Box sx={{ display: "flex", alignItems: "center" }}>
-                                <BusinessOutlinedIcon sx={{ color: theme.palette.success.main, mr: 1 }} />
-                                <Typography variant="body1">
-                                  <strong>Company:</strong> {quiz.companyNameEn}
-                                </Typography>
-                              </Box>
-                            </Grid>
-                          )}
-                        </Grid>
-                      </Grid>
-                    )}
-
-                    {/* ----- tags ----- */}
-                    {quiz.tags?.length && (
-                      <Grid item xs={12}>
-                        <Typography variant="body2" sx={{ mb: 1, fontWeight: 600 }}>
-                          📌 Tags:
-                        </Typography>
-                        <Stack direction="row" flexWrap="wrap" spacing={1}>
-                          {quiz.tags.map((tag, i) => (
-                            <Chip
-                              key={i}
-                              label={tag}
-                              size="small"
-                              variant="outlined"
-                              sx={{
-                                borderColor: theme.palette.primary.main,
-                                color: theme.palette.primary.main,
-                                "&:hover": { backgroundColor: alpha(theme.palette.primary.main, 0.1) },
-                              }}
-                            />
-                          ))}
-                        </Stack>
-                      </Grid>
-                    )}
-                  
-                    {/* ----- specialties ----- */}
-                    {1 && (
-                      <Grid item xs={12}>
-                        <Typography variant="body2" sx={{ mb: 1, fontWeight: 600 }}>
-                          ⚡ Specialties:
-                        </Typography>
-                        <Stack direction="row" flexWrap="wrap" spacing={1}>
-                          {quiz.specialty_tags?.map((s, i) => (
-                            <Chip
-                              key={i}
-                              label={s.replace("SPECIALTY_", "")}
-                              size="small"
-                              sx={{
-                                backgroundColor: theme.palette.warning.main,
-                                color: theme.palette.warning.contrastText,
-                                fontWeight: 600,
-                              }}
-                            />
-                          ))}
-                        </Stack>
-                      </Grid>
-                    )}
-
-                    {/* ----- keywords ----- */}
-                    {quiz.keywords?.length && (
-                      <Grid item xs={12}>
-                        <Typography variant="body2" sx={{ mb: 1, fontWeight: 600 }}>
-                          <LocalOfferOutlinedIcon sx={{ verticalAlign: "middle", mr: 0.5 }} />
-                          Keywords:
-                        </Typography>
-                        <Stack direction="row" flexWrap="wrap" spacing={1}>
-                          {quiz.keywords.map((kw, i) => (
-                            <Chip
-                              key={i}
-                              label={kw}
-                              size="small"
-                              variant="outlined"
-                              color="secondary"
-                            />
-                          ))}
-                        </Stack>
-                      </Grid>
-                    )}
-
-                    {/* ----- process details ----- */}
-                    {quiz.processDetails && (
-                      <Grid item xs={12}>
-                        <Box sx={{ display: "flex", alignItems: "flex-start" }}>
-                          <InfoOutlinedIcon sx={{ color: theme.palette.info.main, mr: 1, mt: 0.2 }} />
-                          <Box>
-                            <Typography variant="body1" sx={{ fontWeight: 600 }}>
-                              Process Details:
-                            </Typography>
-                            <Typography variant="body2" color="text.secondary">
-                              {quiz.processDetails}
-                            </Typography>
-                          </Box>
-                        </Box>
-                      </Grid>
-                    )}
-
-                    {/* ----- content / context ----- */}
-                    {quiz.content && (
-                      <Grid item xs={12}>
-                        <Box sx={{ display: "flex", alignItems: "flex-start" }}>
-                          <InfoOutlinedIcon sx={{ color: theme.palette.info.main, mr: 1, mt: 0.2 }} />
-                          <Box>
-                            <Typography variant="body1" sx={{ fontWeight: 600 }}>
-                              Context / Content:
-                            </Typography>
-                            <Typography variant="body2" color="text.secondary">
-                              {quiz.content}
-                            </Typography>
-                          </Box>
-                        </Box>
-                      </Grid>
-                    )}
-
-                    {/* ----- interviewer mindset ----- */}
-                    {quiz.interviewerMindset && (
-                      <Grid item xs={12}>
-                        <Box sx={{ display: "flex", alignItems: "flex-start" }}>
-                          <ForumOutlinedIcon sx={{ color: theme.palette.secondary.main, mr: 1, mt: 0.2 }} />
-                          <Box>
-                            <Typography variant="body1" sx={{ fontWeight: 600 }}>
-                              Interviewer Mindset:
-                            </Typography>
-                            <Typography variant="body2" color="text.secondary" sx={{ fontStyle: "italic" }}>
-                              "{quiz.interviewerMindset}"
-                            </Typography>
-                          </Box>
-                        </Box>
-                      </Grid>
-                    )}
-                  </Grid>
-                </Paper>
-
-                <Divider sx={{ my: 4 }} />
-
-                {/* ---------------------- Instructions --------------------- */}
-                <Paper
-                  sx={{
-                    p: 2,
-                    mb: 4,
-                    borderRadius: 2,
-                    background: alpha(theme.palette.info.main, 0.1),
-                    border: `1px solid ${alpha(theme.palette.info.main, 0.2)}`,
-                  }}
-                >
-                  <Typography variant="body2" sx={{ fontWeight: 500, textAlign: "center" }}>
-                    💡 Tip: Provide detailed, comprehensive answers for better grades. You can answer in any language!
+              {quiz.processDetails && (
+                <Grid item xs={12}>
+                  <Typography variant="body1" sx={{ mt: 1 }}>
+                    <InfoOutlinedIcon sx={{ verticalAlign: 'middle', mr: 0.5 }} />
+                    Process Details:
                   </Typography>
-                </Paper>
+                  <Typography variant="body2" color="text.secondary" sx={{ ml: 3 }}>
+                    {quiz.processDetails}
+                  </Typography>
+                </Grid>
+              )}
 
-                {/* ------------------ Question list ------------------ */}
-                {quiz.questions.map((q, idx) => (
-                  <Zoom key={idx} in timeout={400 + idx * 100}>
-                    <Paper
-                      sx={{
-                        p: 3,
-                        mb: 3,
-                        borderRadius: 2,
-                        border: `2px solid ${alpha(theme.palette.divider, 0.1)}`,
-                        background: alpha(theme.palette.background.paper, 0.8),
-                        "&:hover": { borderColor: alpha(theme.palette.primary.main, 0.3) },
-                      }}
-                    >
-                      {/* ----------- Question header with eye icon ---------- */}
-                      <Box sx={{ display: "flex", justifyContent: "space-between", mb: 2 }}>
-                        <Box sx={{ display: "flex", alignItems: "flex-start", flexGrow: 1 }}>
-                          <Avatar
-                            sx={{
-                              bgcolor: theme.palette.primary.main,
-                              width: 40,
-                              height: 40,
-                              fontSize: "1rem",
-                              fontWeight: "bold",
-                              mr: 2,
-                              boxShadow: 3,
-                            }}
-                          >
-                            {idx + 1}
-                          </Avatar>
-                          <Typography variant="h6" sx={{ lineHeight: 1.4, fontWeight: 600 }}>
-                            {q.originalQuestion}
-                          </Typography>
-                        </Box>
-                        {q.correctAnswer && (
-                          <Tooltip title={showAnswer[idx] ? "Hide Answer" : "Show Answer"} arrow>
-                            <IconButton
-                              onClick={() => handleToggleAnswerVisibility(idx)}
-                              size="small"
-                              sx={{
-                                ml: 2,
-                                color: theme.palette.primary.main,
-                                "&:hover": { backgroundColor: alpha(theme.palette.primary.main, 0.1) },
-                              }}
-                            >
-                              {showAnswer[idx] ? <VisibilityOff /> : <Visibility />}
-                            </IconButton>
-                          </Tooltip>
-                        )}
-                      </Box>
+              {quiz.content && (
+                <Grid item xs={12}>
+                  <Typography variant="body1" sx={{ mt: 1 }}>
+                    <InfoOutlinedIcon sx={{ verticalAlign: 'middle', mr: 0.5 }} />
+                    Context/Content:
+                  </Typography>
+                  <Typography variant="body2" color="text.secondary" sx={{ ml: 3 }}>
+                    {quiz.content}
+                  </Typography>
+                </Grid>
+              )}
 
-                      {/* ---------------- Answer textarea ---------------- */}
-                      <TextField
-                        fullWidth
-                        multiline
-                        rows={4}
-                        variant="outlined"
-                        label="Your Answer"
-                        value={q.userAnswer}
-                        onChange={(e) => handleUserAnswerChange(idx, e.target.value)}
-                        disabled={quizSubmitted}
-                        sx={{ mb: 2, "& .MuiOutlinedInput-root": { borderRadius: 2 } }}
-                      />
+              {quiz.interviewerMindset && (
+                <Grid item xs={12}>
+                  <Typography variant="body1" sx={{ mt: 1 }}>
+                    <ForumOutlinedIcon sx={{ verticalAlign: 'middle', mr: 0.5 }} />
+                    Interviewer Mindset:
+                  </Typography>
+                  <Typography variant="body2" color="text.secondary" sx={{ fontStyle: 'italic', ml: 3 }}>
+                    "{quiz.interviewerMindset}"
+                  </Typography>
+                </Grid>
+              )}
+            </Grid>
+          </Paper>
+          <Divider sx={{ my: 4 }} />
+          {/* --- End Enhanced Display of Quiz Metadata --- */}
 
-                      {/* ---------------- Grade bar ---------------- */}
-                      {quizSubmitted && q.grade !== undefined && (
-                        <Box sx={{ mt: 3 }}>
-                          <Box sx={{ display: "flex", alignItems: "center", mb: 2 }}>
-                            <Typography variant="subtitle1" sx={{ fontWeight: 600, mr: 2 }}>
-                              Your Grade: {getGradeEmoji(q.grade)}
-                            </Typography>
-                            <Chip
-                              label={`${q.grade}%`}
-                              sx={{
-                                backgroundColor: getGradeColor(q.grade),
-                                color: "white",
-                                fontWeight: "bold",
-                              }}
-                            />
-                          </Box>
-                          <LinearProgress
-                            variant="determinate"
-                            value={q.grade}
-                            sx={{
-                              height: 8,
-                              borderRadius: 4,
-                              backgroundColor: alpha(theme.palette.grey[300], 0.3),
-                              "& .MuiLinearProgress-bar": {
-                                backgroundColor: getGradeColor(q.grade),
-                                borderRadius: 4,
-                              },
-                            }}
-                          />
-                        </Box>
-                      )}
-
-                      {/* ---------------- Improvement tip ---------------- */}
-                      {quizSubmitted && q.tip && (
-                        <Paper
-                          sx={{
-                            mt: 2,
-                            p: 2,
-                            borderRadius: 2,
-                            background: alpha(theme.palette.info.main, 0.1),
-                            border: `1px solid ${alpha(theme.palette.info.main, 0.2)}`,
-                          }}
-                        >
-                          <Box sx={{ display: "flex", alignItems: "flex-start" }}>
-                            <LightbulbOutlinedIcon sx={{ color: theme.palette.info.main, mr: 1, mt: 0.5 }} />
-                            <Box>
-                              <Typography variant="subtitle2" sx={{ fontWeight: 600, mb: 0.5 }}>
-                                💡 Improvement Tip:
-                              </Typography>
-                              <Typography variant="body2">{q.tip}</Typography>
-                            </Box>
-                          </Box>
-                        </Paper>
-                      )}
-
-                      {/* ---------------- Correct answer ---------------- */}
-                      {showAnswer[idx] && q.correctAnswer && (
-                        <Paper
-                          sx={{
-                            mt: 2,
-                            p: 2,
-                            borderRadius: 2,
-                            background: alpha(theme.palette.success.main, 0.1),
-                            border: `1px solid ${alpha(theme.palette.success.main, 0.2)}`,
-                          }}
-                        >
-                          <Typography
-                            variant="subtitle2"
-                            sx={{ fontWeight: 600, mb: 1, color: theme.palette.success.main }}
-                          >
-                            ✅ Correct Answer:
-                          </Typography>
-                          <Typography variant="body2">{q.correctAnswer}</Typography>
-                        </Paper>
-                      )}
-                    </Paper>
-                  </Zoom>
-                ))}
-
-                {/* ---------------- Submit button ---------------- */}
-                {!quizSubmitted && (
-                  <Box sx={{ textAlign: "center", mt: 4 }}>
-                    <Button
-                      variant="contained"
-                      size="large"
-                      onClick={handleSubmitQuiz}
-                      disabled={loading || !quiz.questions.some((q) => q.userAnswer.trim())}
-                      sx={{
-                        py: 1.5,
-                        px: 4,
-                        borderRadius: 2,
-                        fontSize: "1.1rem",
-                        fontWeight: 600,
-                        background: `linear-gradient(45deg, ${theme.palette.success.main}, ${theme.palette.success.dark})`,
-                        "&:hover": {
-                          background: `linear-gradient(45deg, ${theme.palette.success.dark}, ${theme.palette.success.main})`,
-                        },
-                      }}
-                    >
-                      {loading ? (
-                        <Box sx={{ display: "flex", alignItems: "center" }}>
-                          <CircularProgress size={24} sx={{ mr: 2, color: "white" }} />
-                          Calculating Grade...
-                        </Box>
-                      ) : (
-                        <Box sx={{ display: "flex", alignItems: "center" }}>
-                          <EmojiEvents sx={{ mr: 1 }} />
-                          Calculate My Grade
-                        </Box>
-                      )}
-                    </Button>
-                  </Box>
+          <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
+            Your answers may get better grades for broad, in-depth explanations. You can answer in any language you want!
+          </Typography>
+          {quiz.questions.map((q, index) => (
+            <Paper key={index} sx={{ p: 2, mb: 3, border: '1px solid', borderColor: 'divider' }}>
+              <Box display="flex" justifyContent="space-between" alignItems="flex-start" mb={1}>
+                {/* Circled Numbering (Option 2) */}
+                <Avatar
+                  sx={{
+                    bgcolor: 'primary.main',
+                    width: 32,
+                    height: 32,
+                    fontSize: '0.9rem',
+                    fontWeight: 'bold',
+                    mr: 1.5,
+                    boxShadow: 2,
+                    flexShrink: 0, // Prevent shrinking on small screens
+                  }}
+                >
+                  {index + 1}
+                </Avatar>
+                {/* Question Text */}
+                <Typography variant="h6" sx={{ flexGrow: 1 }}>
+                  {q.originalQuestion}
+                </Typography>
+                {/* Blinking Eye Icon (now always visible if answer exists) */}
+                {q.correctAnswer && (
+                  <Tooltip title={showAnswer[index] ? 'Hide Answer' : 'Show Answer'} arrow>
+                    <IconButton onClick={() => handleToggleAnswerVisibility(index)} size="small" sx={{ flexShrink: 0, ml: 1 }}>
+                      {showAnswer[index] ? <VisibilityOff /> : <Visibility />}
+                    </IconButton>
+                  </Tooltip>
                 )}
+              </Box>
+              <TextField
+                fullWidth
+                multiline
+                rows={3}
+                variant="outlined"
+                label="Your Answer"
+                value={q.userAnswer}
+                onChange={e => handleUserAnswerChange(index, e.target.value)}
+                sx={{ mb: 2 }}
+                disabled={quizSubmitted}
+              />
 
-                {/* ---------------- Final grade ---------------- */}
-                {quizSubmitted && quiz.finalGrade !== undefined && (
-                  <Zoom in timeout={800}>
-                    <Paper
-                      sx={{
-                        mt: 4,
-                        p: 4,
-                        borderRadius: 3,
-                        textAlign: "center",
-                        background: `linear-gradient(135deg, ${alpha(
-                          theme.palette.success.main,
-                          0.1
-                        )}, ${alpha(theme.palette.primary.main, 0.1)})`,
-                        border: `2px solid ${alpha(theme.palette.success.main, 0.3)}`,
-                        boxShadow: "0 8px 32px rgba(0,0,0,0.1)",
-                      }}
-                    >
-                      <Box sx={{ mb: 3 }}>
-                        <Typography variant="h4" sx={{ fontWeight: 700, mb: 2 }}>
-                          🎉 Final Grade: {quiz.finalGrade}% {getGradeEmoji(quiz.finalGrade)}
-                        </Typography>
-                        <LinearProgress
-                          variant="determinate"
-                          value={quiz.finalGrade}
-                          sx={{
-                            height: 12,
-                            borderRadius: 6,
-                            backgroundColor: alpha(theme.palette.grey[300], 0.3),
-                            "& .MuiLinearProgress-bar": {
-                              backgroundColor: getGradeColor(quiz.finalGrade),
-                              borderRadius: 6,
-                            },
-                          }}
-                        />
-                      </Box>
-
-                      {quiz.finalTip && (
-                        <Paper
-                          sx={{
-                            p: 3,
-                            mb: 3,
-                            borderRadius: 2,
-                            background: alpha(theme.palette.background.paper, 0.8),
-                          }}
-                        >
-                          <Typography variant="h6" sx={{ fontWeight: 600, mb: 2 }}>
-                            🎯 Overall Feedback:
-                          </Typography>
-                          <Typography variant="body1" sx={{ lineHeight: 1.6 }}>
-                            {quiz.finalTip}
-                          </Typography>
-                        </Paper>
-                      )}
-
-                      <Button
-                        variant="outlined"
-                        size="large"
-                        onClick={() => {
-                          setSubject("")
-                          setQuiz(null)
-                          setQuizSubmitted(false)
-                          setSelectedSpecialties({ code: false, design: false, technologies: false })
-                        }}
-                        sx={{
-                          py: 1.5,
-                          px: 4,
-                          borderRadius: 2,
-                          fontSize: "1rem",
-                          fontWeight: 600,
-                          borderColor: theme.palette.primary.main,
-                          color: theme.palette.primary.main,
-                          "&:hover": {
-                            backgroundColor: alpha(theme.palette.primary.main, 0.1),
-                            borderColor: theme.palette.primary.dark,
+              {/* Grade and Tip are still shown only after submission */}
+              {quizSubmitted && (
+                <>
+                  <Box sx={{ mt: 2 }}>
+                    <Typography variant="subtitle2" sx={{ mb: 4 }}>
+                      Your Grade:
+                    </Typography>
+                    <Box sx={{ px: 2, py: 1 }}>
+                      <Slider
+                        value={q.grade || 0}
+                        aria-label="Question grade"
+                        valueLabelDisplay="on"
+                        min={0}
+                        max={100}
+                        sx={{ 
+                          width: '100%',
+                          '& .MuiSlider-thumb': {
+                            height: 24,
+                            width: 24,
                           },
+                          '& .MuiSlider-valueLabel': {
+                            top: -6,
+                          }
                         }}
-                      >
-                        <Refresh sx={{ mr: 1 }} />
-                        Generate New Quiz
-                      </Button>
-                    </Paper>
-                  </Zoom>
-                )}
-              </CardContent>
-            </Card>
-          </Fade>
-        )}
-      </Container>
-    </Box>
-  )
-}
+                        disabled
+                      />
+                    </Box>
+                  </Box>
+                  <Box sx={{ mt: 2 }}>
+                    <Typography variant="subtitle2" sx={{ mb: 0.5 }}>
+                      Tip:
+                    </Typography>
+                    <Stack direction="row" alignItems="flex-start" spacing={1}>
+                      <LightbulbOutlinedIcon color="info" sx={{ mt: 0.5 }} />
+                      <Typography variant="body2" color="text.secondary">
+                        {q.tip}
+                      </Typography>
+                    </Stack>
+                  </Box>
+                </>
+              )}
+              {/* Correct answer display is now independent of quizSubmitted for showing */}
+              {showAnswer[index] && q.correctAnswer && (
+                <Box sx={{ 
+                  mt: 2, 
+                  p: 1.5, 
+                  bgcolor: theme => theme.palette.mode === 'light' ? '#FFFFFF' : 'background.paper',
+                  borderRadius: 1,
+                  border: '1px solid',
+                  borderColor: 'divider'
+                }}>
+                  <Typography variant="subtitle2">Correct Answer:</Typography>
+                  <Typography variant="body2">{q.correctAnswer}</Typography>
+                </Box>
+              )}
+            </Paper>
+          ))}
 
-export default Quiz
+          {!quizSubmitted && (
+            <Button
+              variant="contained"
+              color="primary"
+              onClick={handleSubmitQuiz}
+              disabled={loading || !quiz.questions.some(q => q.userAnswer.trim() !== '')}
+              fullWidth
+              sx={{ mt: 3 }}
+            >
+              {loading ? <CircularProgress size={24} /> : 'Calculate Grade'}
+            </Button>
+          )}
+
+          {quizSubmitted && quiz.finalGrade !== undefined && (
+            <Box sx={{ 
+              mt: 4, 
+              p: 3, 
+              bgcolor: theme => theme.palette.mode === 'light' ? '#e8f5e9' : 'rgba(46, 125, 50, 0.15)', 
+              borderRadius: 2, 
+              boxShadow: 2, 
+              textAlign: 'center',
+              border: '1px solid',
+              borderColor: theme => theme.palette.mode === 'light' ? 'rgba(46, 125, 50, 0.2)' : 'rgba(46, 125, 50, 0.3)'
+            }}>
+              <Typography variant="h5" gutterBottom sx={{ mb: 4 }}>
+                Final Quiz Grade:
+              </Typography>
+              <Box sx={{ px: 2, py: 1, mb: 2 }}>
+                <Slider
+                  value={quiz.finalGrade || 0}
+                  aria-label="Final quiz grade"
+                  valueLabelDisplay="on"
+                  min={0}
+                  max={100}
+                  sx={{ 
+                    width: '100%',
+                    '& .MuiSlider-thumb': {
+                      height: 24,
+                      width: 24,
+                    },
+                    '& .MuiSlider-valueLabel': {
+                      top: -6,
+                    }
+                  }}
+                  disabled
+                />
+              </Box>
+              <Typography variant="h6" sx={{ mt: 2 }}>
+                Overall Tip:
+              </Typography>
+              <Stack direction="row" alignItems="flex-start" spacing={1} justifyContent="center">
+                <LightbulbOutlinedIcon color="success" sx={{ mt: 0.5 }} />
+                <Typography variant="body1" color="text.primary">
+                  {quiz.finalTip}
+                </Typography>
+              </Stack>
+              <Button
+                variant="outlined"
+                onClick={() => {
+                  setSubject('');
+                  setQuiz(null);
+                  setQuizSubmitted(false);
+                }}
+                sx={{ mt: 3 }}
+              >
+                Generate New Quiz
+              </Button>
+            </Box>
+          )}
+        </Box>
+      )}
+    </Container>
+  );
+};
+
+export default Quiz;
