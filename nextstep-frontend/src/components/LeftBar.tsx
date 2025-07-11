@@ -119,7 +119,7 @@ const LeftBar: React.FC = () => {
             alt="NextStep"
             className="logo-text"
             sx={{
-              height: collapsed ? 40 : 60, // Reduced logo size
+              height: collapsed ? 40 : 80, 
               cursor: "pointer",
               opacity: 1,
               transform: collapsed ? "scale(0.8)" : "scale(1)",

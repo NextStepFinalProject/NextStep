@@ -904,19 +904,6 @@ const MainDashboard: React.FC = () => {
                     ) : (
                       <Stack spacing={2}>
                         <Button
-                          variant="contained"
-                          startIcon={<LinkedIn />}
-                          fullWidth
-                          sx={{
-                            bgcolor: "#0077B5",
-                            "&:hover": { bgcolor: "#005582" },
-                            transition: "all 0.3s ease",
-                            "&:active": { transform: "scale(0.98)" },
-                          }}
-                        >
-                          Connect LinkedIn
-                        </Button>
-                        <Button
                           variant="outlined"
                           startIcon={<GitHub />}
                           fullWidth

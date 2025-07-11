@@ -35,7 +35,9 @@ import {
   LightbulbOutlined as LightbulbOutlinedIcon,
   WorkOutline as WorkOutlineIcon,
   InfoOutlined as InfoOutlinedIcon,
+  ForumOutlined as ForumOutlinedIcon,
   BusinessOutlined as BusinessOutlinedIcon,
+  LocalOfferOutlined as LocalOfferOutlinedIcon,
   Quiz as QuizIcon,
   Psychology,
   EmojiEvents,
@@ -45,7 +47,10 @@ import {
 import api from "../serverApi"
 import { config } from "../config"
 
-// Define interfaces for the API response schemas
+/* ------------------------------------------------------------------ */
+/* ---------------- Interfaces that drive API / state ---------------- */
+/* ------------------------------------------------------------------ */
+
 interface QuizGenerationResponse {
   _id: string
   title: string
@@ -92,7 +97,8 @@ interface QuizGradingResponse {
   final_summary_tip: string
 }
 
-// Internal state structure for the quiz, combining generated and graded data
+/* ---------------- Combined local state ---------------- */
+
 interface QuizStateQuestion {
   originalQuestion: string
   userAnswer: string
@@ -107,7 +113,6 @@ interface QuizState {
   questions: QuizStateQuestion[]
   finalGrade?: number
   finalTip?: string
-  // --- Additional fields from QuizGenerationResponse for display ---
   title?: string
   tags?: string[]
   content?: string
@@ -120,24 +125,43 @@ interface QuizState {
   specialty_tags?: string[]
 }
 
+/* ================================================================== */
+/* =============================== UI =============================== */
+/* ================================================================== */
+
 const Quiz: React.FC = () => {
   const theme = useTheme()
   const [searchParams] = useSearchParams()
+
+  /* ------------------------ Local state ------------------------ */
   const [subject, setSubject] = useState<string>(searchParams.get("subject") || "")
-  const [selectedSpecialties, setSelectedSpecialties] = useState<{
-    code: boolean
-    design: boolean
-    technologies: boolean
-  }>({
+  const [selectedSpecialties, setSelectedSpecialties] = useState({
     code: false,
     design: false,
     technologies: false,
   })
   const [quiz, setQuiz] = useState<QuizState | null>(null)
-  const [loading, setLoading] = useState<boolean>(false)
-  const [showAnswer, setShowAnswer] = useState<{ [key: number]: boolean }>({})
-  const [quizSubmitted, setQuizSubmitted] = useState<boolean>(false)
+  const [loading, setLoading] = useState(false)
+  const [showAnswer, setShowAnswer] = useState<{ [idx: number]: boolean }>({})
+  const [quizSubmitted, setQuizSubmitted] = useState(false)
 
+  /* --------------------- Helpers for colors / emojis --------------------- */
+  const getGradeColor = (grade: number) => {
+    if (grade >= 90) return theme.palette.success.main
+    if (grade >= 70) return theme.palette.warning.main
+    return theme.palette.error.main
+  }
+  const getGradeEmoji = (grade: number) => {
+    if (grade >= 90) return "🏆"
+    if (grade >= 80) return "🎉"
+    if (grade >= 70) return "👍"
+    if (grade >= 60) return "📚"
+    return "💪"
+  }
+
+  /* ------------------------------------------------------------------ */
+  /* -------------------------- Generate quiz ------------------------- */
+  /* ------------------------------------------------------------------ */
   const handleGenerateQuiz = async () => {
     if (!subject.trim()) return
     setLoading(true)
@@ -145,83 +169,70 @@ const Quiz: React.FC = () => {
     setQuizSubmitted(false)
     setShowAnswer({})
 
-    // Build the full subject with specialties
     let fullSubject = subject
     if (selectedSpecialties.code) fullSubject += " SPECIALTY_CODE"
     if (selectedSpecialties.design) fullSubject += " SPECIALTY_DESIGN"
     if (selectedSpecialties.technologies) fullSubject += " SPECIALTY_TECHNOLOGIES"
 
     try {
-      const response = await api.post<QuizGenerationResponse>(`${config.app.backend_url()}/quiz/generate`, {
-        subject: fullSubject,
-      })
+      const { data } = await api.post<QuizGenerationResponse>(
+        `${config.app.backend_url()}/quiz/generate`,
+        { subject: fullSubject }
+      )
 
-      // Validate the response data
-      if (!response.data || !response.data.question_list || !response.data.answer_list) {
+      if (!data?.question_list || !data?.answer_list)
         throw new Error("Invalid quiz data received from server")
-      }
 
-      const generatedQuestions: QuizStateQuestion[] = response.data.question_list.map((q: string, idx: number) => ({
+      const generatedQuestions = data.question_list.map((q, idx) => ({
         originalQuestion: q,
         userAnswer: "",
-        correctAnswer: response.data.answer_list[idx],
+        correctAnswer: data.answer_list[idx],
       }))
 
       setQuiz({
-        _id: response.data._id,
-        subject: subject,
+        _id: data._id,
+        subject,
         questions: generatedQuestions,
-        title: response.data.title,
-        tags: response.data.tags,
-        content: response.data.content,
-        jobRole: response.data.job_role,
-        companyNameEn: response.data.company_name_en,
-        processDetails: response.data.process_details,
-        keywords: response.data.keywords,
-        interviewerMindset: response.data.interviewer_mindset,
-        answer_list: response.data.answer_list,
-        specialty_tags: response.data.specialty_tags,
+        title: data.title,
+        tags: data.tags,
+        content: data.content,
+        jobRole: data.job_role,
+        companyNameEn: data.company_name_en,
+        processDetails: data.process_details,
+        keywords: data.keywords,
+        interviewerMindset: data.interviewer_mindset,
+        answer_list: data.answer_list,
+        specialty_tags: data.specialty_tags,
       })
-    } catch (error: any) {
-      console.error("Error generating quiz:", error)
-      let errorMessage = "Failed to generate quiz. "
-
-      if (error.response?.data?.message) {
-        errorMessage += error.response.data.message
-      } else if (error.message) {
-        errorMessage += error.message
-      } else {
-        errorMessage += "Please try again."
-      }
-
-      alert(errorMessage)
-      setLoading(false)
-      return
+    } catch (err: any) {
+      console.error("Error generating quiz:", err)
+      let msg = "Failed to generate quiz. "
+      msg += err.response?.data?.message || err.message || "Please try again."
+      alert(msg)
     } finally {
       setLoading(false)
     }
   }
 
-  const handleUserAnswerChange = (index: number, answer: string) => {
-    if (quiz) {
-      const updatedQuestions = [...quiz.questions]
-      updatedQuestions[index].userAnswer = answer
-      setQuiz({ ...quiz, questions: updatedQuestions })
-    }
+  /* -------------------------- Answer editing ------------------------- */
+  const handleUserAnswerChange = (idx: number, val: string) => {
+    if (!quiz) return
+    const updated = [...quiz.questions]
+    updated[idx].userAnswer = val
+    setQuiz({ ...quiz, questions: updated })
   }
 
-  const handleToggleAnswerVisibility = (index: number) => {
-    setShowAnswer((prev) => ({
-      ...prev,
-      [index]: !prev[index],
-    }))
-  }
+  const handleToggleAnswerVisibility = (idx: number) =>
+    setShowAnswer((prev) => ({ ...prev, [idx]: !prev[idx] }))
 
+  /* ------------------------------------------------------------------ */
+  /* ---------------------------- Submit ----------------------------- */
+  /* ------------------------------------------------------------------ */
   const handleSubmitQuiz = async () => {
     if (!quiz || quizSubmitted) return
     setLoading(true)
 
-    const answeredQuizData: UserAnsweredQuiz = {
+    const payload: UserAnsweredQuiz = {
       _id: quiz._id,
       title: quiz.title || "",
       tags: quiz.tags || [],
@@ -239,59 +250,43 @@ const Quiz: React.FC = () => {
     }
 
     try {
-      const response = await api.post<QuizGradingResponse>(`${config.app.backend_url()}/quiz/grade`, answeredQuizData)
+      const { data } = await api.post<QuizGradingResponse>(
+        `${config.app.backend_url()}/quiz/grade`,
+        payload
+      )
 
-      const gradedQuizData = response.data
-      const updatedQuestions = quiz.questions.map((q, _) => {
-        const gradedAnswer = gradedQuizData.graded_answers.find((ga) => ga.question === q.originalQuestion)
-        return {
-          ...q,
-          grade: gradedAnswer?.grade,
-          tip: gradedAnswer?.tip,
-        }
+      const updatedQuestions = quiz.questions.map((q) => {
+        const graded = data.graded_answers.find((ga) => ga.question === q.originalQuestion)
+        return { ...q, grade: graded?.grade, tip: graded?.tip }
       })
 
       setQuiz({
         ...quiz,
         questions: updatedQuestions,
-        finalGrade: gradedQuizData.final_quiz_grade,
-        finalTip: gradedQuizData.final_summary_tip,
+        finalGrade: data.final_quiz_grade,
+        finalTip: data.final_summary_tip,
       })
       setQuizSubmitted(true)
-
-      // After submission, automatically show all correct answers and grades
-      const initialShowAnswer: { [key: number]: boolean } = {}
-      updatedQuestions.forEach((_, index) => {
-        initialShowAnswer[index] = true
-      })
-      setShowAnswer(initialShowAnswer)
-    } catch (error) {
-      console.error("Error submitting quiz:", error)
+      const autoShow: { [idx: number]: boolean } = {}
+      updatedQuestions.forEach((_, i) => (autoShow[i] = true))
+      setShowAnswer(autoShow)
+    } catch (err) {
+      console.error("Error submitting quiz:", err)
       alert("Failed to submit quiz for grading. Please try again.")
     } finally {
       setLoading(false)
     }
   }
 
-  const handleEditSubject = (newSubject: string) => {
-    setSubject(newSubject)
+  /* -------------------------- Misc helpers -------------------------- */
+  const handleEditSubject = (txt: string) => {
+    setSubject(txt)
     setQuiz(null)
   }
 
-  const getGradeColor = (grade: number) => {
-    if (grade >= 90) return theme.palette.success.main
-    if (grade >= 70) return theme.palette.warning.main
-    return theme.palette.error.main
-  }
-
-  const getGradeEmoji = (grade: number) => {
-    if (grade >= 90) return "🏆"
-    if (grade >= 80) return "🎉"
-    if (grade >= 70) return "👍"
-    if (grade >= 60) return "📚"
-    return "💪"
-  }
-
+  /* ================================================================== */
+  /* ============================ RENDER ============================== */
+  /* ================================================================== */
   return (
     <Box
       sx={{
@@ -300,43 +295,37 @@ const Quiz: React.FC = () => {
           theme.palette.mode === "dark"
             ? "linear-gradient(135deg,rgb(127, 127, 147) 0%,rgb(30, 67, 62) 50%,rgb(50, 164, 190) 100%)"
             : "linear-gradient(135deg,rgb(241, 242, 248) 0%,rgb(244, 242, 245) 50%,rgb(242, 251, 253) 100%)",
-        position: "relative",
       }}
     >
-      <Container maxWidth="lg" sx={{ py: 4, position: "relative", zIndex: 1 }}>
+      <Container maxWidth="lg" sx={{ py: 4 }}>
+        {/* --------------------------- Header --------------------------- */}
         <Fade in timeout={800}>
-          <Box>
-            {/* Header Section */}
-            <Paper
-              elevation={0}
-              sx={{
-                p: 4,
-                mb: 4,
-                borderRadius: 4,
-                background: alpha(theme.palette.background.paper, 0.95),
-                backdropFilter: "blur(20px)",
-                border: `1px solid ${alpha(theme.palette.divider, 0.1)}`,
-                textAlign: "center",
-              }}
-            >
-              <Box sx={{ display: "flex", justifyContent: "center", alignItems: "center", mb: 2 }}>
-                <Psychology sx={{ fontSize: 48, color: theme.palette.primary.main, mr: 2 }} />
-                <Typography
-                  variant="h4"
-                  component="h1"
-                >
-                  Quiz Generator
-                </Typography>
-                <AutoAwesome sx={{ fontSize: 48, color: theme.palette.secondary.main, ml: 2 }} />
-              </Box>
-              <Typography variant="h6" color="text.secondary" sx={{ maxWidth: 600, mx: "auto" }}>
-                Generate personalized quizzes with AI-powered grading and detailed feedback
+          <Paper
+            elevation={0}
+            sx={{
+              p: 4,
+              mb: 4,
+              borderRadius: 4,
+              background: alpha(theme.palette.background.paper, 0.95),
+              backdropFilter: "blur(20px)",
+              border: `1px solid ${alpha(theme.palette.divider, 0.1)}`,
+              textAlign: "center",
+            }}
+          >
+            <Box sx={{ display: "flex", justifyContent: "center", mb: 2 }}>
+              <Psychology sx={{ fontSize: 48, color: theme.palette.primary.main, mr: 2 }} />
+              <Typography variant="h4" component="h1">
+                Quiz Generator
               </Typography>
-            </Paper>
-          </Box>
+              <AutoAwesome sx={{ fontSize: 48, color: theme.palette.secondary.main, ml: 2 }} />
+            </Box>
+            <Typography variant="h6" color="text.secondary" sx={{ maxWidth: 600, mx: "auto" }}>
+              Generate personalized quizzes with AI-powered grading and detailed feedback
+            </Typography>
+          </Paper>
         </Fade>
 
-        {/* Subject Input Section */}
+        {/* --------------------- Subject input (no quiz) -------------------- */}
         {!quiz && (
           <Zoom in timeout={600}>
             <Card
@@ -357,6 +346,7 @@ const Quiz: React.FC = () => {
                   </Typography>
                 </Box>
 
+                {/* ------------------ Subject field ------------------ */}
                 <TextField
                   fullWidth
                   label="Quiz Subject"
@@ -367,53 +357,39 @@ const Quiz: React.FC = () => {
                   onKeyDown={(e) => e.key === "Enter" && handleGenerateQuiz()}
                   sx={{
                     mb: 3,
-                    "& .MuiOutlinedInput-root": {
-                      borderRadius: 2,
-                      fontSize: "1.1rem",
-                    },
+                    "& .MuiOutlinedInput-root": { borderRadius: 2, fontSize: "1.1rem" },
                   }}
                 />
 
+                {/* -------------- Specialization checkboxes -------------- */}
                 <Box sx={{ mb: 3 }}>
-                  <Typography variant="subtitle1" sx={{ mb: 2, fontWeight: 600, color: theme.palette.text.primary }}>
+                  <Typography variant="subtitle1" sx={{ mb: 2, fontWeight: 600 }}>
                     Specialization Focus (Optional):
                   </Typography>
                   <FormGroup row>
-                    <FormControlLabel
-                      control={
-                        <Checkbox
-                          checked={selectedSpecialties.code}
-                          onChange={(e) => setSelectedSpecialties((prev) => ({ ...prev, code: e.target.checked }))}
-                          sx={{ "& .MuiSvgIcon-root": { fontSize: 24 } }}
-                        />
-                      }
-                      label={<Typography sx={{ fontSize: "1rem", fontWeight: 500 }}>💻 Code</Typography>}
-                    />
-                    <FormControlLabel
-                      control={
-                        <Checkbox
-                          checked={selectedSpecialties.design}
-                          onChange={(e) => setSelectedSpecialties((prev) => ({ ...prev, design: e.target.checked }))}
-                          sx={{ "& .MuiSvgIcon-root": { fontSize: 24 } }}
-                        />
-                      }
-                      label={<Typography sx={{ fontSize: "1rem", fontWeight: 500 }}>🎨 Design</Typography>}
-                    />
-                    <FormControlLabel
-                      control={
-                        <Checkbox
-                          checked={selectedSpecialties.technologies}
-                          onChange={(e) =>
-                            setSelectedSpecialties((prev) => ({ ...prev, technologies: e.target.checked }))
-                          }
-                          sx={{ "& .MuiSvgIcon-root": { fontSize: 24 } }}
-                        />
-                      }
-                      label={<Typography sx={{ fontSize: "1rem", fontWeight: 500 }}>⚡ Technologies</Typography>}
-                    />
+                    {([
+                      ["code", "💻 Code"],
+                      ["design", "🎨 Design"],
+                      ["technologies", "⚡ Technologies"],
+                    ] as const).map(([key, label]) => (
+                      <FormControlLabel
+                        key={key}
+                        control={
+                          <Checkbox
+                            checked={(selectedSpecialties as any)[key]}
+                            onChange={(e) =>
+                              setSelectedSpecialties((prev) => ({ ...prev, [key]: e.target.checked }))
+                            }
+                            sx={{ "& .MuiSvgIcon-root": { fontSize: 24 } }}
+                          />
+                        }
+                        label={<Typography sx={{ fontSize: "1rem", fontWeight: 500 }}>{label}</Typography>}
+                      />
+                    ))}
                   </FormGroup>
                 </Box>
 
+                {/* ------------------- Generate button ------------------- */}
                 <Button
                   variant="contained"
                   onClick={handleGenerateQuiz}
@@ -448,7 +424,7 @@ const Quiz: React.FC = () => {
           </Zoom>
         )}
 
-        {/* Generated Quiz Display */}
+        {/* ----------------------- Quiz display ----------------------- */}
         {quiz && (
           <Fade in timeout={800}>
             <Card
@@ -461,7 +437,7 @@ const Quiz: React.FC = () => {
               }}
             >
               <CardContent sx={{ p: 4 }}>
-                {/* Quiz Header */}
+                {/* --------------- Editable title ---------------- */}
                 <Box sx={{ textAlign: "center", mb: 4 }}>
                   <Typography variant="h4" sx={{ fontWeight: 700, mb: 2 }}>
                     Quiz: {subject}
@@ -471,15 +447,11 @@ const Quiz: React.FC = () => {
                     onChange={(e) => handleEditSubject(e.target.value)}
                     variant="outlined"
                     size="small"
-                    sx={{
-                      "& .MuiOutlinedInput-root": {
-                        borderRadius: 2,
-                      },
-                    }}
+                    sx={{ "& .MuiOutlinedInput-root": { borderRadius: 2 } }}
                   />
                 </Box>
 
-                {/* Quiz Metadata */}
+                {/* ----------------- Metadata block ---------------- */}
                 <Paper
                   elevation={0}
                   sx={{
@@ -491,6 +463,7 @@ const Quiz: React.FC = () => {
                   }}
                 >
                   <Grid container spacing={3}>
+                    {/* ----- title ----- */}
                     {quiz.title && (
                       <Grid item xs={12}>
                         <Box sx={{ display: "flex", alignItems: "center", mb: 2 }}>
@@ -502,6 +475,7 @@ const Quiz: React.FC = () => {
                       </Grid>
                     )}
 
+                    {/* ----- role / company ----- */}
                     {(quiz.jobRole || quiz.companyNameEn) && (
                       <Grid item xs={12}>
                         <Grid container spacing={2}>
@@ -529,7 +503,8 @@ const Quiz: React.FC = () => {
                       </Grid>
                     )}
 
-                    {quiz.tags && quiz.tags.length > 0 && (
+                    {/* ----- tags ----- */}
+                    {quiz.tags?.length && (
                       <Grid item xs={12}>
                         <Typography variant="body2" sx={{ mb: 1, fontWeight: 600 }}>
                           📌 Tags:
@@ -544,28 +519,26 @@ const Quiz: React.FC = () => {
                               sx={{
                                 borderColor: theme.palette.primary.main,
                                 color: theme.palette.primary.main,
-                                "&:hover": {
-                                  backgroundColor: alpha(theme.palette.primary.main, 0.1),
-                                },
+                                "&:hover": { backgroundColor: alpha(theme.palette.primary.main, 0.1) },
                               }}
                             />
                           ))}
                         </Stack>
                       </Grid>
                     )}
-
-                    {quiz.specialty_tags && quiz.specialty_tags.length > 0 && (
+                  
+                    {/* ----- specialties ----- */}
+                    {1 && (
                       <Grid item xs={12}>
                         <Typography variant="body2" sx={{ mb: 1, fontWeight: 600 }}>
                           ⚡ Specialties:
                         </Typography>
                         <Stack direction="row" flexWrap="wrap" spacing={1}>
-                          {quiz.specialty_tags.map((specialty, i) => (
+                          {quiz.specialty_tags?.map((s, i) => (
                             <Chip
                               key={i}
-                              label={specialty.replace("SPECIALTY_", "")}
+                              label={s.replace("SPECIALTY_", "")}
                               size="small"
-                              variant="filled"
                               sx={{
                                 backgroundColor: theme.palette.warning.main,
                                 color: theme.palette.warning.contrastText,
@@ -576,12 +549,84 @@ const Quiz: React.FC = () => {
                         </Stack>
                       </Grid>
                     )}
+
+                    {/* ----- keywords ----- */}
+                    {quiz.keywords?.length && (
+                      <Grid item xs={12}>
+                        <Typography variant="body2" sx={{ mb: 1, fontWeight: 600 }}>
+                          <LocalOfferOutlinedIcon sx={{ verticalAlign: "middle", mr: 0.5 }} />
+                          Keywords:
+                        </Typography>
+                        <Stack direction="row" flexWrap="wrap" spacing={1}>
+                          {quiz.keywords.map((kw, i) => (
+                            <Chip
+                              key={i}
+                              label={kw}
+                              size="small"
+                              variant="outlined"
+                              color="secondary"
+                            />
+                          ))}
+                        </Stack>
+                      </Grid>
+                    )}
+
+                    {/* ----- process details ----- */}
+                    {quiz.processDetails && (
+                      <Grid item xs={12}>
+                        <Box sx={{ display: "flex", alignItems: "flex-start" }}>
+                          <InfoOutlinedIcon sx={{ color: theme.palette.info.main, mr: 1, mt: 0.2 }} />
+                          <Box>
+                            <Typography variant="body1" sx={{ fontWeight: 600 }}>
+                              Process Details:
+                            </Typography>
+                            <Typography variant="body2" color="text.secondary">
+                              {quiz.processDetails}
+                            </Typography>
+                          </Box>
+                        </Box>
+                      </Grid>
+                    )}
+
+                    {/* ----- content / context ----- */}
+                    {quiz.content && (
+                      <Grid item xs={12}>
+                        <Box sx={{ display: "flex", alignItems: "flex-start" }}>
+                          <InfoOutlinedIcon sx={{ color: theme.palette.info.main, mr: 1, mt: 0.2 }} />
+                          <Box>
+                            <Typography variant="body1" sx={{ fontWeight: 600 }}>
+                              Context / Content:
+                            </Typography>
+                            <Typography variant="body2" color="text.secondary">
+                              {quiz.content}
+                            </Typography>
+                          </Box>
+                        </Box>
+                      </Grid>
+                    )}
+
+                    {/* ----- interviewer mindset ----- */}
+                    {quiz.interviewerMindset && (
+                      <Grid item xs={12}>
+                        <Box sx={{ display: "flex", alignItems: "flex-start" }}>
+                          <ForumOutlinedIcon sx={{ color: theme.palette.secondary.main, mr: 1, mt: 0.2 }} />
+                          <Box>
+                            <Typography variant="body1" sx={{ fontWeight: 600 }}>
+                              Interviewer Mindset:
+                            </Typography>
+                            <Typography variant="body2" color="text.secondary" sx={{ fontStyle: "italic" }}>
+                              "{quiz.interviewerMindset}"
+                            </Typography>
+                          </Box>
+                        </Box>
+                      </Grid>
+                    )}
                   </Grid>
                 </Paper>
 
                 <Divider sx={{ my: 4 }} />
 
-                {/* Instructions */}
+                {/* ---------------------- Instructions --------------------- */}
                 <Paper
                   sx={{
                     p: 2,
@@ -596,9 +641,9 @@ const Quiz: React.FC = () => {
                   </Typography>
                 </Paper>
 
-                {/* Questions */}
-                {quiz.questions.map((q, index) => (
-                  <Zoom in timeout={400 + index * 100} key={index}>
+                {/* ------------------ Question list ------------------ */}
+                {quiz.questions.map((q, idx) => (
+                  <Zoom key={idx} in timeout={400 + idx * 100}>
                     <Paper
                       sx={{
                         p: 3,
@@ -606,12 +651,11 @@ const Quiz: React.FC = () => {
                         borderRadius: 2,
                         border: `2px solid ${alpha(theme.palette.divider, 0.1)}`,
                         background: alpha(theme.palette.background.paper, 0.8),
-                        "&:hover": {
-                          borderColor: alpha(theme.palette.primary.main, 0.3),
-                        },
+                        "&:hover": { borderColor: alpha(theme.palette.primary.main, 0.3) },
                       }}
                     >
-                      <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", mb: 2 }}>
+                      {/* ----------- Question header with eye icon ---------- */}
+                      <Box sx={{ display: "flex", justifyContent: "space-between", mb: 2 }}>
                         <Box sx={{ display: "flex", alignItems: "flex-start", flexGrow: 1 }}>
                           <Avatar
                             sx={{
@@ -624,32 +668,30 @@ const Quiz: React.FC = () => {
                               boxShadow: 3,
                             }}
                           >
-                            {index + 1}
+                            {idx + 1}
                           </Avatar>
-                          <Typography variant="h6" sx={{ flexGrow: 1, fontWeight: 600, lineHeight: 1.4 }}>
+                          <Typography variant="h6" sx={{ lineHeight: 1.4, fontWeight: 600 }}>
                             {q.originalQuestion}
                           </Typography>
                         </Box>
-
                         {q.correctAnswer && (
-                          <Tooltip title={showAnswer[index] ? "Hide Answer" : "Show Answer"} arrow>
+                          <Tooltip title={showAnswer[idx] ? "Hide Answer" : "Show Answer"} arrow>
                             <IconButton
-                              onClick={() => handleToggleAnswerVisibility(index)}
+                              onClick={() => handleToggleAnswerVisibility(idx)}
                               size="small"
                               sx={{
                                 ml: 2,
                                 color: theme.palette.primary.main,
-                                "&:hover": {
-                                  backgroundColor: alpha(theme.palette.primary.main, 0.1),
-                                },
+                                "&:hover": { backgroundColor: alpha(theme.palette.primary.main, 0.1) },
                               }}
                             >
-                              {showAnswer[index] ? <VisibilityOff /> : <Visibility />}
+                              {showAnswer[idx] ? <VisibilityOff /> : <Visibility />}
                             </IconButton>
                           </Tooltip>
                         )}
                       </Box>
 
+                      {/* ---------------- Answer textarea ---------------- */}
                       <TextField
                         fullWidth
                         multiline
@@ -657,17 +699,12 @@ const Quiz: React.FC = () => {
                         variant="outlined"
                         label="Your Answer"
                         value={q.userAnswer}
-                        onChange={(e) => handleUserAnswerChange(index, e.target.value)}
+                        onChange={(e) => handleUserAnswerChange(idx, e.target.value)}
                         disabled={quizSubmitted}
-                        sx={{
-                          mb: 2,
-                          "& .MuiOutlinedInput-root": {
-                            borderRadius: 2,
-                          },
-                        }}
+                        sx={{ mb: 2, "& .MuiOutlinedInput-root": { borderRadius: 2 } }}
                       />
 
-                      {/* Grade Display */}
+                      {/* ---------------- Grade bar ---------------- */}
                       {quizSubmitted && q.grade !== undefined && (
                         <Box sx={{ mt: 3 }}>
                           <Box sx={{ display: "flex", alignItems: "center", mb: 2 }}>
@@ -685,13 +722,13 @@ const Quiz: React.FC = () => {
                           </Box>
                           <LinearProgress
                             variant="determinate"
-                            value={q.grade || 0}
+                            value={q.grade}
                             sx={{
                               height: 8,
                               borderRadius: 4,
                               backgroundColor: alpha(theme.palette.grey[300], 0.3),
                               "& .MuiLinearProgress-bar": {
-                                backgroundColor: getGradeColor(q.grade || 0),
+                                backgroundColor: getGradeColor(q.grade),
                                 borderRadius: 4,
                               },
                             }}
@@ -699,7 +736,7 @@ const Quiz: React.FC = () => {
                         </Box>
                       )}
 
-                      {/* Tip Display */}
+                      {/* ---------------- Improvement tip ---------------- */}
                       {quizSubmitted && q.tip && (
                         <Paper
                           sx={{
@@ -722,8 +759,8 @@ const Quiz: React.FC = () => {
                         </Paper>
                       )}
 
-                      {/* Correct Answer Display */}
-                      {showAnswer[index] && q.correctAnswer && (
+                      {/* ---------------- Correct answer ---------------- */}
+                      {showAnswer[idx] && q.correctAnswer && (
                         <Paper
                           sx={{
                             mt: 2,
@@ -746,14 +783,14 @@ const Quiz: React.FC = () => {
                   </Zoom>
                 ))}
 
-                {/* Submit Button */}
+                {/* ---------------- Submit button ---------------- */}
                 {!quizSubmitted && (
                   <Box sx={{ textAlign: "center", mt: 4 }}>
                     <Button
                       variant="contained"
                       size="large"
                       onClick={handleSubmitQuiz}
-                      disabled={loading || !quiz.questions.some((q) => q.userAnswer.trim() !== "")}
+                      disabled={loading || !quiz.questions.some((q) => q.userAnswer.trim())}
                       sx={{
                         py: 1.5,
                         px: 4,
@@ -781,7 +818,7 @@ const Quiz: React.FC = () => {
                   </Box>
                 )}
 
-                {/* Final Grade Display */}
+                {/* ---------------- Final grade ---------------- */}
                 {quizSubmitted && quiz.finalGrade !== undefined && (
                   <Zoom in timeout={800}>
                     <Paper
@@ -790,7 +827,10 @@ const Quiz: React.FC = () => {
                         p: 4,
                         borderRadius: 3,
                         textAlign: "center",
-                        background: `linear-gradient(135deg, ${alpha(theme.palette.success.main, 0.1)}, ${alpha(theme.palette.primary.main, 0.1)})`,
+                        background: `linear-gradient(135deg, ${alpha(
+                          theme.palette.success.main,
+                          0.1
+                        )}, ${alpha(theme.palette.primary.main, 0.1)})`,
                         border: `2px solid ${alpha(theme.palette.success.main, 0.3)}`,
                         boxShadow: "0 8px 32px rgba(0,0,0,0.1)",
                       }}
