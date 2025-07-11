@@ -175,7 +175,7 @@ const Resume: React.FC = () => {
   };
 
   return (
-    <Box sx={{ maxWidth: 800, mx: 'auto', p: 3 }}>
+    <Box sx={{ p: 3 }}>
       <Typography variant="h4" gutterBottom>
         Score your resume
       </Typography>
