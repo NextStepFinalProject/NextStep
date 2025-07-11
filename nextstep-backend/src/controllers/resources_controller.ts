@@ -2,7 +2,7 @@ import { Request, Response } from 'express';
 import { config } from '../config/config';
 import fs from 'fs';
 import path from 'path';
-import { uploadResume, uploadImage } from '../services/resources_service';
+import { uploadResume, uploadImage, uploadFile } from '../services/resources_service';
 import multer from 'multer';
 import {CustomRequest} from "types/customRequest";
 import {updateUserById} from "../services/users_service";
@@ -37,6 +37,19 @@ const createImageResource = async (req: Request, res: Response) => {
     }
 };
 
+const createFileResource = async (req: Request, res: Response) => {
+    try {
+        const filename = await uploadFile(req);
+        return res.status(201).send(filename);
+    } catch (error) {
+        if (error instanceof multer.MulterError || error instanceof TypeError) {
+            return res.status(400).send({ message: error.message });
+        } else {
+            handleError(error, res);
+        }
+    }
+};
+
 const getImageResource = async (req: Request, res: Response) => {
     try {
         const { filename } = req.params;
@@ -52,9 +65,27 @@ const getImageResource = async (req: Request, res: Response) => {
     }
 };
 
+const getFileResource = async (req: Request, res: Response) => {
+    try {
+        const { filename } = req.params;
+        const filePath = path.resolve(config.resources.filesDirectoryPath(), filename);
+
+        if (!fs.existsSync(filePath)) {
+            return res.status(404).send('File not found');
+        }
+
+        // res.sendFile(filePath);
+        return res.download(filePath);
+    } catch (error) {
+        handleError(error, res);
+    }
+};
+
 const createResumeResource = async (req: Request, res: Response) => {
     try {
-        const resumeFilename = await uploadResume(req);    
+        const resumeFilename = await uploadResume(req);
+
+
         return res.status(201).send(resumeFilename);
     } catch (error) {
         if (error instanceof multer.MulterError || error instanceof TypeError) {
@@ -83,7 +114,9 @@ const getResumeResource = async (req: Request, res: Response) => {
 export default {
     createUserImageResource,
     createImageResource,
+    createFileResource,
     getImageResource,
+    getFileResource,
     getResumeResource,
     createResumeResource
 };
