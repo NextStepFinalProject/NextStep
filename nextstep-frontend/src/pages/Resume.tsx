@@ -225,14 +225,15 @@ const Resume: React.FC = () => {
         )}
       </Box>
 
-      <Button
-        variant="contained"
-        onClick={handleSubmit}
-        disabled={loading || !file}
-        sx={{ mb: 3 }}
-      >
-        {loading ? 'Analyzing...' : 'Analyze Resume'}
-      </Button>
+      <Box sx={{ display: 'flex', justifyContent: 'center', mb: 3 }}>
+        <Button
+          variant="contained"
+          onClick={handleSubmit}
+          disabled={loading || !file}
+        >
+          {loading ? 'Analyzing...' : 'Analyze Resume'}
+        </Button>
+      </Box>
 
       {loading && <CircularProgress />}
 
