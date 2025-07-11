@@ -11,10 +11,6 @@ router.get('/score/:filename', Resume.getResumeScore);
 
 router.get('/streamScore/:filename', Resume.getStreamResumeScore);
 
-router.get('/templates', Resume.getTemplates);
-
-router.post('/generate', Resume.generateResume);
-
 router.post('/parseResume',  upload.single('resume'), Resume.parseResume);
 
 export default router; 
