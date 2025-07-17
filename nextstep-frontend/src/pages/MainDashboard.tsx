@@ -23,6 +23,7 @@ import {
   Card,
   CardContent,
   LinearProgress,
+  Alert,
 } from "@mui/material"
 import {
   GitHub,
@@ -39,6 +40,7 @@ import {
   CheckCircle,
   InsertDriveFile,
   Delete,
+  Sync,
 } from "@mui/icons-material"
 import { connectToGitHub, initiateGitHubOAuth, fetchRepoLanguages, handleGitHubOAuth } from "../handlers/githubAuth"
 import api from "../serverApi"
@@ -73,7 +75,7 @@ const skillsList = [
 ]
 
 const MainDashboard: React.FC = () => {
-  const theme = useTheme();
+  const theme = useTheme()
   const [aboutMe, setAboutMe] = useState(() => localStorage.getItem("aboutMe") || "")
   const [skills, setSkills] = useState<string[]>(() => JSON.parse(localStorage.getItem("skills") || "[]"))
   const [newSkill, setNewSkill] = useState("")
@@ -84,13 +86,16 @@ const MainDashboard: React.FC = () => {
 
   // AI-resume state
   const [parsing, setParsing] = useState(false)
+  const [syncing, setSyncing] = useState(false)
   const [resumeExperience, setResumeExperience] = useState<string[]>([])
   const [roleMatch, setRoleMatch] = useState<string>("")
   const [resumeFileName, setResumeFileName] = useState<string>("")
+  const [currentResumeId, setCurrentResumeId] = useState<string>("")
+  const [hasResumeChanged, setHasResumeChanged] = useState(false)
 
   // Profile image state
   const [image, setImage] = useState<string | null>(null)
-  
+
   // Skills toggle
   const [showAllSkills, setShowAllSkills] = useState(false)
   const SKILL_DISPLAY_LIMIT = 4
@@ -124,33 +129,47 @@ const MainDashboard: React.FC = () => {
   useEffect(() => {
     const code = new URLSearchParams(window.location.search).get("code")
     if (code) {
-      (async () => {
+      ;(async () => {
         try {
-          const username = await handleGitHubOAuth(code);
-          const fetched = await connectToGitHub(username);
-          setRepos(fetched);
-          mergeRepoLanguages(fetched);
+          const username = await handleGitHubOAuth(code)
+          const fetched = await connectToGitHub(username)
+          setRepos(fetched)
+          mergeRepoLanguages(fetched)
         } catch (e) {
-          console.error(e);
+          console.error(e)
         }
-      })();
+      })()
     }
-  }, []);
+  }, [])
 
-  // Fetch resume data on mount
+  // Fetch resume data on mount and check for changes
   useEffect(() => {
     const fetchResumeData = async () => {
       try {
-        const response = await api.get('/resume');
-        setResumeFileName(response.data.parsedData.fileName || '');
-        setResumeExperience(response.data.parsedData.experience || []);
-        setRoleMatch(response.data.parsedData.roleMatch || '');
+        const response = await api.get("/resume")
+        if (response.data && response.data.parsedData) {
+          const parsedData = response.data.parsedData
+          const storedResumeId = localStorage.getItem("lastResumeId")
+          const currentId = parsedData.id || response.data.rawContentLink
+
+          setResumeFileName(parsedData.fileName || "")
+          setResumeExperience(parsedData.experience || [])
+          setRoleMatch(parsedData.roleMatch || "")
+          setCurrentResumeId(currentId)
+
+          // Check if resume has changed
+          if (storedResumeId && storedResumeId !== currentId) {
+            setHasResumeChanged(true)
+          } else {
+            localStorage.setItem("lastResumeId", currentId)
+          }
+        }
       } catch (err) {
-        console.error('Failed to fetch resume data:', err);
+        console.error("Failed to fetch resume data:", err)
       }
-    };
-    fetchResumeData();
-  }, []);
+    }
+    fetchResumeData()
+  }, [])
 
   const mergeRepoLanguages = async (fetchedRepos: typeof repos) => {
     const langSet = new Set(skills)
@@ -190,61 +209,86 @@ const MainDashboard: React.FC = () => {
     }
   }
 
-   useEffect(() => {
-      const fetchProfileImage = async () => {
-        try {
-          const response = await api.get(`/resource/image/${getUserAuth().imageFilename}`, {
-            responseType: 'blob',
-          });
-          const imageUrl = URL.createObjectURL(response.data as Blob);
-          setImage(imageUrl);
-        } catch (error) {
-          console.log('Error fetching profile image.');
-          setImage(null);
-        }
-      };
-     getUserAuth().imageFilename && fetchProfileImage();
-    }, []);
+  useEffect(() => {
+    const fetchProfileImage = async () => {
+      try {
+        const response = await api.get(`/resource/image/${getUserAuth().imageFilename}`, {
+          responseType: "blob",
+        })
+        const imageUrl = URL.createObjectURL(response.data as Blob)
+        setImage(imageUrl)
+      } catch (error) {
+        console.log("Error fetching profile image.")
+        setImage(null)
+      }
+    }
+
+    getUserAuth().imageFilename && fetchProfileImage()
+  }, [])
 
   // Upload & parse resume
   const handleResumeUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-
     const uploadResume = async (formData: FormData) => {
-      const response = await api.post('/resource/resume', formData, {
+      const response = await api.post("/resource/resume", formData, {
         headers: {
-          'Content-Type': 'multipart/form-data',
+          "Content-Type": "multipart/form-data",
         },
-      });
-      return response.data;
-    };
-
-    const file = e.target.files?.[0];
-    if (!file) return;
-    setResumeFileName(file.name);
-    setParsing(true);
-    const form = new FormData();
-    form.append('file', file);
-    try {
-      const uploadedResume = await uploadResume(form);
-
-      const res = await api.post('/resume/parseResume',
-          {
-            resumefileName: uploadedResume, originfilename: file.name,
-            }, {
-        headers: { 'Content-Type': 'multipart/form-data' },
-      });
-      const { aboutMe: aiAbout, skills: aiSkills, roleMatch: aiRole, experience: aiExp } = res.data;
-      setAboutMe(aiAbout);
-      setSkills(aiSkills);
-      setRoleMatch(aiRole);
-      setResumeExperience(aiExp);
-    } catch (err) {
-      console.error(err);
-      alert('Failed to parse resume.');
-    } finally {
-      setParsing(false);
+      })
+      return response.data
     }
-  };
+
+    const file = e.target.files?.[0]
+    if (!file) return
+    setResumeFileName(file.name)
+    setParsing(true)
+    const form = new FormData()
+    form.append("file", file)
+    try {
+      const uploadedResume = await uploadResume(form)
+      const res = await api.post("/resume/parseResume", {
+        resumefileName: uploadedResume,
+        originfilename: file.name,
+      })
+      const { aboutMe: aiAbout, skills: aiSkills, roleMatch: aiRole, experience: aiExp } = res.data
+      setAboutMe(aiAbout)
+      setSkills(aiSkills)
+      setRoleMatch(aiRole)
+      setResumeExperience(aiExp)
+      setCurrentResumeId(uploadedResume)
+      localStorage.setItem("lastResumeId", uploadedResume)
+      setHasResumeChanged(false)
+    } catch (err) {
+      console.error(err)
+      alert("Failed to parse resume.")
+    } finally {
+      setParsing(false)
+    }
+  }
+
+  // Sync with new resume
+  const handleSyncWithNewResume = async () => {
+    if (!currentResumeId) return
+
+    setSyncing(true)
+    try {
+      const res = await api.post("/resume/parseResume", {
+        resumefileName: currentResumeId,
+        originfilename: resumeFileName,
+      })
+      const { aboutMe: aiAbout, skills: aiSkills, roleMatch: aiRole, experience: aiExp } = res.data
+      setAboutMe(aiAbout)
+      setSkills(aiSkills)
+      setRoleMatch(aiRole)
+      setResumeExperience(aiExp)
+      localStorage.setItem("lastResumeId", currentResumeId)
+      setHasResumeChanged(false)
+    } catch (err) {
+      console.error(err)
+      alert("Failed to sync with resume.")
+    } finally {
+      setSyncing(false)
+    }
+  }
 
   // Fetch Linkedin Jobs
   const fetchJobs = async (settings: {
@@ -288,8 +332,8 @@ const MainDashboard: React.FC = () => {
   const profileCompletion = calculateProfileCompletion()
 
   const handleRemoveAllSkills = () => {
-    setSkills([]);
-  };
+    setSkills([])
+  }
 
   return (
     <Box sx={{ minHeight: "100vh", py: 4 }}>
@@ -302,9 +346,10 @@ const MainDashboard: React.FC = () => {
               sx={{
                 fontWeight: 800,
                 display: "inline",
-                background: theme.palette.mode === "dark"
-                  ? "linear-gradient(45deg, #60a5fa 30%, #34d399 90%)"
-                  : "linear-gradient(45deg, #3b82f6 30%, #10b981 90%)",
+                background:
+                  theme.palette.mode === "dark"
+                    ? "linear-gradient(45deg, #60a5fa 30%, #34d399 90%)"
+                    : "linear-gradient(45deg, #3b82f6 30%, #10b981 90%)",
                 backgroundClip: "text",
                 WebkitBackgroundClip: "text",
                 color: "transparent",
@@ -317,6 +362,27 @@ const MainDashboard: React.FC = () => {
             <Typography variant="h6" color="text.secondary" sx={{ mb: 3 }}>
               Your personalized career development dashboard
             </Typography>
+
+            {/* Resume Change Alert */}
+            {hasResumeChanged && (
+              <Alert
+                severity="info"
+                sx={{ mb: 3 }}
+                action={
+                  <Button
+                    color="inherit"
+                    size="small"
+                    startIcon={syncing ? <CircularProgress size={16} /> : <Sync />}
+                    onClick={handleSyncWithNewResume}
+                    disabled={syncing}
+                  >
+                    {syncing ? "Syncing..." : "Sync Now"}
+                  </Button>
+                }
+              >
+                Your resume has been updated. Click "Sync Now" to update your profile with the latest information.
+              </Alert>
+            )}
 
             {/* Profile Completion Card */}
             <Card
@@ -374,27 +440,31 @@ const MainDashboard: React.FC = () => {
                       transform: "translateY(-4px)",
                       boxShadow: `0 12px 48px ${alpha(theme.palette.common.black, 0.15)}`,
                     },
-                    // flexDirection: "column",
                   }}
                 >
                   <CardContent sx={{ p: 4 }}>
                     {/* Upload Section */}
                     <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 3 }}>
                       <Box sx={{ display: "flex", alignItems: "center" }}>
-                        { !image ? <Avatar
-                          sx={{
-                            bgcolor: alpha(theme.palette.primary.main, 0.1),
-                            color: theme.palette.primary.main,
-                            mr: 2,
-                            width: 56,
-                            height: 56,
-                          }}
-                        >
-                          <PersonIcon sx={{ fontSize: 28 }} />
-                        </Avatar> : 
-                        <Avatar src={image} alt="Profile" style={{ width: 56, height: 56, marginTop: '16px', objectFit: 'cover', margin:7 }} />
-
-                        }
+                        {!image ? (
+                          <Avatar
+                            sx={{
+                              bgcolor: alpha(theme.palette.primary.main, 0.1),
+                              color: theme.palette.primary.main,
+                              mr: 2,
+                              width: 56,
+                              height: 56,
+                            }}
+                          >
+                            <PersonIcon sx={{ fontSize: 28 }} />
+                          </Avatar>
+                        ) : (
+                          <Avatar
+                            src={image}
+                            alt="Profile"
+                            style={{ width: 56, height: 56, marginTop: "16px", objectFit: "cover", margin: 7 }}
+                          />
+                        )}
                         <Box>
                           <Typography variant="h5" fontWeight={700} sx={{ mb: 0.5 }}>
                             About Me
@@ -407,6 +477,37 @@ const MainDashboard: React.FC = () => {
 
                       <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
                         {parsing && <CircularProgress size={20} />}
+                        {hasResumeChanged && (
+                          <Tooltip title="Sync with updated resume" arrow>
+                            <IconButton
+                              onClick={handleSyncWithNewResume}
+                              disabled={syncing}
+                              sx={{
+                                bgcolor: alpha(theme.palette.warning.main, 0.1),
+                                color: theme.palette.warning.main,
+                                "&:hover": {
+                                  bgcolor: alpha(theme.palette.warning.main, 0.2),
+                                  transform: "scale(1.1)",
+                                },
+                                transition: "all 0.2s ease",
+                                animation: "pulse 2s infinite",
+                                "@keyframes pulse": {
+                                  "0%": {
+                                    boxShadow: `0 0 0 0 ${alpha(theme.palette.warning.main, 0.7)}`,
+                                  },
+                                  "70%": {
+                                    boxShadow: `0 0 0 10px ${alpha(theme.palette.warning.main, 0)}`,
+                                  },
+                                  "100%": {
+                                    boxShadow: `0 0 0 0 ${alpha(theme.palette.warning.main, 0)}`,
+                                  },
+                                },
+                              }}
+                            >
+                              {syncing ? <CircularProgress size={20} /> : <Sync />}
+                            </IconButton>
+                          </Tooltip>
+                        )}
                         <input
                           accept=".pdf,.docx"
                           id="upload-resume"
@@ -428,18 +529,24 @@ const MainDashboard: React.FC = () => {
                                 transition: "all 0.2s ease",
                               }}
                             >
-                              {resumeFileName ? <Box>
-                                <InsertDriveFile  />
-                                <CheckCircle fontSize="small"
-                                  sx={{
-                                    position: 'absolute',
-                                    bottom: 0,
-                                    right: 0,
-                                    color: 'green',
-                                    backgroundColor: 'white',
-                                    borderRadius: '50%',
-                                  }}/>
-                                </Box> : <InsertDriveFile />}
+                              {resumeFileName ? (
+                                <Box>
+                                  <InsertDriveFile />
+                                  <CheckCircle
+                                    fontSize="small"
+                                    sx={{
+                                      position: "absolute",
+                                      bottom: 0,
+                                      right: 0,
+                                      color: "green",
+                                      backgroundColor: "white",
+                                      borderRadius: "50%",
+                                    }}
+                                  />
+                                </Box>
+                              ) : (
+                                <InsertDriveFile />
+                              )}
                             </IconButton>
                           </label>
                         </Tooltip>
@@ -474,7 +581,7 @@ const MainDashboard: React.FC = () => {
               </motion.div>
 
               {/* Role and Skills Row */}
-              <Grid container >
+              <Grid container>
                 {/* Skills */}
                 <Grid item xs={12} md={6} paddingRight={2}>
                   <motion.div
@@ -490,7 +597,7 @@ const MainDashboard: React.FC = () => {
                         border: `1px solid ${alpha(theme.palette.divider, 0.1)}`,
                         boxShadow: `0 8px 32px ${alpha(theme.palette.common.black, 0.1)}`,
                         transition: "all 0.3s ease",
-                        position: 'relative', // Add position relative
+                        position: "relative",
                         "&:hover": {
                           transform: "translateY(-4px)",
                           boxShadow: `0 12px 48px ${alpha(theme.palette.common.black, 0.15)}`,
@@ -520,8 +627,12 @@ const MainDashboard: React.FC = () => {
                           </Box>
                         </Box>
                         <Tooltip title="Remove all skills" arrow>
-                          <Button size="small" onClick={handleRemoveAllSkills} sx={{ mb: 2, position: 'absolute', top: 8, right: 8 }}>
-                            <Delete/>
+                          <Button
+                            size="small"
+                            onClick={handleRemoveAllSkills}
+                            sx={{ mb: 2, position: "absolute", top: 8, right: 8 }}
+                          >
+                            <Delete />
                           </Button>
                         </Tooltip>
                         <Stack direction="row" spacing={1} sx={{ flexWrap: "wrap", mb: 2, gap: 1 }}>
@@ -619,7 +730,7 @@ const MainDashboard: React.FC = () => {
                         },
                       }}
                     >
-                      <CardContent sx={{ p: 3  }}>
+                      <CardContent sx={{ p: 3 }}>
                         <Box sx={{ display: "flex", alignItems: "center", mb: 3 }}>
                           <Avatar
                             sx={{
