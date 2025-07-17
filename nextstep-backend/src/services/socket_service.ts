@@ -28,8 +28,13 @@ const initSocket = async (socketListener: Server) => {
             await new messageModel(messageToInsert).validate();
             const insertedMessage = await messageModel.create(messageToInsert);
 
-            // Emit mesage
-            socketListener.to(roomId).emit(config.socketMethods.messageFromServer, { roomId, message: insertedMessage });
+            // Emit message with user info
+            const messageWithUser = {
+                ...insertedMessage.toObject(),
+                email: user.email,
+                username: user.username,
+            };
+            socketListener.to(roomId).emit(config.socketMethods.messageFromServer, { roomId, message: messageWithUser });
         });
 
         // Online users

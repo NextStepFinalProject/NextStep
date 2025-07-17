@@ -25,6 +25,7 @@ const Chat: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isConnected, setIsConnected] = useState(false);
+  const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
 
   const usersMetadataCacheRef = useRef(new Set<LoginResponse>());
   const socketRef = useRef<Socket | null>(null);
@@ -138,13 +139,13 @@ const Chat: React.FC = () => {
 
   const onUserClick = async (user: LoginResponse) => {
     if (!userAuthRef.current) return;
-
+    setSelectedUserId(user.id!);
     try {
       setIsLoading(true);
       const response = await axios.get<Room>(`${config.app.backend_url()}/room/user/${user.id}`, {
         headers: { Authorization: `Bearer ${userAuthRef.current.accessToken}` }
       });
-      
+
       setRoom(response.data);
       socketRef.current?.emit(config.socketMethods.enterRoom, response.data._id);
     } catch (err) {
@@ -159,6 +160,17 @@ const Chat: React.FC = () => {
       messagesEndRef.current.scrollIntoView({ behavior: 'smooth', block: 'end' });
     }
   }, [room.messages]);
+
+  // Type guard for users with valid id and email
+  function isValidUser(user: LoginResponse): user is LoginResponse & { id: string; email: string } {
+    return Boolean(user.id && user.email);
+  }
+
+  // Helper to get display name by userId
+  const getUserDisplayName = (userId: string) => {
+    const user = onlineUsers.find(u => u.id === userId);
+    return user?.username || user?.email || 'Unknown User';
+  };
 
   if (isLoading) {
     return (
@@ -339,7 +351,7 @@ const Chat: React.FC = () => {
                     }}
                     className="message-user"
                   >
-                    {Array.from(usersMetadataCacheRef.current).find(u => u.userId === m?.userId)?.email}
+                    {getUserDisplayName(m?.userId)}
                   </Typography>
                   <Typography
                     variant="caption"
@@ -439,9 +451,15 @@ const Chat: React.FC = () => {
           </Box>
         </Box>
         <DividedList 
-          onlineUsers={onlineUsers.map(user => ({ id: user.id, email: user.email }))} 
-          onUserClick={onUserClick}
+          onlineUsers={onlineUsers.filter(isValidUser).map(user => ({ id: user.id, username: user.username, email: user.email }))} 
+          onUserClick={(user) => {
+            const fullUser = onlineUsers.find(u => u.id === user.id);
+            if (fullUser) {
+              onUserClick(fullUser);
+            }
+          }}
           disabled={!isConnected}
+          selectedUserId={selectedUserId}
         />
       </Paper>
     </Box>

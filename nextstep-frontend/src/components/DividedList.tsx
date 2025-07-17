@@ -1,4 +1,3 @@
-import { useState } from 'react';
 import {
   Avatar,
   Box,
@@ -11,19 +10,18 @@ import {
 
 interface User {
   id: string;
+  username?: string;
   email: string;
 }
 
+interface DividedListProps {
+  onlineUsers: { id: string, username?: string, email: string }[];
+  onUserClick: (user: { id: string, username?: string, email: string }) => void;
+  disabled?: boolean;
+  selectedUserId?: string | null;
+}
 
-const DividedList: React.FC<any> = ({ onlineUsers, onUserClick, disabled = false }) => {
-  const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
-
-  const handleUserClick = (user: User) => {
-    if (disabled) return;
-    setSelectedUserId(user.id);
-    onUserClick(user);
-  };
-
+const DividedList: React.FC<DividedListProps> = ({ onlineUsers, onUserClick, disabled = false, selectedUserId }) => {
   return (
     <Box sx={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'center', gap: 4 }}>
       <List
@@ -43,16 +41,17 @@ const DividedList: React.FC<any> = ({ onlineUsers, onUserClick, disabled = false
           <div key={user.id}>
             {index !== 0 && <Divider />}
             <ListItemButton
-              onClick={() => handleUserClick(user)}
+              className={`divided-list-item${selectedUserId === user.id ? ' selected' : ''}`}
+              onClick={() => !disabled && onUserClick(user)}
               disabled={disabled}
               sx={{
                 py: 1.5,
                 px: 2,
-                backgroundColor: user.id === selectedUserId ? 'primary.main' : 'transparent',
-                color: user.id === selectedUserId ? 'primary.contrastText' : 'text.primary',
+                backgroundColor: selectedUserId === user.id ? 'primary.main' : 'transparent',
+                color: selectedUserId === user.id ? 'primary.contrastText' : 'text.primary',
                 transition: 'all 0.3s ease',
                 '&:hover': {
-                  backgroundColor: user.id === selectedUserId ? 'primary.dark' : 'action.hover',
+                  backgroundColor: selectedUserId === user.id ? 'primary.dark' : 'action.hover',
                   transform: 'translateX(4px)',
                 },
                 '&.Mui-disabled': {
@@ -75,10 +74,10 @@ const DividedList: React.FC<any> = ({ onlineUsers, onUserClick, disabled = false
                 />
               </ListItemAvatar>
               <ListItemText
-                primary={user.email}
+                primary={`${user.username} (${user.email})`}
                 primaryTypographyProps={{
                   fontSize: '0.875rem',
-                  fontWeight: user.id === selectedUserId ? 600 : 400,
+                  fontWeight: selectedUserId === user.id ? 600 : 400,
                 }}
                 sx={{
                   transition: 'all 0.3s ease',
