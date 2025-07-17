@@ -23,7 +23,6 @@ export const config = {
         resumeMaxSize: () => 5 * 1024 * 1024 // Max file size: 5MB
     },
     assets: {
-        resumeTemplatesDirectoryPath: () => 'assets/resume-templates',
         jobQuizzesJobHuntHtmlPath: () => 'assets/job-quizzes/jobhunt/מאגר שאלות מראיונות עבודה.html',
         jobQuizzesTheWorkerHtmlDirectoryPath: () => 'assets/job-quizzes/theworker/interviews',
     },

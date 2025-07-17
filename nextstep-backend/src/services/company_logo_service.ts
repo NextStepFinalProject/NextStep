@@ -1,9 +1,19 @@
 import axios from 'axios';
 
-export const getCompanyLogo = async (companyName: string): Promise<string | null> => {
+export const getCompanyLogo = async (companyName: string, extensions: string[] = ['.com', '.co.il']): Promise<string | null> => {
     try {
-        const response = await axios.get(`https://logo.clearbit.com/${encodeURIComponent(companyName)}.com`);
-        return response.status === 200 ? response.config.url ?? null : null;
+        for (const extension of extensions) {
+            try {
+                const response = await axios.get(`https://logo.clearbit.com/${encodeURIComponent(companyName)}${extension}`);
+                if (response.status === 200) {
+                    return response.config.url!;
+                }
+            } catch (error) {
+                // Continue to next extension if this one fails
+                continue;
+            }
+        }
+        return null;
     } catch (error) {
         if (error instanceof Error) {
             console.error(`Failed to fetch logo for company: ${companyName}`, error.message);

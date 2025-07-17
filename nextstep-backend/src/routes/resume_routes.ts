@@ -12,10 +12,6 @@ router.get('/score/:filename', Resume.getResumeScore);
 
 router.get('/streamScore/:filename', (req: Request, res: Response) => Resume.getStreamResumeScore(req as CustomRequest, res));
 
-router.get('/templates', Resume.getTemplates);
-
-router.post('/generate', Resume.generateResume);
-
 router.post('/parseResume',  upload.single('resume'), (req: Request, res: Response) => Resume.parseResume(req as CustomRequest, res));
 
 // TODO - Use it in the frontend after the parse and upload resume

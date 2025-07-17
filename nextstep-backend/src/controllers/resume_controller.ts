@@ -2,8 +2,7 @@ import { Request, Response } from 'express';
 import { config } from '../config/config';
 import fs from 'fs';
 import path from 'path';
-import { scoreResume, streamScoreResume, getResumeTemplates,
-    generateImprovedResume, parseResumeFields,
+import { scoreResume, streamScoreResume, parseResumeFields,
     saveParsedResume, getResumeByOwner, updateResume } from '../services/resume_service';
 import multer from 'multer';
 import {getResumeBuffer, resumeExists} from '../services/resources_service';
@@ -105,30 +104,6 @@ const getStreamResumeScore = async (req: CustomRequest, res: Response) => {
     }
 };
 
-const getTemplates = async (req: Request, res: Response) => {
-    try {
-        const templates = await getResumeTemplates();
-        return res.status(200).json(templates);
-    } catch (error) {
-        handleError(error, res);
-    }
-};
-
-const generateResume = async (req: Request, res: Response) => {
-    try {
-        const { feedback, jobDescription, templateName } = req.body;
-        
-        if (!feedback || !jobDescription || !templateName) {
-            return res.status(400).json({ error: 'Missing required fields' });
-        }
-
-        const result = await generateImprovedResume(feedback, jobDescription, templateName);
-        return res.status(200).json(result);
-    } catch (error) {
-        handleError(error, res);
-    }
-};
-
 
 const parseResume = async (req: CustomRequest, res: Response) => {
     try {
@@ -182,5 +157,4 @@ const getResumeData = async (req: CustomRequest, res: Response) => {
 };
 
 export default { parseResume, getResumeScore,
-    getStreamResumeScore, getTemplates,
-    generateResume, getResumeData, getResume };
+    getStreamResumeScore, getResumeData, getResume };
