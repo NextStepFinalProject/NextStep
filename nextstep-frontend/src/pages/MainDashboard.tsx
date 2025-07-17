@@ -26,7 +26,6 @@ import {
 } from "@mui/material"
 import {
   GitHub,
-  LinkedIn,
   Person as PersonIcon,
   Work as WorkIcon,
   Build as BuildIcon,

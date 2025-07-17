@@ -1,9 +1,7 @@
-"use client"
-
 import type React from "react"
 import { useState, useRef, useEffect } from "react"
 import { Box, Button, CircularProgress, Typography, TextField } from "@mui/material"
-import { styled, useTheme } from "@mui/material/styles"
+import { styled } from "@mui/material/styles"
 import { config } from "../config"
 import api from "../serverApi"
 import ReactMarkdown from "react-markdown"
@@ -105,7 +103,6 @@ const Resume: React.FC = () => {
   const [error, setError] = useState("")
   const fileInputRef = useRef<HTMLInputElement>(null)
   const feedbackEndRef = useRef<HTMLDivElement>(null)
-  const theme = useTheme()
   const [fileName, setFileName] = useState<string>("")
 
   useEffect(() => {
