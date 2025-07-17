@@ -1,6 +1,6 @@
 import {PostModel } from '../models/posts_model';
 import { IPost, PostData } from 'types/post_types';
-import {ClientSession, Document} from 'mongoose';
+import {Document} from 'mongoose';
 import * as mongoose from 'mongoose';
 import * as commentsService from './comments_service';
 import * as usersService from './users_service';
@@ -9,7 +9,8 @@ import likeModel from "../models/like_model";
 import {CommentData} from "types/comment_types";
 import {UserData} from 'types/user_types';
 import * as chatService from './chat_api_service';
-import {config} from "../config/config";
+import {config} from "../config/config"
+
 
 
 const postToPostData = async (post: Document<unknown, {}, IPost> & IPost): Promise<PostData> => {
