@@ -29,7 +29,7 @@ const userSchema: Schema = new Schema({
 }, { timestamps: true, strict: true, versionKey: false });
 
 userSchema.set('toJSON', {
-    transform: (doc, ret): UserData => {
+    transform: (doc: mongoose.Document, ret: Record<string, any>): UserData => {
         return {
             id: ret._id.toString(),
             username: ret.username as string,
