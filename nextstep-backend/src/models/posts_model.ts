@@ -25,13 +25,12 @@ const postSchema: Schema = new mongoose.Schema({
 postSchema.set('toJSON', {
     transform: (doc: Document, ret: Record<string, any>): PostData => {
         return {
-            id: ret._id,
+            id: ret._id.toString(),
             title: ret.title,
             content: ret.content,
             owner: ret.owner._id.toString(),
-            createdAt: ret.createdAt,
-            updatedAt: ret.updatedAt
-
+            createdAt: ret.createdAt ? ret.createdAt.toISOString() : undefined,
+            updatedAt: ret.updatedAt ? ret.updatedAt.toISOString() : undefined
         };
     }
 });
