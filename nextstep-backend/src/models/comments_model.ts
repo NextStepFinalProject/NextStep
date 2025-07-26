@@ -30,12 +30,12 @@ const commentSchema: Schema = new mongoose.Schema({
 commentSchema.set('toJSON', {
     transform: (doc: Document, ret: Record<string, any>) => {
         return {
-            id: ret._id,
-            postId: ret.postId,
-            content: ret.content,
-            owner: ret.owner,
-            createdAt: ret.createdAt,
-            updatedAt: ret.updatedAt,
+            id: ret._id.toString(),
+            postId: ret.postId.toString(),
+            content: ret.content as string,
+            owner: ret.owner.toString(),
+            createdAt: ret.createdAt ? ret.createdAt.toISOString() : undefined,
+            updatedAt: ret.updatedAt ? ret.updatedAt.toISOString() : undefined,
         };
     }
 });

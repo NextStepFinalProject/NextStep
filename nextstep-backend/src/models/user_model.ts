@@ -29,15 +29,15 @@ const userSchema: Schema = new Schema({
 }, { timestamps: true, strict: true, versionKey: false });
 
 userSchema.set('toJSON', {
-    transform: (doc, ret): UserData => {
+    transform: (doc: mongoose.Document, ret: Record<string, any>): UserData => {
         return {
-            id: ret._id,
-            username: ret.username,
-            email: ret.email,
-            password: ret.password,
-            imageFilename: ret?.imageFilename,
-            createdAt: ret.createdAt,
-            updatedAt: ret.updatedAt
+            id: ret._id.toString(),
+            username: ret.username as string,
+            email: ret.email as string,
+            password: ret.password as string,
+            imageFilename: ret?.imageFilename as string | undefined,
+            createdAt: ret.createdAt ? ret.createdAt.toISOString() : undefined,
+            updatedAt: ret.updatedAt ? ret.updatedAt.toISOString() : undefined
         };
     }
 });

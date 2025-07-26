@@ -46,10 +46,10 @@ const companySchema: Schema = new mongoose.Schema({
 companySchema.set('toJSON', {
     transform: (doc: Document, ret: Record<string, any>) => {
         return {
-            id: ret._id,
-            company: ret.company,
-            company_he: ret.company_he,
-            tags: ret.tags,
+            id: ret._id.toString(),
+            company: ret.company as string,
+            company_he: ret.company_he as string,
+            tags: ret.tags as string[],
             quizzes: ret.quizzes,
         }
     }
