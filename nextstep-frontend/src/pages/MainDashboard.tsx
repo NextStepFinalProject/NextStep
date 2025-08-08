@@ -254,7 +254,7 @@ const MainDashboard: React.FC = () => {
       setResumeExperience(aiExp)
       setCurrentResumeId(uploadedResume)
       localStorage.setItem("lastResumeId", uploadedResume)
-      updateUserProfile(aiAbout, aiSkills, aiRole);
+      updateUserProfile(aiAbout, aiSkills, selectedRole);
       setHasResumeChanged(false)
     } catch (err) {
       console.error(err)
@@ -281,7 +281,7 @@ const MainDashboard: React.FC = () => {
       setResumeExperience(aiExp)
       localStorage.setItem("lastResumeId", currentResumeId)
       setHasResumeChanged(false)
-      updateUserProfile(aiAbout, aiSkills, aiRole);
+      updateUserProfile(aiAbout, aiSkills, selectedRole);
     } catch (err) {
       console.error(err)
       alert("Failed to sync with resume.")
