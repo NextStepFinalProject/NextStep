@@ -38,6 +38,14 @@ export const getUserById = async (id: string): Promise<UserData | null> => {
 };
 
 
+export const updateUserProfile = async (userId: string, aboutMe: string, skills: string[], selectedRole: string) => {
+    const updatedUser = await UserModel.findByIdAndUpdate(
+        userId,
+        { aboutMe, skills, selectedRole },
+        { new: true, runValidators: true }
+    );
+    return updatedUser ? userToUserData(updatedUser) : null;
+};
 
 export const updateUserById = async (id: string, updateData: Partial<UserData>): Promise<UserData | null> => {
     if (updateData.password) {

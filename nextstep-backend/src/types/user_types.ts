@@ -17,6 +17,9 @@ export interface UserData {
     imageFilename?: string;
     createdAt?: string,
     updatedAt?: string,
+    aboutMe?: string;
+    skills?: string[];
+    selectedRole?: string;
 }
 
 

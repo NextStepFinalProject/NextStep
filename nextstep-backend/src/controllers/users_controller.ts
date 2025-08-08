@@ -36,6 +36,25 @@ export const getUserById = async (req: Request, res: Response): Promise<void> =>
 }
 
 
+export const updateUserProfile = async (req: Request, res: Response) => {
+    const { aboutMe, skills, selectedRole } = req.body;
+
+    if (!req.params.id) {
+        return res.status(400).json({ error: 'User ID is required' });
+    }
+
+    try {
+        const updatedUser = await usersService.updateUserProfile(req.params.id, aboutMe, skills, selectedRole);
+        if (!updatedUser) {
+            return res.status(404).json({ error: 'User not found' });
+        }
+
+        res.status(200).json(updatedUser);
+    } catch (error) {
+        handleError(error, res);
+    }
+};
+
 export const updateUserById = async (req: Request, res: Response): Promise<void> => {
     try {
         const user = await usersService.updateUserById(req.params.id, req.body);

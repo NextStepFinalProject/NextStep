@@ -23,6 +23,18 @@ const userSchema: Schema = new Schema({
         type: Date,
         default: Date.now
     },
+    aboutMe: {
+        type: String,
+        default: ""
+    },
+    skills: {
+        type: [String],
+        default: []
+    },
+    selectedRole: {
+        type: String,
+        default: ""
+    },
     authProvider: {
         type: String
     }
@@ -37,7 +49,10 @@ userSchema.set('toJSON', {
             password: ret.password,
             imageFilename: ret?.imageFilename,
             createdAt: ret.createdAt,
-            updatedAt: ret.updatedAt
+            updatedAt: ret.updatedAt,
+            aboutMe: ret?.aboutMe,
+            skills: ret?.skills,
+            selectedRole: ret?.selectedRole,
         };
     }
 });

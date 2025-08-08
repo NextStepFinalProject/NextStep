@@ -76,10 +76,10 @@ const skillsList = [
 
 const MainDashboard: React.FC = () => {
   const theme = useTheme()
-  const [aboutMe, setAboutMe] = useState(() => localStorage.getItem("aboutMe") || "")
-  const [skills, setSkills] = useState<string[]>(() => JSON.parse(localStorage.getItem("skills") || "[]"))
+  const [aboutMe, setAboutMe] = useState("")
+  const [skills, setSkills] =  useState<string[]>([]) 
   const [newSkill, setNewSkill] = useState("")
-  const [selectedRole, setSelectedRole] = useState(() => localStorage.getItem("selectedRole") || "")
+  const [selectedRole, setSelectedRole] = useState("") 
   const [repos, setRepos] = useState<{ id: number; name: string; html_url: string }[]>([])
   const [useOAuth, setUseOAuth] = useState(true)
   const [showAuthOptions, setShowAuthOptions] = useState(false)
@@ -114,17 +114,6 @@ const MainDashboard: React.FC = () => {
     setShowJobRecommendations(!showJobRecommendations)
   }
 
-  // Persist to localStorage
-  useEffect(() => {
-    localStorage.setItem("aboutMe", aboutMe)
-  }, [aboutMe])
-  useEffect(() => {
-    localStorage.setItem("skills", JSON.stringify(skills))
-  }, [skills])
-  useEffect(() => {
-    localStorage.setItem("selectedRole", selectedRole)
-  }, [selectedRole])
-
   // Handle GitHub OAuth callback
   useEffect(() => {
     const code = new URLSearchParams(window.location.search).get("code")
@@ -146,6 +135,13 @@ const MainDashboard: React.FC = () => {
   useEffect(() => {
     const fetchResumeData = async () => {
       try {
+        const user_data = await api.get("/user/" + getUserAuth().userId);
+        if (user_data.data.aboutMe) {
+          setAboutMe(user_data.data.aboutMe || "")
+          setSkills(user_data.data.skills || [])
+          setSelectedRole(user_data.data.selectedRole || "")
+        }
+
         const response = await api.get("/resume")
         if (response.data && response.data.parsedData) {
           const parsedData = response.data.parsedData
@@ -184,11 +180,13 @@ const MainDashboard: React.FC = () => {
     const trimmed = skill.trim()
     if (!trimmed || skills.includes(trimmed)) return
     setSkills((prev) => [trimmed, ...prev])
+    setIsProfileDirty(true);
     setNewSkill("")
   }
 
   const handleDeleteSkill = (skillToDelete: string) => {
     setSkills((prev) => prev.filter((s) => s !== skillToDelete))
+    setIsProfileDirty(true);
   }
 
   const handleGitHubConnect = async () => {
@@ -256,6 +254,7 @@ const MainDashboard: React.FC = () => {
       setResumeExperience(aiExp)
       setCurrentResumeId(uploadedResume)
       localStorage.setItem("lastResumeId", uploadedResume)
+      updateUserProfile(aiAbout, aiSkills, aiRole);
       setHasResumeChanged(false)
     } catch (err) {
       console.error(err)
@@ -282,6 +281,7 @@ const MainDashboard: React.FC = () => {
       setResumeExperience(aiExp)
       localStorage.setItem("lastResumeId", currentResumeId)
       setHasResumeChanged(false)
+      updateUserProfile(aiAbout, aiSkills, aiRole);
     } catch (err) {
       console.error(err)
       alert("Failed to sync with resume.")
@@ -333,7 +333,51 @@ const MainDashboard: React.FC = () => {
 
   const handleRemoveAllSkills = () => {
     setSkills([])
+    setIsProfileDirty(true);
   }
+
+  const [isProfileDirty, setIsProfileDirty] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+
+
+  useEffect(() => {
+    setIsProfileDirty(true);
+  }, [aboutMe, skills, selectedRole]);
+
+  const handleAboutMeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setAboutMe(e.target.value);
+    setIsProfileDirty(true);
+  };
+
+  const handleSelectedRoleChange = (_: any, val: string | null) => {
+    setSelectedRole(val || "");
+    setIsProfileDirty(true);
+  };
+
+  const updateUserProfile = async (newAboutMe?: string, newSkills?: string, newSelectedRole?: string) => {
+    setIsSaving(true);
+    try {
+      await api.put(`/user/${getUserAuth().userId}`, {
+        aboutMe: newAboutMe ? newAboutMe : aboutMe,
+        skills: newSkills ? newSkills : skills,
+        selectedRole: newSelectedRole ? newSelectedRole : selectedRole,
+      }, {
+        headers: {
+          Authorization: `Bearer ${getUserAuth().accessToken}`,
+        },
+      });
+      // // Optionally, update localStorage or context with new values
+      // localStorage.setItem("aboutMe", aboutMe);
+      // localStorage.setItem("skills", JSON.stringify(skills));
+      // localStorage.setItem("selectedRole", selectedRole);
+      // setIsProfileDirty(false);
+    } catch (error) {
+      console.error("Failed to update profile:", error);
+      alert("Failed to update profile. Please try again.");
+    } finally {
+      setIsSaving(false);
+    }
+  };
 
   return (
     <Box sx={{ minHeight: "100vh", py: 4 }}>
@@ -560,7 +604,7 @@ const MainDashboard: React.FC = () => {
                       variant="outlined"
                       placeholder="Describe your background, experience, and career aspirations..."
                       value={aboutMe}
-                      onChange={(e) => setAboutMe(e.target.value)}
+                      onChange={handleAboutMeChange}
                       sx={{
                         "& .MuiOutlinedInput-root": {
                           borderRadius: 3,
@@ -756,7 +800,7 @@ const MainDashboard: React.FC = () => {
                           freeSolo
                           options={roles}
                           value={selectedRole}
-                          onInputChange={(_, val) => setSelectedRole(val)}
+                          onInputChange={handleSelectedRoleChange}
                           renderInput={(params) => (
                             <TextField
                               {...params}
@@ -1090,6 +1134,17 @@ const MainDashboard: React.FC = () => {
             </Stack>
           </Grid>
         </Grid>
+        {isProfileDirty && (
+          <Button
+            variant="contained"
+            color="primary"
+            onClick={updateUserProfile}
+            disabled={isSaving}
+            sx={{ mt: 2 }}
+          >
+            {isSaving ? <CircularProgress size={24} /> : "Save Changes"}
+          </Button>
+        )}
       </Container>
     </Box>
   )

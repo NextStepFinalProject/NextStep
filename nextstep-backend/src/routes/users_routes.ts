@@ -13,7 +13,7 @@ router.delete('/:id', validateUserId, handleValidationErrors, (req: Request, res
 
 router.patch('/:id', validateUserId, validateUserDataOptional, handleValidationErrors, (req: Request, res: Response) => usersController.updateUserById(req, res));
 
-// router.post('/', validateUserRegister, handleValidationErrors, (req: Request, res: Response) => usersController.createUser(req, res));
+router.put('/:id', validateUserId, handleValidationErrors, (req: Request, res: Response) => usersController.updateUserProfile(req, res));
 
 
 export default router;
