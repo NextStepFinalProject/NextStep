@@ -619,11 +619,18 @@ Content Details:
 }
 \`\`\`
 
-Return ONLY the JSON, without any other text, so I could easily retrieve it.
+Return ONLY the JSON, without any other text, so I could easily retrieve it. As A correct json format.
 `;
 
   const aiResponse = await chatWithAI(GEN_QUIZ_SYSTEM_PROMPT, [prompt]);
-  const parsed = JSON.parse(aiResponse.trim().replace("```json", "").replace("```", "")) as any;
+
+  const cleanedResponse = aiResponse
+  .trim()
+  .replace(/^```json[\s\n]*/, "") // Remove "json" and any whitespace after it
+  .replace(/^```/, "") // Remove leading ```
+  .replace(/```$/, ""); // Remove trailing ```
+
+  const parsed = JSON.parse(cleanedResponse) as any;
 
   parsed.specialty_tags = parsed.specialty_tags || [];
 

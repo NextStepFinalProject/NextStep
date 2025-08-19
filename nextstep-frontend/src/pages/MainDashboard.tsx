@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from 'react';
+import type React from "react"
+import { useState, useEffect } from "react"
 import {
   Container,
   Grid,
@@ -9,7 +10,6 @@ import {
   Chip,
   Stack,
   Avatar,
-  Divider,
   Autocomplete,
   FormControl,
   InputLabel,
@@ -17,452 +17,1137 @@ import {
   MenuItem,
   CircularProgress,
   IconButton,
-  Tooltip
-} from '@mui/material';
+  Tooltip,
+  useTheme,
+  alpha,
+  Card,
+  CardContent,
+  LinearProgress,
+  Alert,
+} from "@mui/material"
 import {
   GitHub,
-  LinkedIn,
   Person as PersonIcon,
   Work as WorkIcon,
   Build as BuildIcon,
-  DocumentScannerTwoTone,
   LightbulbSharp,
-  Grading
-} from '@mui/icons-material';
-import {
-  connectToGitHub,
-  initiateGitHubOAuth,
-  fetchRepoLanguages,
-  handleGitHubOAuth
-} from '../handlers/githubAuth';
-import api from '../serverApi';
-import LinkedinJobs from '../components/LinkedinJobs';
+  Grading,
+  Add as AddIcon,
+  TrendingUp,
+  Star,
+  Code,
+  Business,
+  CheckCircle,
+  InsertDriveFile,
+  Delete,
+  Sync,
+} from "@mui/icons-material"
+import { connectToGitHub, initiateGitHubOAuth, fetchRepoLanguages, handleGitHubOAuth } from "../handlers/githubAuth"
+import api from "../serverApi"
+import LinkedinJobs from "../components/LinkedinJobs"
+import { motion } from "framer-motion"
+import { getUserAuth } from "../handlers/userAuth"
 
 const roles = [
-  'Software Engineer', 'Frontend Developer', 'Backend Developer',
-  'Full Stack Developer', 'DevOps Engineer', 'Product Manager', 'UI/UX Designer'
-];
+  "Software Engineer",
+  "Frontend Developer",
+  "Backend Developer",
+  "Full Stack Developer",
+  "DevOps Engineer",
+  "Product Manager",
+  "UI/UX Designer",
+]
 
 const skillsList = [
-  'React', 'JavaScript', 'TypeScript', 'Python', 'Java', 'Node.js',
-  'Express', 'MongoDB', 'AWS', 'Docker', 'Kubernetes', 'Git', 'Agile'
-];
+  "React",
+  "JavaScript",
+  "TypeScript",
+  "Python",
+  "Java",
+  "Node.js",
+  "Express",
+  "MongoDB",
+  "AWS",
+  "Docker",
+  "Kubernetes",
+  "Git",
+  "Agile",
+]
 
 const MainDashboard: React.FC = () => {
-  const [aboutMe, setAboutMe] = useState(() => localStorage.getItem('aboutMe') || '');
-  const [skills, setSkills] = useState<string[]>(() => JSON.parse(localStorage.getItem('skills') || '[]'));
-  const [newSkill, setNewSkill] = useState('');
-  const [selectedRole, setSelectedRole] = useState(() => localStorage.getItem('selectedRole') || '');
-  const [repos, setRepos] = useState<{ id: number; name: string; html_url: string }[]>([]);
-  const [useOAuth, setUseOAuth] = useState(true);
-  const [showAuthOptions, setShowAuthOptions] = useState(false);
+  const theme = useTheme()
+  const [aboutMe, setAboutMe] = useState("")
+  const [skills, setSkills] =  useState<string[]>([]) 
+  const [newSkill, setNewSkill] = useState("")
+  const [selectedRole, setSelectedRole] = useState("") 
+  const [repos, setRepos] = useState<{ id: number; name: string; html_url: string }[]>([])
+  const [useOAuth, setUseOAuth] = useState(true)
+  const [showAuthOptions, setShowAuthOptions] = useState(false)
 
   // AI-resume state
-  const [parsing, setParsing] = useState(false);
-  const [resumeExperience, setResumeExperience] = useState<string[]>([]);
-  const [roleMatch, setRoleMatch] = useState<string>('');
-  const [resumeFileName, setResumeFileName] = useState<string>('');
+  const [parsing, setParsing] = useState(false)
+  const [syncing, setSyncing] = useState(false)
+  const [resumeExperience, setResumeExperience] = useState<string[]>([])
+  const [roleMatch, setRoleMatch] = useState<string>("")
+  const [resumeFileName, setResumeFileName] = useState<string>("")
+  const [currentResumeId, setCurrentResumeId] = useState<string>("")
+  const [hasResumeChanged, setHasResumeChanged] = useState(false)
+
+  // Profile image state
+  const [image, setImage] = useState<string | null>(null)
 
   // Skills toggle
-  const [showAllSkills, setShowAllSkills] = useState(false);
-  const SKILL_DISPLAY_LIMIT = 6;
-  const shouldShowToggle = skills.length > SKILL_DISPLAY_LIMIT;
+  const [showAllSkills, setShowAllSkills] = useState(false)
+  const SKILL_DISPLAY_LIMIT = 4
+  const shouldShowToggle = skills.length > SKILL_DISPLAY_LIMIT
 
   // LinkedIn jobs state
-  const [jobs, setJobs] = useState<{ position: string; company: string; location: string; url: string, companyLogo?: string, jobUrl?: string }[]>([]);
-  const [loadingJobs, setLoadingJobs] = useState(false); // New state for loading jobs
+  const [jobs, setJobs] = useState<
+    { position: string; company: string; location: string; url: string; companyLogo?: string; jobUrl?: string }[]
+  >([])
+  const [loadingJobs, setLoadingJobs] = useState(false)
 
   // Job Recommendations toggle
-  const [showJobRecommendations, setShowJobRecommendations] = useState(false); // New state for toggle
+  const [showJobRecommendations, setShowJobRecommendations] = useState(false)
 
   const toggleJobRecommendations = () => {
-    setShowJobRecommendations(!showJobRecommendations);
-  };
-
-  // Persist to localStorage
-  useEffect(() => { localStorage.setItem('aboutMe', aboutMe); }, [aboutMe]);
-  useEffect(() => { localStorage.setItem('skills', JSON.stringify(skills)); }, [skills]);
-  useEffect(() => { localStorage.setItem('selectedRole', selectedRole); }, [selectedRole]);
+    setShowJobRecommendations(!showJobRecommendations)
+  }
 
   // Handle GitHub OAuth callback
   useEffect(() => {
-    const code = new URLSearchParams(window.location.search).get('code');
+    const code = new URLSearchParams(window.location.search).get("code")
     if (code) {
-      (async () => {
+      ;(async () => {
         try {
-          const username = await handleGitHubOAuth(code);
-          const fetched = await connectToGitHub(username);
-          setRepos(fetched);
-          mergeRepoLanguages(fetched);
+          const username = await handleGitHubOAuth(code)
+          const fetched = await connectToGitHub(username)
+          setRepos(fetched)
+          mergeRepoLanguages(fetched)
         } catch (e) {
-          console.error(e);
+          console.error(e)
         }
-      })();
+      })()
     }
-  }, []);
+  }, [])
+
+  // Fetch resume data on mount and check for changes
+  useEffect(() => {
+    const fetchResumeData = async () => {
+      try {
+        const user_data = await api.get("/user/" + getUserAuth().userId);
+        if (user_data.data.aboutMe) {
+          setAboutMe(user_data.data.aboutMe || "")
+          setSkills(user_data.data.skills || [])
+          setSelectedRole(user_data.data.selectedRole || "")
+        }
+
+        const response = await api.get("/resume")
+        if (response.data && response.data.parsedData) {
+          const parsedData = response.data.parsedData
+          const storedResumeId = localStorage.getItem("lastResumeId")
+          const currentId = parsedData.id || response.data.rawContentLink
+
+          setResumeFileName(parsedData.fileName || "")
+          setResumeExperience(parsedData.experience || [])
+          setRoleMatch(parsedData.roleMatch || "")
+          setCurrentResumeId(currentId)
+
+          // Check if resume has changed
+          if (storedResumeId && storedResumeId !== currentId) {
+            setHasResumeChanged(true)
+          } else {
+            localStorage.setItem("lastResumeId", currentId)
+          }
+        }
+      } catch (err) {
+        console.error("Failed to fetch resume data:", err)
+      }
+    }
+    fetchResumeData()
+  }, [])
 
   const mergeRepoLanguages = async (fetchedRepos: typeof repos) => {
-    const langSet = new Set(skills);
+    const langSet = new Set(skills)
     for (const repo of fetchedRepos) {
-      const langs = await fetchRepoLanguages(repo.html_url);
-      Object.keys(langs).forEach(lang => langSet.add(lang));
+      const langs = await fetchRepoLanguages(repo.html_url)
+      Object.keys(langs).forEach((lang) => langSet.add(lang))
     }
-    setSkills(Array.from(langSet));
-  };
+    setSkills(Array.from(langSet))
+  }
 
   const handleAddSkill = (skill: string) => {
-    const trimmed = skill.trim();
-    if (!trimmed || skills.includes(trimmed)) return;
-    setSkills(prev => [trimmed, ...prev]);
-    setNewSkill('');
-  };
+    const trimmed = skill.trim()
+    if (!trimmed || skills.includes(trimmed)) return
+    setSkills((prev) => [trimmed, ...prev])
+    setIsProfileDirty(true);
+    setNewSkill("")
+  }
 
   const handleDeleteSkill = (skillToDelete: string) => {
-    setSkills(prev => prev.filter(s => s !== skillToDelete));
-  };
+    setSkills((prev) => prev.filter((s) => s !== skillToDelete))
+    setIsProfileDirty(true);
+  }
 
   const handleGitHubConnect = async () => {
-    if (!showAuthOptions) return setShowAuthOptions(true);
+    if (!showAuthOptions) return setShowAuthOptions(true)
     try {
-      if (useOAuth) initiateGitHubOAuth();
+      if (useOAuth) initiateGitHubOAuth()
       else {
-        const username = prompt('Enter GitHub username:');
-        if (!username) return alert('Username required');
-        const fetched = await connectToGitHub(username);
-        setRepos(fetched);
-        mergeRepoLanguages(fetched);
+        const username = prompt("Enter GitHub username:")
+        if (!username) return alert("Username required")
+        const fetched = await connectToGitHub(username)
+        setRepos(fetched)
+        mergeRepoLanguages(fetched)
       }
     } catch (e) {
-      console.error(e);
+      console.error(e)
     } finally {
-      setShowAuthOptions(false);
+      setShowAuthOptions(false)
     }
-  };
+  }
+
+  useEffect(() => {
+    const fetchProfileImage = async () => {
+      try {
+        const response = await api.get(`/resource/image/${getUserAuth().imageFilename}`, {
+          responseType: "blob",
+        })
+        const imageUrl = URL.createObjectURL(response.data as Blob)
+        setImage(imageUrl)
+      } catch (error) {
+        console.log("Error fetching profile image.")
+        setImage(null)
+      }
+    }
+
+    getUserAuth().imageFilename && fetchProfileImage()
+  }, [])
 
   // Upload & parse resume
   const handleResumeUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    setResumeFileName(file.name);
-    setParsing(true);
-    const form = new FormData();
-    form.append('resume', file);
-    try {
-      const res = await api.post('/resume/parseResume', form, {
-        headers: { 'Content-Type': 'multipart/form-data' }
-      });
-      const { aboutMe: aiAbout, skills: aiSkills, roleMatch: aiRole, experience: aiExp } = res.data;
-      setAboutMe(aiAbout);
-      setSkills(aiSkills);
-      setRoleMatch(aiRole);
-      setResumeExperience(aiExp);
-    } catch (err) {
-      console.error(err);
-      alert('Failed to parse resume.');
-    } finally {
-      setParsing(false);
+    const uploadResume = async (formData: FormData) => {
+      const response = await api.post("/resource/resume", formData, {
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
+      })
+      return response.data
     }
-  };
+
+    const file = e.target.files?.[0]
+    if (!file) return
+    setResumeFileName(file.name)
+    setParsing(true)
+    const form = new FormData()
+    form.append("file", file)
+    try {
+      const uploadedResume = await uploadResume(form)
+      const res = await api.post("/resume/parseResume", {
+        resumefileName: uploadedResume,
+        originfilename: file.name,
+      })
+      const { aboutMe: aiAbout, skills: aiSkills, roleMatch: aiRole, experience: aiExp } = res.data
+      setAboutMe(aiAbout)
+      setSkills(aiSkills)
+      setRoleMatch(aiRole)
+      setResumeExperience(aiExp)
+      setCurrentResumeId(uploadedResume)
+      localStorage.setItem("lastResumeId", uploadedResume)
+      updateUserProfile(aiAbout, aiSkills, selectedRole);
+      setHasResumeChanged(false)
+    } catch (err) {
+      console.error(err)
+      alert("Failed to parse resume.")
+    } finally {
+      setParsing(false)
+    }
+  }
+
+  // Sync with new resume
+  const handleSyncWithNewResume = async () => {
+    if (!currentResumeId) return
+
+    setSyncing(true)
+    try {
+      const res = await api.post("/resume/parseResume", {
+        resumefileName: currentResumeId,
+        originfilename: resumeFileName,
+      })
+      const { aboutMe: aiAbout, skills: aiSkills, roleMatch: aiRole, experience: aiExp } = res.data
+      setAboutMe(aiAbout)
+      setSkills(aiSkills)
+      setRoleMatch(aiRole)
+      setResumeExperience(aiExp)
+      localStorage.setItem("lastResumeId", currentResumeId)
+      setHasResumeChanged(false)
+      updateUserProfile(aiAbout, aiSkills, selectedRole);
+    } catch (err) {
+      console.error(err)
+      alert("Failed to sync with resume.")
+    } finally {
+      setSyncing(false)
+    }
+  }
 
   // Fetch Linkedin Jobs
-  const fetchJobs = async (settings: { location: string; dateSincePosted: string; jobType: string; experienceLevel: string; skills?: string[] }) => {
-    setLoadingJobs(true);
+  const fetchJobs = async (settings: {
+    location: string
+    dateSincePosted: string
+    jobType: string
+    experienceLevel: string
+    skills?: string[]
+  }) => {
+    setLoadingJobs(true)
     try {
-      const response = await api.get('/linkedin-jobs/jobs', {
+      const response = await api.get("/linkedin-jobs/jobs", {
         params: {
-          skills: (settings.skills || skills.slice(0, 3)).join(','), // Use updated skills or default to first three
+          skills: (settings.skills || skills.slice(0, 3)).join(","),
           role: selectedRole,
           location: settings.location,
           dateSincePosted: settings.dateSincePosted,
           jobType: settings.jobType,
           experienceLevel: settings.experienceLevel,
         },
-      });
-      setJobs(response.data);
+      })
+      setJobs(response.data)
     } catch (error) {
-      console.error('Error fetching jobs:', error);
+      console.error("Error fetching jobs:", error)
     } finally {
-      setLoadingJobs(false);
+      setLoadingJobs(false)
+    }
+  }
+
+  // Calculate profile completion
+  const calculateProfileCompletion = () => {
+    let completed = 0
+    const total = 4
+    if (aboutMe.trim()) completed++
+    if (selectedRole.trim()) completed++
+    if (skills.length > 0) completed++
+    if (repos.length > 0) completed++
+    return Math.round((completed / total) * 100)
+  }
+
+  const profileCompletion = calculateProfileCompletion()
+
+  const handleRemoveAllSkills = () => {
+    setSkills([])
+    setIsProfileDirty(true);
+  }
+
+  const [isProfileDirty, setIsProfileDirty] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+
+
+  useEffect(() => {
+    setIsProfileDirty(true);
+  }, [aboutMe, skills, selectedRole]);
+
+  const handleAboutMeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setAboutMe(e.target.value);
+    setIsProfileDirty(true);
+  };
+
+  const handleSelectedRoleChange = (_: any, val: string | null) => {
+    setSelectedRole(val || "");
+    setIsProfileDirty(true);
+  };
+
+  const updateUserProfile = async (newAboutMe?: string, newSkills?: string, newSelectedRole?: string) => {
+    setIsSaving(true);
+    try {
+      await api.put(`/user/${getUserAuth().userId}`, {
+        aboutMe: newAboutMe ? newAboutMe : aboutMe,
+        skills: newSkills ? newSkills : skills,
+        selectedRole: newSelectedRole ? newSelectedRole : selectedRole,
+      }, {
+        headers: {
+          Authorization: `Bearer ${getUserAuth().accessToken}`,
+        },
+      });
+      // // Optionally, update localStorage or context with new values
+      // localStorage.setItem("aboutMe", aboutMe);
+      // localStorage.setItem("skills", JSON.stringify(skills));
+      // localStorage.setItem("selectedRole", selectedRole);
+      // setIsProfileDirty(false);
+    } catch (error) {
+      console.error("Failed to update profile:", error);
+      alert("Failed to update profile. Please try again.");
+    } finally {
+      setIsSaving(false);
     }
   };
 
   return (
-    <Container maxWidth="lg" sx={{ py: 4 }}>
-      <Grid container spacing={4}>
-        {/* Left Column */}
-        <Grid item xs={12} md={7}> {/* Adjusted width */}
-          <Stack spacing={4}>
-            {/* About Me Section */}
-            <Box sx={{ bgcolor: 'background.paper', p: 3, borderRadius: 2, boxShadow: 1 }}>
-              {/* Upload icon & filename above the title, right-aligned */}
-              <Box display="flex" justifyContent="flex-end" mb={1}>
-                <input
-                  accept=".pdf,.docx"
-                  id="upload-resume"
-                  type="file"
-                  hidden
-                  onChange={handleResumeUpload}
-                />
-                <Tooltip title="Upload CV" arrow placement="left">
-                <label htmlFor="upload-resume">
-                  <IconButton 
-                    component="span" 
-                    sx={{ 
-                      p: 0,
-                      color: 'primary.main',
-                      '&:hover': {
-                        color: 'primary.dark',
-                        backgroundColor: 'rgba(25, 118, 210, 0.08)'
-                      }
-                    }}
+    <Box sx={{ minHeight: "100vh", py: 4 }}>
+      <Container maxWidth="xl">
+        {/* Welcome Header */}
+        <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6 }}>
+          <Box sx={{ mb: 6 }}>
+            <Typography
+              variant="h3"
+              sx={{
+                fontWeight: 800,
+                display: "inline",
+                background:
+                  theme.palette.mode === "dark"
+                    ? "linear-gradient(45deg, #60a5fa 30%, #34d399 90%)"
+                    : "linear-gradient(45deg, #3b82f6 30%, #10b981 90%)",
+                backgroundClip: "text",
+                WebkitBackgroundClip: "text",
+                color: "transparent",
+                WebkitTextFillColor: "transparent",
+                mb: 1,
+              }}
+            >
+              NextStep
+            </Typography>
+            <Typography variant="h6" color="text.secondary" sx={{ mb: 3 }}>
+              Your personalized career development dashboard
+            </Typography>
+
+            {/* Resume Change Alert */}
+            {hasResumeChanged && (
+              <Alert
+                severity="info"
+                sx={{ mb: 3 }}
+                action={
+                  <Button
+                    color="inherit"
+                    size="small"
+                    startIcon={syncing ? <CircularProgress size={16} /> : <Sync />}
+                    onClick={handleSyncWithNewResume}
+                    disabled={syncing}
                   >
-                    <DocumentScannerTwoTone />
-                  </IconButton>
-                </label>
-                </Tooltip>
-                
-                {resumeFileName && (
-                  <Typography
-                    variant="caption"
-                    sx={{
-                      ml: 1,
-                      maxWidth: 200,
-                      whiteSpace: 'nowrap',
-                      overflow: 'hidden',
-                      textOverflow: 'ellipsis'
-                    }}
-                  >
-                    {resumeFileName}
+                    {syncing ? "Syncing..." : "Sync Now"}
+                  </Button>
+                }
+              >
+                Your resume has been updated. Click "Sync Now" to update your profile with the latest information.
+              </Alert>
+            )}
+
+            {/* Profile Completion Card */}
+            <Card
+              sx={{
+                background: `linear-gradient(135deg, ${alpha(theme.palette.primary.main, 0.1)}, ${alpha(theme.palette.secondary.main, 0.1)})`,
+                border: `1px solid ${alpha(theme.palette.primary.main, 0.2)}`,
+                backdropFilter: "blur(10px)",
+              }}
+            >
+              <CardContent sx={{ py: 2 }}>
+                <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mb: 1 }}>
+                  <Typography variant="subtitle1" fontWeight={600}>
+                    Profile Completion
                   </Typography>
-                )}
-                {parsing && <CircularProgress size={16} sx={{ ml: 1 }} />}
-              </Box>
-
-              {/* Header */}
-              <Box display="flex" alignItems="center" mb={2}>
-                <PersonIcon fontSize="large" color="primary" sx={{ mr: 1, fillOpacity: '80%' }} />
-                <Typography variant="h6" sx={{ flexGrow: 1 }} align="center">
-                  About Me
-                </Typography>
-              </Box>
-
-              {/* Content */}
-              <TextField
-                fullWidth
-                multiline
-                rows={3}
-                variant="outlined"
-                placeholder="Write about yourself..."
-                value={aboutMe}
-                onChange={e => setAboutMe(e.target.value)}
-              />
-            </Box>
-
-            {/* Desired Role */}
-            <Box sx={{ bgcolor: 'background.paper', p: 3, borderRadius: 2, boxShadow: 1 }}>
-              <Box display="flex" alignItems="center" mb={2}>
-                <WorkIcon fontSize="large" color="inherit" sx={{ mr: 1, color: 'dark' }} />
-                <Typography variant="h6" sx={{ flexGrow: 1 }} align="center">
-                  Desired Role
-                </Typography>
-              </Box>
-              <Autocomplete
-                freeSolo
-                options={roles}
-                value={selectedRole}
-                onInputChange={(_, val) => setSelectedRole(val)}
-                renderInput={params => (
-                  <TextField {...params} variant="outlined" placeholder="Select or type a role" />
-                )}
-              />
-            </Box>
-
-            {/* Skills */}
-            <Box sx={{ bgcolor: 'background.paper', p: 3, borderRadius: 2, boxShadow: 1 }}>
-              <Box display="flex" alignItems="center" mb={2}>
-                <BuildIcon fontSize="large" sx={{ mr: 1, color:"grey" }} />
-                <Typography variant="h6" sx={{ flexGrow: 1 }} align="center">
-                  Skills
-                </Typography>
-              </Box>
-              <Divider sx={{ my: 2 }} />
-              <Stack direction="row" spacing={1} sx={{ flexWrap: 'wrap', mb: 2 }}>
-                {(showAllSkills ? skills : skills.slice(0, SKILL_DISPLAY_LIMIT)).map(skill => (
-                  <Chip key={skill} label={skill} onDelete={() => handleDeleteSkill(skill)} />
-                ))}
-              </Stack>
-              {shouldShowToggle && (
-                <Button size="small" onClick={() => setShowAllSkills(prev => !prev)}>
-                  {showAllSkills ? 'Show Less' : 'Show More'}
-                </Button>
-              )}
-              <Box mt={2} display="flex" gap={2}>
-                <Autocomplete
-                  freeSolo
-                  options={skillsList}
-                  value={newSkill}
-                  onInputChange={(_, val) => setNewSkill(val)}
-                  onChange={(_, val) => val && handleAddSkill(val)}
-                  renderInput={params => (
-                    <TextField
-                      {...params}
-                      label="Add a skill"
-                      onKeyDown={e => e.key === 'Enter' && handleAddSkill(newSkill)}
-                    />
-                  )}
-                  sx={{ flexGrow: 1 }}
-                />
-                <Button variant="contained" onClick={() => handleAddSkill(newSkill)}>
-                  Add
-                </Button>
-              </Box>
-            </Box>
-
-            {/* Suggested Role Match */}
-            {roleMatch && (
-              <Box sx={{ bgcolor: 'background.paper', p: 3, borderRadius: 2, boxShadow: 1 }}>
-                <Box display="flex" alignItems="center" mb={2}>
-                  <LightbulbSharp fontSize="large" sx={{ mr: 1, color: 'orange' }} />
-                  <Typography variant="h6" sx={{ flexGrow: 1 }} align="center">
-                    Suggested Role Match
+                  <Typography variant="h6" color="primary" fontWeight={700}>
+                    {profileCompletion}%
                   </Typography>
                 </Box>
-                <Typography>{roleMatch}</Typography>
-              </Box>
-            )}
-
-            {/* Experience */}
-            {resumeExperience.length > 0 && (
-              <Box sx={{ bgcolor: 'background.paper', p: 3, borderRadius: 2, boxShadow: 1 }}>
-                <Box display="flex" alignItems="center" mb={2}>
-                  <Grading fontSize="large" sx={{ mr: 1, color: 'darkred' }} />
-                  <Typography variant="h6" sx={{ flexGrow: 1 }} align="center">
-                    Experience
-                  </Typography>
-                </Box>
-                <Stack component="ul" spacing={1} sx={{ pl: 2 }}>
-                  {resumeExperience.map((exp, i) => (
-                    <Typography component="li" key={i}>{exp}</Typography>
-                  ))}
-                </Stack>
-              </Box>
-            )}
-          </Stack>
-        </Grid>
-
-        {/* Right Column */}
-        <Grid item xs={12} md={5}>
-          <Box sx={{ bgcolor: 'background.paper', p: 3, borderRadius: 2, boxShadow: 1, textAlign: 'center' }}>
-            <Box display="flex" alignItems="center" justifyContent="center" mb={2}>
-              <Avatar sx={{ width: 64, height: 64, mr: 2 }} />
-              <Typography variant="h6">Connect Accounts</Typography>
-            </Box>
-
-            {showAuthOptions ? (
-              <Box>
-                <FormControl fullWidth sx={{ mb: 2 }}>
-                  <InputLabel>Method</InputLabel>
-                </FormControl>
-                <Select
-                  value={useOAuth ? 'oauth' : 'no-auth'}
-                  label="Method"
-                  onChange={e => setUseOAuth(e.target.value === 'oauth')}
-                >
-                  <MenuItem value="oauth">OAuth</MenuItem>
-                  <MenuItem value="no-auth">Username</MenuItem>
-                </Select>
-                <Button
-                  fullWidth
-                  variant="contained"
-                  startIcon={<GitHub sx={{color:'black'}}/>}
-                  sx={{ my: 1 }}
-                  onClick={handleGitHubConnect}
-                >
-                  Proceed with GitHub
-                </Button>
-                <Button fullWidth variant="outlined" onClick={() => setShowAuthOptions(false)}>
-                  Cancel
-                </Button>
-              </Box>
-            ) : (
-              <Stack spacing={2}>
-                <Button 
-                  variant="contained" 
-                  startIcon={<LinkedIn />} 
-                  fullWidth
+                <LinearProgress
+                  variant="determinate"
+                  value={profileCompletion}
                   sx={{
-                    backgroundColor: '#0077B5',
-                    '&:hover': {
-                      backgroundColor: '#005582',
+                    height: 8,
+                    borderRadius: 4,
+                    backgroundColor: alpha(theme.palette.primary.main, 0.1),
+                    "& .MuiLinearProgress-bar": {
+                      borderRadius: 4,
+                      background: `linear-gradient(90deg, ${theme.palette.primary.main}, ${theme.palette.secondary.main})`,
                     },
-                    transition: 'all 0.3s ease',
-                    boxShadow: '0 2px 4px rgba(0,0,0,0.2)',
-                    '&:active': {
-                      transform: 'scale(0.98)',
-                    }
                   }}
-                >
-                  Connect LinkedIn
-                </Button>
-                <Button
-                  variant="contained"
-                  startIcon={<GitHub />}
-                  fullWidth
-                  onClick={() => setShowAuthOptions(true)}
-                  sx={{
-                    backgroundColor: '#1a1a1a',
-                    color: '#ffffff',
-                    '&:hover': {
-                      backgroundColor: '#000000',
-                    },
-                    transition: 'all 0.3s ease',
-                    boxShadow: '0 2px 4px rgba(0,0,0,0.2)',
-                    '&:active': {
-                      transform: 'scale(0.98)',
-                    }
-                  }}
-                >
-                  Connect GitHub
-                </Button>
-              </Stack>
-            )}
-
-            {repos.length > 0 && (
-              <Box mt={3} textAlign="left">
-                <Typography variant="subtitle1" gutterBottom>
-                  Repositories:
-                </Typography>
-                <Stack spacing={1} sx={{ maxHeight: 150, overflow: 'auto' }}>
-                  {repos.map(repo => (
-                    <Button
-                      key={repo.id}
-                      href={repo.html_url}
-                      target="_blank"
-                      variant="text"
-                      sx={{ justifyContent: 'flex-start', textTransform: 'none' }}
-                    >
-                      {repo.name}
-                    </Button>
-                  ))}
-                </Stack>
-              </Box>
-            )}
+                />
+              </CardContent>
+            </Card>
           </Box>
+        </motion.div>
 
-          {/* Jobs Section */}
-          <LinkedinJobs
-            jobs={jobs}
-            loadingJobs={loadingJobs}
-            fetchJobs={fetchJobs}
-            showJobRecommendations={showJobRecommendations}
-            toggleJobRecommendations={toggleJobRecommendations}
-            skills={skills}
-            selectedRole={selectedRole}
-          />
+        <Grid container spacing={4}>
+          {/* Left Column */}
+          <Grid item xs={12} lg={8}>
+            <Stack spacing={4}>
+              {/* About Me Section */}
+              <motion.div
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ duration: 0.6, delay: 0.1 }}
+              >
+                <Card
+                  sx={{
+                    background: `linear-gradient(145deg, ${alpha(theme.palette.background.paper, 0.9)}, ${alpha(theme.palette.background.paper, 0.7)})`,
+                    backdropFilter: "blur(20px)",
+                    border: `1px solid ${alpha(theme.palette.divider, 0.1)}`,
+                    boxShadow: `0 8px 32px ${alpha(theme.palette.common.black, 0.1)}`,
+                    transition: "all 0.3s ease",
+                    "&:hover": {
+                      transform: "translateY(-4px)",
+                      boxShadow: `0 12px 48px ${alpha(theme.palette.common.black, 0.15)}`,
+                    },
+                  }}
+                >
+                  <CardContent sx={{ p: 4 }}>
+                    {/* Upload Section */}
+                    <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 3 }}>
+                      <Box sx={{ display: "flex", alignItems: "center" }}>
+                        {!image ? (
+                          <Avatar
+                            sx={{
+                              bgcolor: alpha(theme.palette.primary.main, 0.1),
+                              color: theme.palette.primary.main,
+                              mr: 2,
+                              width: 56,
+                              height: 56,
+                            }}
+                          >
+                            <PersonIcon sx={{ fontSize: 28 }} />
+                          </Avatar>
+                        ) : (
+                          <Avatar
+                            src={image}
+                            alt="Profile"
+                            style={{ width: 56, height: 56, marginTop: "16px", objectFit: "cover", margin: 7 }}
+                          />
+                        )}
+                        <Box>
+                          <Typography variant="h5" fontWeight={700} sx={{ mb: 0.5 }}>
+                            About Me
+                          </Typography>
+                          <Typography variant="body2" color="text.secondary">
+                            Tell us about yourself and your career goals
+                          </Typography>
+                        </Box>
+                      </Box>
+
+                      <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
+                        {parsing && <CircularProgress size={20} />}
+                        {hasResumeChanged && (
+                          <Tooltip title="Sync with updated resume" arrow>
+                            <IconButton
+                              onClick={handleSyncWithNewResume}
+                              disabled={syncing}
+                              sx={{
+                                bgcolor: alpha(theme.palette.warning.main, 0.1),
+                                color: theme.palette.warning.main,
+                                "&:hover": {
+                                  bgcolor: alpha(theme.palette.warning.main, 0.2),
+                                  transform: "scale(1.1)",
+                                },
+                                transition: "all 0.2s ease",
+                                animation: "pulse 2s infinite",
+                                "@keyframes pulse": {
+                                  "0%": {
+                                    boxShadow: `0 0 0 0 ${alpha(theme.palette.warning.main, 0.7)}`,
+                                  },
+                                  "70%": {
+                                    boxShadow: `0 0 0 10px ${alpha(theme.palette.warning.main, 0)}`,
+                                  },
+                                  "100%": {
+                                    boxShadow: `0 0 0 0 ${alpha(theme.palette.warning.main, 0)}`,
+                                  },
+                                },
+                              }}
+                            >
+                              {syncing ? <CircularProgress size={20} /> : <Sync />}
+                            </IconButton>
+                          </Tooltip>
+                        )}
+                        <input
+                          accept=".pdf,.docx"
+                          id="upload-resume"
+                          type="file"
+                          hidden
+                          onChange={handleResumeUpload}
+                        />
+                        <Tooltip title={resumeFileName ? resumeFileName : "Upload CV to auto-fill"} arrow>
+                          <label htmlFor="upload-resume">
+                            <IconButton
+                              component="span"
+                              sx={{
+                                bgcolor: alpha(theme.palette.primary.main, 0.1),
+                                color: theme.palette.primary.main,
+                                "&:hover": {
+                                  bgcolor: alpha(theme.palette.primary.main, 0.2),
+                                  transform: "scale(1.1)",
+                                },
+                                transition: "all 0.2s ease",
+                              }}
+                            >
+                              {resumeFileName ? (
+                                <Box>
+                                  <InsertDriveFile />
+                                  <CheckCircle
+                                    fontSize="small"
+                                    sx={{
+                                      position: "absolute",
+                                      bottom: 0,
+                                      right: 0,
+                                      color: "green",
+                                      backgroundColor: "white",
+                                      borderRadius: "50%",
+                                    }}
+                                  />
+                                </Box>
+                              ) : (
+                                <InsertDriveFile />
+                              )}
+                            </IconButton>
+                          </label>
+                        </Tooltip>
+                      </Box>
+                    </Box>
+
+                    <TextField
+                      fullWidth
+                      multiline
+                      rows={4}
+                      variant="outlined"
+                      placeholder="Describe your background, experience, and career aspirations..."
+                      value={aboutMe}
+                      onChange={handleAboutMeChange}
+                      sx={{
+                        "& .MuiOutlinedInput-root": {
+                          borderRadius: 3,
+                          backgroundColor: alpha(theme.palette.background.default, 0.5),
+                          transition: "all 0.2s ease",
+                          "&:hover": {
+                            backgroundColor: alpha(theme.palette.background.default, 0.7),
+                          },
+                          "&.Mui-focused": {
+                            backgroundColor: alpha(theme.palette.background.default, 0.8),
+                            boxShadow: `0 0 0 2px ${alpha(theme.palette.primary.main, 0.2)}`,
+                          },
+                        },
+                      }}
+                    />
+                  </CardContent>
+                </Card>
+              </motion.div>
+
+              {/* Role and Skills Row */}
+              <Grid container>
+                {/* Skills */}
+                <Grid item xs={12} md={6} paddingRight={2}>
+                  <motion.div
+                    initial={{ opacity: 0, x: 20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ duration: 0.6, delay: 0.3 }}
+                  >
+                    <Card
+                      sx={{
+                        height: "100%",
+                        background: `linear-gradient(145deg, ${alpha(theme.palette.background.paper, 0.9)}, ${alpha(theme.palette.background.paper, 0.7)})`,
+                        backdropFilter: "blur(20px)",
+                        border: `1px solid ${alpha(theme.palette.divider, 0.1)}`,
+                        boxShadow: `0 8px 32px ${alpha(theme.palette.common.black, 0.1)}`,
+                        transition: "all 0.3s ease",
+                        position: "relative",
+                        "&:hover": {
+                          transform: "translateY(-4px)",
+                          boxShadow: `0 12px 48px ${alpha(theme.palette.common.black, 0.15)}`,
+                        },
+                      }}
+                    >
+                      <CardContent sx={{ p: 3 }}>
+                        <Box sx={{ display: "flex", alignItems: "center", mb: 3 }}>
+                          <Avatar
+                            sx={{
+                              bgcolor: alpha(theme.palette.info.main, 0.1),
+                              color: theme.palette.info.main,
+                              mr: 2,
+                              width: 48,
+                              height: 48,
+                            }}
+                          >
+                            <BuildIcon />
+                          </Avatar>
+                          <Box sx={{ flex: 1 }}>
+                            <Typography variant="h6" fontWeight={600}>
+                              Skills ({skills.length})
+                            </Typography>
+                            <Typography variant="body2" color="text.secondary">
+                              Your technical expertise
+                            </Typography>
+                          </Box>
+                        </Box>
+                        <Tooltip title="Remove all skills" arrow>
+                          <Button
+                            size="small"
+                            onClick={handleRemoveAllSkills}
+                            sx={{ mb: 2, position: "absolute", top: 8, right: 8 }}
+                          >
+                            <Delete />
+                          </Button>
+                        </Tooltip>
+                        <Stack direction="row" spacing={1} sx={{ flexWrap: "wrap", mb: 2, gap: 1 }}>
+                          {(showAllSkills ? skills : skills.slice(0, SKILL_DISPLAY_LIMIT)).map((skill, index) => (
+                            <Chip
+                              key={index}
+                              label={skill}
+                              onDelete={() => handleDeleteSkill(skill)}
+                              size="small"
+                              sx={{
+                                transition: "all 0.2s ease",
+                                "&:hover": {
+                                  transform: "scale(1.05)",
+                                  boxShadow: `0 2px 8px ${alpha(theme.palette.info.main, 0.3)}`,
+                                },
+                                backgroundColor: alpha(theme.palette.info.main, 0.1),
+                                color: theme.palette.info.main,
+                                "& .MuiChip-deleteIcon": {
+                                  color: alpha(theme.palette.info.main, 0.7),
+                                  "&:hover": {
+                                    color: theme.palette.error.main,
+                                  },
+                                },
+                              }}
+                            />
+                          ))}
+                        </Stack>
+
+                        {shouldShowToggle && (
+                          <Button size="small" onClick={() => setShowAllSkills((prev) => !prev)} sx={{ mb: 2 }}>
+                            {showAllSkills ? "Show Less" : `Show ${skills.length - SKILL_DISPLAY_LIMIT} More`}
+                          </Button>
+                        )}
+
+                        <Box sx={{ display: "flex", gap: 1 }}>
+                          <Autocomplete
+                            freeSolo
+                            size="small"
+                            options={skillsList}
+                            value={newSkill}
+                            onInputChange={(_, val) => setNewSkill(val)}
+                            onChange={(_, val) => val && handleAddSkill(val)}
+                            renderInput={(params) => (
+                              <TextField
+                                {...params}
+                                placeholder="Add skill..."
+                                onKeyDown={(e) => e.key === "Enter" && handleAddSkill(newSkill)}
+                                sx={{
+                                  "& .MuiOutlinedInput-root": {
+                                    borderRadius: 2,
+                                    backgroundColor: alpha(theme.palette.background.default, 0.5),
+                                  },
+                                }}
+                              />
+                            )}
+                            sx={{ flexGrow: 1 }}
+                          />
+                          <IconButton
+                            onClick={() => handleAddSkill(newSkill)}
+                            disabled={!newSkill.trim()}
+                            sx={{
+                              bgcolor: alpha(theme.palette.info.main, 0.1),
+                              color: theme.palette.info.main,
+                              "&:hover": {
+                                bgcolor: alpha(theme.palette.info.main, 0.2),
+                              },
+                            }}
+                          >
+                            <AddIcon />
+                          </IconButton>
+                        </Box>
+                      </CardContent>
+                    </Card>
+                  </motion.div>
+                </Grid>
+
+                {/* Desired Role */}
+                <Grid item xs={12} md={6}>
+                  <motion.div
+                    initial={{ opacity: 0, x: -20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ duration: 0.6, delay: 0.2 }}
+                  >
+                    <Card
+                      sx={{
+                        height: "100%",
+                        background: `linear-gradient(145deg, ${alpha(theme.palette.background.paper, 0.9)}, ${alpha(theme.palette.background.paper, 0.7)})`,
+                        backdropFilter: "blur(20px)",
+                        border: `1px solid ${alpha(theme.palette.divider, 0.1)}`,
+                        boxShadow: `0 8px 32px ${alpha(theme.palette.common.black, 0.1)}`,
+                        transition: "all 0.3s ease",
+                        "&:hover": {
+                          transform: "translateY(-4px)",
+                          boxShadow: `0 12px 48px ${alpha(theme.palette.common.black, 0.15)}`,
+                        },
+                      }}
+                    >
+                      <CardContent sx={{ p: 3 }}>
+                        <Box sx={{ display: "flex", alignItems: "center", mb: 3 }}>
+                          <Avatar
+                            sx={{
+                              bgcolor: alpha(theme.palette.secondary.main, 0.1),
+                              color: theme.palette.secondary.main,
+                              mr: 2,
+                              width: 48,
+                              height: 48,
+                            }}
+                          >
+                            <WorkIcon />
+                          </Avatar>
+                          <Box>
+                            <Typography variant="h6" fontWeight={600}>
+                              Target Role
+                            </Typography>
+                            <Typography variant="body2" color="text.secondary">
+                              What's your dream job?
+                            </Typography>
+                          </Box>
+                        </Box>
+                        <Autocomplete
+                          freeSolo
+                          options={roles}
+                          value={selectedRole}
+                          onInputChange={handleSelectedRoleChange}
+                          renderInput={(params) => (
+                            <TextField
+                              {...params}
+                              variant="outlined"
+                              placeholder="Select or type a role"
+                              sx={{
+                                "& .MuiOutlinedInput-root": {
+                                  borderRadius: 2,
+                                  backgroundColor: alpha(theme.palette.background.default, 0.5),
+                                  "&:hover": {
+                                    backgroundColor: alpha(theme.palette.background.default, 0.7),
+                                  },
+                                  "&.Mui-focused": {
+                                    backgroundColor: alpha(theme.palette.background.default, 0.8),
+                                    boxShadow: `0 0 0 2px ${alpha(theme.palette.secondary.main, 0.2)}`,
+                                  },
+                                },
+                              }}
+                            />
+                          )}
+                        />
+                      </CardContent>
+                    </Card>
+                  </motion.div>
+                </Grid>
+              </Grid>
+
+              {/* AI Insights Row */}
+              {(roleMatch || resumeExperience.length > 0) && (
+                <Grid container>
+                  {/* Suggested Role Match */}
+                  {roleMatch && (
+                    <Grid item xs={12} md={6} paddingRight={2}>
+                      <motion.div
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ duration: 0.6, delay: 0.4 }}
+                      >
+                        <Card
+                          sx={{
+                            height: "100%",
+                            background: `linear-gradient(145deg, ${alpha(theme.palette.warning.main, 0.1)}, ${alpha(theme.palette.warning.main, 0.05)})`,
+                            border: `1px solid ${alpha(theme.palette.warning.main, 0.2)}`,
+                            backdropFilter: "blur(20px)",
+                            boxShadow: `0 8px 32px ${alpha(theme.palette.warning.main, 0.1)}`,
+                          }}
+                        >
+                          <CardContent sx={{ p: 3 }}>
+                            <Box sx={{ display: "flex", alignItems: "center", mb: 2 }}>
+                              <Avatar
+                                sx={{
+                                  bgcolor: alpha(theme.palette.warning.main, 0.1),
+                                  color: theme.palette.warning.main,
+                                  mr: 2,
+                                  width: 48,
+                                  height: 48,
+                                }}
+                              >
+                                <LightbulbSharp />
+                              </Avatar>
+                              <Box>
+                                <Typography variant="h6" fontWeight={600}>
+                                  AI Suggestion
+                                </Typography>
+                                <Typography variant="body2" color="text.secondary">
+                                  Based on your profile
+                                </Typography>
+                              </Box>
+                            </Box>
+                            <Typography variant="body1" sx={{ fontStyle: "italic" }}>
+                              "{roleMatch}"
+                            </Typography>
+                          </CardContent>
+                        </Card>
+                      </motion.div>
+                    </Grid>
+                  )}
+
+                  {/* Experience */}
+                  {resumeExperience.length > 0 && (
+                    <Grid item xs={12} md={roleMatch ? 6 : 12}>
+                      <motion.div
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ duration: 0.6, delay: 0.5 }}
+                      >
+                        <Card
+                          sx={{
+                            height: "100%",
+                            background: `linear-gradient(145deg, ${alpha(theme.palette.success.main, 0.1)}, ${alpha(theme.palette.success.main, 0.05)})`,
+                            border: `1px solid ${alpha(theme.palette.success.main, 0.2)}`,
+                            backdropFilter: "blur(20px)",
+                            boxShadow: `0 8px 32px ${alpha(theme.palette.success.main, 0.1)}`,
+                          }}
+                        >
+                          <CardContent sx={{ p: 3 }}>
+                            <Box sx={{ display: "flex", alignItems: "center", mb: 2 }}>
+                              <Avatar
+                                sx={{
+                                  bgcolor: alpha(theme.palette.success.main, 0.1),
+                                  color: theme.palette.success.main,
+                                  mr: 2,
+                                  width: 48,
+                                  height: 48,
+                                }}
+                              >
+                                <Grading />
+                              </Avatar>
+                              <Box>
+                                <Typography variant="h6" fontWeight={600}>
+                                  Experience Highlights
+                                </Typography>
+                                <Typography variant="body2" color="text.secondary">
+                                  From your resume
+                                </Typography>
+                              </Box>
+                            </Box>
+                            <Stack spacing={1}>
+                              {resumeExperience.slice(0, 3).map((exp, i) => (
+                                <Typography key={i} variant="body2" sx={{ display: "flex", alignItems: "flex-start" }}>
+                                  <Star sx={{ fontSize: 16, mr: 1, mt: 0.2, color: theme.palette.success.main }} />
+                                  {exp}
+                                </Typography>
+                              ))}
+                            </Stack>
+                          </CardContent>
+                        </Card>
+                      </motion.div>
+                    </Grid>
+                  )}
+                </Grid>
+              )}
+            </Stack>
+          </Grid>
+
+          {/* Right Column */}
+          <Grid item xs={12} lg={4}>
+            <Stack spacing={4}>
+              {/* Quick Stats */}
+              <motion.div
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ duration: 0.6, delay: 0.2 }}
+              >
+                <Grid container spacing={2}>
+                  <Grid item xs={6}>
+                    <Card
+                      sx={{
+                        background: `linear-gradient(135deg, ${alpha(theme.palette.primary.main, 0.1)}, ${alpha(theme.palette.primary.main, 0.05)})`,
+                        border: `1px solid ${alpha(theme.palette.primary.main, 0.2)}`,
+                        textAlign: "center",
+                      }}
+                    >
+                      <CardContent sx={{ py: 2 }}>
+                        <TrendingUp sx={{ fontSize: 32, color: theme.palette.primary.main, mb: 1 }} />
+                        <Typography variant="h6" fontWeight={700}>
+                          {skills.length}
+                        </Typography>
+                        <Typography variant="body2" color="text.secondary">
+                          Skills
+                        </Typography>
+                      </CardContent>
+                    </Card>
+                  </Grid>
+                  <Grid item xs={6}>
+                    <Card
+                      sx={{
+                        background: `linear-gradient(135deg, ${alpha(theme.palette.secondary.main, 0.1)}, ${alpha(theme.palette.secondary.main, 0.05)})`,
+                        border: `1px solid ${alpha(theme.palette.secondary.main, 0.2)}`,
+                        textAlign: "center",
+                      }}
+                    >
+                      <CardContent sx={{ py: 2 }}>
+                        <Code sx={{ fontSize: 32, color: theme.palette.secondary.main, mb: 1 }} />
+                        <Typography variant="h6" fontWeight={700}>
+                          {repos.length}
+                        </Typography>
+                        <Typography variant="body2" color="text.secondary">
+                          Repos
+                        </Typography>
+                      </CardContent>
+                    </Card>
+                  </Grid>
+                </Grid>
+              </motion.div>
+
+              {/* Connect Accounts */}
+              <motion.div
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ duration: 0.6, delay: 0.3 }}
+              >
+                <Card
+                  sx={{
+                    background: `linear-gradient(145deg, ${alpha(theme.palette.background.paper, 0.9)}, ${alpha(theme.palette.background.paper, 0.7)})`,
+                    backdropFilter: "blur(20px)",
+                    border: `1px solid ${alpha(theme.palette.divider, 0.1)}`,
+                    boxShadow: `0 8px 32px ${alpha(theme.palette.common.black, 0.1)}`,
+                  }}
+                >
+                  <CardContent sx={{ p: 3 }}>
+                    <Box sx={{ display: "flex", alignItems: "center", mb: 3 }}>
+                      <Avatar
+                        sx={{
+                          bgcolor: alpha(theme.palette.info.main, 0.1),
+                          color: theme.palette.info.main,
+                          mr: 2,
+                          width: 48,
+                          height: 48,
+                        }}
+                      >
+                        <Business />
+                      </Avatar>
+                      <Box>
+                        <Typography variant="h6" fontWeight={600}>
+                          Connect Accounts
+                        </Typography>
+                        <Typography variant="body2" color="text.secondary">
+                          Link your professional profiles
+                        </Typography>
+                      </Box>
+                    </Box>
+
+                    {showAuthOptions ? (
+                      <Box>
+                        <FormControl fullWidth sx={{ mb: 2 }}>
+                          <InputLabel>Connection Method</InputLabel>
+                          <Select
+                            value={useOAuth ? "oauth" : "no-auth"}
+                            label="Connection Method"
+                            onChange={(e) => setUseOAuth(e.target.value === "oauth")}
+                          >
+                            <MenuItem value="oauth">OAuth (Recommended)</MenuItem>
+                            <MenuItem value="no-auth">Username Only</MenuItem>
+                          </Select>
+                        </FormControl>
+                        <Stack spacing={2}>
+                          <Button
+                            fullWidth
+                            variant="contained"
+                            startIcon={<GitHub />}
+                            onClick={handleGitHubConnect}
+                            sx={{
+                              bgcolor: "#24292e",
+                              "&:hover": { bgcolor: "#1a1e22" },
+                            }}
+                          >
+                            Connect GitHub
+                          </Button>
+                          <Button fullWidth variant="outlined" onClick={() => setShowAuthOptions(false)}>
+                            Cancel
+                          </Button>
+                        </Stack>
+                      </Box>
+                    ) : (
+                      <Stack spacing={2}>
+                        <Button
+                          variant="outlined"
+                          startIcon={<GitHub />}
+                          fullWidth
+                          onClick={() => setShowAuthOptions(true)}
+                          sx={{
+                            borderColor: "#24292e",
+                            color: "#24292e",
+                            "&:hover": {
+                              borderColor: "#1a1e22",
+                              bgcolor: alpha("#24292e", 0.04),
+                            },
+                          }}
+                        >
+                          Connect GitHub
+                        </Button>
+                      </Stack>
+                    )}
+
+                    {repos.length > 0 && (
+                      <Box sx={{ mt: 3 }}>
+                        <Typography variant="subtitle2" sx={{ mb: 2, fontWeight: 600 }}>
+                          Connected Repositories ({repos.length})
+                        </Typography>
+                        <Stack spacing={1} sx={{ maxHeight: 150, overflow: "auto" }}>
+                          {repos.slice(0, 5).map((repo) => (
+                            <Button
+                              key={repo.id}
+                              href={repo.html_url}
+                              target="_blank"
+                              variant="text"
+                              size="small"
+                              sx={{
+                                justifyContent: "flex-start",
+                                textTransform: "none",
+                                color: theme.palette.text.secondary,
+                                "&:hover": {
+                                  color: theme.palette.primary.main,
+                                  bgcolor: alpha(theme.palette.primary.main, 0.04),
+                                },
+                              }}
+                            >
+                              <Code sx={{ fontSize: 16, mr: 1 }} />
+                              {repo.name}
+                            </Button>
+                          ))}
+                          {repos.length > 5 && (
+                            <Typography variant="caption" color="text.secondary" sx={{ textAlign: "center", pt: 1 }}>
+                              +{repos.length - 5} more repositories
+                            </Typography>
+                          )}
+                        </Stack>
+                      </Box>
+                    )}
+                  </CardContent>
+                </Card>
+              </motion.div>
+
+              {/* Jobs Section */}
+              <motion.div
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ duration: 0.6, delay: 0.4 }}
+              >
+                <LinkedinJobs
+                  jobs={jobs}
+                  loadingJobs={loadingJobs}
+                  fetchJobs={fetchJobs}
+                  showJobRecommendations={showJobRecommendations}
+                  toggleJobRecommendations={toggleJobRecommendations}
+                  skills={skills}
+                  selectedRole={selectedRole}
+                />
+              </motion.div>
+            </Stack>
+          </Grid>
         </Grid>
-      </Grid>
-    </Container>
-  );
-};
+        {isProfileDirty && (
+          <Button
+            variant="contained"
+            color="primary"
+            onClick={updateUserProfile}
+            disabled={isSaving}
+            sx={{ mt: 2 }}
+          >
+            {isSaving ? <CircularProgress size={24} /> : "Save Changes"}
+          </Button>
+        )}
+      </Container>
+    </Box>
+  )
+}
 
-export default MainDashboard;
+export default MainDashboard
