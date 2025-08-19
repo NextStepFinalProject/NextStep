@@ -25,13 +25,12 @@ const ResumeSchema = new Schema({
 ResumeSchema.set('toJSON', {
     transform: (doc, ret): ResumeData => {
         return {
-            id: ret._id,
+            id: ret._id.toString(),
             owner: ret.owner._id.toString(),
-            createdAt: ret.createdAt,
-            updatedAt: ret.updatedAt,
-            version: ret.version,
-            rawContentLink: ret.rawContentLink,
-            parsedData: ret.parsedData
+            createdAt: ret.createdAt as any,
+            version: ret.version as any,
+            rawContentLink: ret.rawContentLink as any,
+            parsedData: ret.parsedData as any
         };
     }
 });
