@@ -318,7 +318,7 @@ const NewPostModal: React.FC<NewPostModalProps> = ({ open, onClose, onPostCreate
         />
 
         <Box sx={{ mb: 3 }}>
-          {open && mountedEditor && content && (
+          {open && mountedEditor && (
             <FroalaEditorComponent
               ref={editorRef}
               tag="textarea"
