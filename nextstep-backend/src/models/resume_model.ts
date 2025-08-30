@@ -1,5 +1,5 @@
 import mongoose, { Schema } from 'mongoose';
-import {ResumeData} from "types/resume_types";
+import {ResumeData, ParsedResume} from "types/resume_types";
 
 const ResumeSchema = new Schema({
     owner: { type: Schema.Types.ObjectId, ref: 'User', required: true },
@@ -18,20 +18,31 @@ const ResumeSchema = new Schema({
         },
         required: false
     },
-    createdAt: { type: Date, default: Date.now }
+    createdAt: { type: Date, default: Date.now },
+    updatedAt: { type: Date, default: Date.now }
 }, { versionKey: false });
 
 
 ResumeSchema.set('toJSON', {
-    transform: (doc, ret): ResumeData => {
+    transform: (doc: mongoose.Document, ret: Record<string, any>): ResumeData => {
         return {
-            id: ret._id,
+            id: ret._id.toString(),
             owner: ret.owner._id.toString(),
-            createdAt: ret.createdAt,
-            updatedAt: ret.updatedAt,
-            version: ret.version,
-            rawContentLink: ret.rawContentLink,
-            parsedData: ret.parsedData
+            createdAt: ret.createdAt ? ret.createdAt.toISOString() : undefined,
+            updatedAt: ret.updatedAt ? ret.updatedAt.toISOString() : undefined,
+            version: ret.version as number,
+            rawContentLink: ret.rawContentLink as string,
+            parsedData: ret.parsedData as ParsedResume || {
+                aboutMe: '',
+                skills: [],
+                roleMatch: '',
+                experience: [],
+                education: [],
+                jobDescription: '',
+                feedback: '',
+                score: 0,
+                fileName: ''
+            }
         };
     }
 });
