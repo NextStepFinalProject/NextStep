@@ -1138,7 +1138,7 @@ const MainDashboard: React.FC = () => {
           <Button
             variant="contained"
             color="primary"
-            onClick={updateUserProfile}
+            onClick={() => updateUserProfile()}
             disabled={isSaving}
             sx={{ mt: 2 }}
           >
