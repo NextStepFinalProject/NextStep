@@ -7,6 +7,7 @@ import {getUserAuth, removeUserAuth, setUserAuth} from "./handlers/userAuth.ts";
 // Create an Axios instance
 const api: AxiosInstance = axios.create({
     baseURL: config.app.backend_url(),
+    timeout: 15 * 60 * 1000,
 });
 
 // Function to refresh the token
@@ -15,7 +16,7 @@ const refreshToken = async (): Promise<LoginResponse | null> => {
         const authData = getUserAuth();
         const response = await axios.post(`${config.app.backend_url()}/auth/refresh`, {
             refreshToken: authData.refreshToken,
-        });
+        }, { timeout: 15 * 60 * 1000 });
         const newAuthData = response.data as LoginResponse;
         setUserAuth(newAuthData);
         return newAuthData;
