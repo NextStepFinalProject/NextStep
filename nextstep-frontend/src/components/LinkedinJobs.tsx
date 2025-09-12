@@ -1,5 +1,5 @@
 import type React from "react"
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import {
   Box,
   Typography,
@@ -74,11 +74,17 @@ const LinkedinJobs: React.FC<LinkedinJobsProps> = ({
   skills,
   selectedRole,
 }) => {
-  const [settings, setSettings] = useState<LinkedInSettings>({
+  const DEFAULTS: Omit<LinkedInSettings, "skills"> = {
     location: "Israel",
     dateSincePosted: "past month",
     jobType: "full time",
     experienceLevel: "all",
+  }
+  const [settings, setSettings] = useState<LinkedInSettings>({
+    location: DEFAULTS.location,
+    dateSincePosted: DEFAULTS.dateSincePosted,
+    jobType: DEFAULTS.jobType,
+    experienceLevel: DEFAULTS.experienceLevel,
     skills: skills.slice(0, 3), // Limit to first 3 skills
   })
   const theme = useTheme()
@@ -88,6 +94,21 @@ const LinkedinJobs: React.FC<LinkedinJobsProps> = ({
   const [fullScreen, setFullScreen] = useState(false)
   const [fullScreenSettings, setFullScreenSettings] = useState<LinkedInSettings>({ ...settings })
   const [newSkill, setNewSkill] = useState("")
+
+  // Auto-fill compact settings when empty
+  useEffect(() => {
+    setSettings((prev) => {
+      if (prev.skills.length > 0) return prev
+      return {
+        ...prev,
+        location: prev.location || DEFAULTS.location,
+        dateSincePosted: prev.dateSincePosted || DEFAULTS.dateSincePosted,
+        jobType: prev.jobType || DEFAULTS.jobType,
+        experienceLevel: prev.experienceLevel || DEFAULTS.experienceLevel,
+        skills: prev.skills.length === 0 && skills.length > 0 ? skills.slice(0, 3) : prev.skills,
+      }
+    })
+  }, [skills])
 
   const handleSettingChange = (key: keyof LinkedInSettings, value: string) => {
     setSettings((prev) => ({ ...prev, [key]: value }))
@@ -146,6 +167,22 @@ const LinkedinJobs: React.FC<LinkedinJobsProps> = ({
       skills: prev.skills.filter((s) => s !== skillToDelete),
     }))
   }
+
+  // Auto-fill full-screen settings when empty
+  useEffect(() => {
+    if (!fullScreen) return
+    setFullScreenSettings((prev) => {
+      if (prev.skills.length > 0) return prev
+      return {
+        ...prev,
+        location: prev.location || DEFAULTS.location,
+        dateSincePosted: prev.dateSincePosted || DEFAULTS.dateSincePosted,
+        jobType: prev.jobType || DEFAULTS.jobType,
+        experienceLevel: prev.experienceLevel || DEFAULTS.experienceLevel,
+        skills: prev.skills.length === 0 && skills.length > 0 ? skills.slice(0, 3) : prev.skills,
+      }
+    })
+  }, [fullScreen, skills])
 
   return (
     <>
