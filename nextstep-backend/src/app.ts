@@ -24,7 +24,7 @@ const specs = swaggerJsdoc(options);
 const app = express();
 
 const corsOptions = {
-    origin: [config.app.frontend_url().split(","), config.app.backend_url()],
+    origin: [config.app.frontend_url().split(";"), config.app.backend_url()],
     methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
     credentials: true, // Allow cookies to be sent with requests
 };

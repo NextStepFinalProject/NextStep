@@ -1,6 +1,6 @@
 export const config = {
     app: {
-        backend_url: () => import.meta.env.VITE_BACKEND_URL.split(",")
+        backend_url: () => import.meta.env.VITE_BACKEND_URL.split(";")
             .filter((backendUrl: string) => backendUrl.includes(window.location.protocol))[0],
     },
     socketMethods: {
